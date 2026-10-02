@@ -3,5 +3,14 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Generates golden reference values from reference/poc-reitwege.html (implemented in M1)"
+  "description": "Generates golden reference values from reference/poc-reitwege.html",
+  "scripts": {
+    "fixtures": "node src/generate.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "playwright-core": "1.63.0"
+  }
 }

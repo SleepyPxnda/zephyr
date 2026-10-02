@@ -15,6 +15,8 @@ export default tseslint.config(
       '**/playwright-report/**',
       '**/test-results/**',
       'packages/core/test/fixtures/**',
+      // page snippets injected into the prototype closure (not modules)
+      'tools/poc-harness/src/*.js',
     ],
   },
   js.configs.recommended,

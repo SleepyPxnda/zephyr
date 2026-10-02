@@ -1,0 +1,9 @@
+{
+  "app": {
+    "name": "zephyr",
+    "tagline": "Reit-Choreografien zur Musik planen"
+  },
+  "home": {
+    "empty": "Noch keine Pläne."
+  }
+}

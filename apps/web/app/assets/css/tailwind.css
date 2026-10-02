@@ -1,0 +1,92 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/nunito';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Zephyr theme (SPEC "Name und Farbthema"). Values marked "derived" are not
+ * listed in the SPEC and are taken from the nearest SPEC token.
+ */
+:root {
+  --radius: 0.625rem;
+  --background: #f8f7fc;
+  --foreground: #2e2a3d;
+  --card: #ffffff;
+  --card-foreground: #2e2a3d; /* derived: foreground */
+  --popover: #ffffff; /* derived: card */
+  --popover-foreground: #2e2a3d; /* derived: foreground */
+  --primary: #8fb8de;
+  --primary-foreground: #1f2a3a;
+  --secondary: #e6e0f5;
+  --secondary-foreground: #2e2a3d; /* derived: foreground */
+  --accent: #cdebdd;
+  --accent-foreground: #2e2a3d; /* derived: foreground */
+  --muted: #f0eef6;
+  --muted-foreground: #6e6889;
+  --destructive: #e8a0a8;
+  --destructive-foreground: #2e2a3d; /* derived: dark text on rosé */
+  --border: #e3e0ee;
+  --input: #e3e0ee; /* derived: border */
+  --ring: #8fb8de;
+}
+
+.dark {
+  --background: #1c1b26;
+  --foreground: #eceaf5;
+  --card: #24232f;
+  --card-foreground: #eceaf5;
+  --popover: #24232f;
+  --popover-foreground: #eceaf5;
+  --primary: #a9c9e8;
+  --primary-foreground: #16202c;
+  --secondary: #3a3550;
+  --secondary-foreground: #eceaf5;
+  --accent: #2f4a40;
+  --accent-foreground: #eceaf5;
+  --muted: #2a2937;
+  --muted-foreground: #a7a3bd;
+  --destructive: #d98c95;
+  --destructive-foreground: #1c1b26;
+  --border: #34324a;
+  --input: #34324a;
+  --ring: #a9c9e8;
+}
+
+@theme inline {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-brand: 'Nunito Variable', ui-rounded, ui-sans-serif, sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}

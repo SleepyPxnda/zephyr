@@ -11,6 +11,7 @@ export type ProblemCode =
   | 'email_taken'
   | 'csrf'
   | 'revision_conflict'
+  | 'unknown_gaits'
 
 /** Throwable error that the error handler turns into RFC 9457 `application/problem+json`. */
 export function problem(

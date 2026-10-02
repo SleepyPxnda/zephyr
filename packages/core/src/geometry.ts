@@ -58,12 +58,13 @@ export function turnThenStraight(S: Point, hd: number, E: Point, R: number): Tur
     lo = th
   }
   if (hi === null) return 'inside'
+  let up: number = hi
   for (let k = 0; k < 30; k++) {
-    const mid = (lo + hi) / 2
+    const mid = (lo + up) / 2
     if (facing(mid) > 0) lo = mid
-    else hi = mid
+    else up = mid
   }
-  const thE = (lo + hi) / 2
+  const thE = (lo + up) / 2
   const arcLen = thE * R
   const cnt = Math.max(3, Math.ceil(arcLen / ARC_STEP))
   const pts: Point[] = []

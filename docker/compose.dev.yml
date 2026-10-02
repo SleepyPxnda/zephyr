@@ -1,4 +1,4 @@
-# Local development services: PostgreSQL 16 and MinIO (S3).
+# Local development services: PostgreSQL 16 and Garage (S3-compatible object storage).
 # Usage: docker compose -f docker/compose.dev.yml up -d
 # Works without configuration; to override, add `--env-file .env` (see .env.example).
 name: zephyr-dev
@@ -20,40 +20,31 @@ services:
       timeout: 3s
       retries: 20
 
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
+  # Single node without replication; creates the access key and the private
+  # bucket from the GARAGE_DEFAULT_* variables on first start.
+  garage:
+    image: dxflrs/garage:v2.4.1
+    command: ['/garage', 'server', '--single-node', '--default-bucket']
     environment:
-      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-zephyr}
-      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-zephyr-dev-secret}
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:-4f1c2a9e8b7d6c5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e}
+      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN:-zephyr-dev-admin-token}
+      GARAGE_DEFAULT_ACCESS_KEY: ${S3_ACCESS_KEY:-GK0123456789abcdef01234567}
+      GARAGE_DEFAULT_SECRET_KEY: ${S3_SECRET_KEY:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
+      GARAGE_DEFAULT_BUCKET: ${S3_BUCKET:-zephyr}
     ports:
-      - '${MINIO_PORT:-9000}:9000'
-      - '${MINIO_CONSOLE_PORT:-9001}:9001'
+      - '${S3_PORT:-3900}:3900'
+      - '${GARAGE_ADMIN_PORT:-3903}:3903'
     volumes:
-      - minio-data:/data
+      - ./garage.toml:/etc/garage.toml:ro
+      - garage-meta:/var/lib/garage/meta
+      - garage-data:/var/lib/garage/data
     healthcheck:
-      test: ['CMD', 'mc', 'ready', 'local']
+      test: ['CMD', '/garage', 'status']
       interval: 5s
       timeout: 3s
       retries: 20
 
-  # Creates the private bucket once MinIO is up, then exits.
-  minio-init:
-    image: minio/mc:latest
-    depends_on:
-      minio:
-        condition: service_healthy
-    environment:
-      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-zephyr}
-      S3_SECRET_KEY: ${S3_SECRET_KEY:-zephyr-dev-secret}
-      S3_BUCKET: ${S3_BUCKET:-zephyr}
-    entrypoint: >
-      /bin/sh -c "
-      mc alias set local http://minio:9000 $$S3_ACCESS_KEY $$S3_SECRET_KEY &&
-      mc mb --ignore-existing local/$$S3_BUCKET &&
-      mc anonymous set none local/$$S3_BUCKET
-      "
-
 volumes:
   postgres-data:
-  minio-data:
+  garage-meta:
+  garage-data:

@@ -11,8 +11,8 @@ export interface Strokes {
   strokes: number[]
   sg: string[]
   gaps: number[]
-  /** null = not set yet (only in imported data); normalize decides */
-  gt: (GapType | null)[]
+  /** null or anything else than halt/pause only occurs in imported data; normalize decides */
+  gt: (GapType | string | null)[]
   tack: (boolean | null)[]
 }
 
@@ -43,7 +43,7 @@ export function fromStrokes(s: Strokes): Path {
       start,
       gaitId: s.sg[k] ?? '',
       gap: s.gaps[k] ?? 0,
-      gapType: s.gt[k] ?? 'halt',
+      gapType: s.gt[k] === 'pause' ? 'pause' : 'halt',
       tack: s.tack[k] ?? null,
     })),
   }

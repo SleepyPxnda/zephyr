@@ -63,7 +63,8 @@ export const pathSchema = z
       if (prev && s.start <= prev.start)
         ctx.addIssue({ code: 'custom', message: 'starts must increase', path: ['sections', k] })
     })
-    if (p.pts[0]?.jump) ctx.addIssue({ code: 'custom', message: 'first point cannot jump', path: ['pts', 0] })
+    if (p.pts[0]?.jump)
+      ctx.addIssue({ code: 'custom', message: 'first point cannot jump', path: ['pts', 0] })
   })
 
 /** Halt or pause announced with "+ Halt" / "+ Pause" for the next line. */
@@ -143,6 +144,25 @@ export const arenaSchema = z.object({
   lengthM: z.number().gt(0).max(500),
 })
 
+// ---------- API inputs ----------
+
+export const emailSchema = z.string().trim().toLowerCase().pipe(z.email().max(254))
+/** At least 10 characters; long passphrases are welcome, but bounded for hashing. */
+export const passwordSchema = z.string().min(10).max(200)
+
+export const registerSchema = z.object({
+  email: emailSchema,
+  name: z.string().trim().min(1).max(80),
+  password: passwordSchema,
+})
+
+export const loginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1).max(200),
+})
+
+export type RegisterInput = z.infer<typeof registerSchema>
+export type LoginInput = z.infer<typeof loginSchema>
 export type Point = z.infer<typeof pointSchema>
 export type GeoKind = z.infer<typeof geoKindSchema>
 export type Hand = z.infer<typeof handSchema>

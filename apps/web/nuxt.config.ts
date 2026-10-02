@@ -3,7 +3,26 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineNuxtConfig({
   compatibilityDate: '2026-10-01',
   devtools: { enabled: true },
-  modules: ['@nuxt/eslint', '@nuxtjs/i18n', '@pinia/nuxt', '@vueuse/nuxt', 'shadcn-nuxt'],
+  modules: [
+    '@nuxt/eslint',
+    '@nuxtjs/i18n',
+    '@pinia/nuxt',
+    '@vueuse/nuxt',
+    'shadcn-nuxt',
+    'nuxt-auth-utils',
+  ],
+  runtimeConfig: {
+    // sealed session cookie (nuxt-auth-utils); password from NUXT_SESSION_PASSWORD
+    session: {
+      name: 'zephyr-session',
+      password: '',
+      maxAge: 60 * 60 * 24 * 30,
+      cookie: { httpOnly: true, secure: true, sameSite: 'lax' },
+    },
+  },
+  nitro: {
+    errorHandler: '~~/server/error',
+  },
   css: ['~/assets/css/tailwind.css'],
   vite: {
     plugins: [tailwindcss()],

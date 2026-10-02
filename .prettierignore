@@ -1,0 +1,8 @@
+reference/
+pnpm-lock.yaml
+.nuxt/
+.output/
+coverage/
+packages/core/test/fixtures/
+apps/web/app/components/ui/
+*.md

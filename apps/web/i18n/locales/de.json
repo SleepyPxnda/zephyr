@@ -110,6 +110,58 @@
       "add": "Pferd hinzufügen"
     }
   },
+  "tools": {
+    "label": "Werkzeuge",
+    "select": "Auswählen",
+    "free": "Freihand",
+    "line": "Gerade",
+    "arc": "Bogen",
+    "circle": "Zirkel/Volte",
+    "split": "Teilen",
+    "newLinesIn": "Neue Linien in",
+    "beforeNext": "Vor nächster Linie",
+    "nextHalt": "+ Halt (2 s)",
+    "nextPause": "+ Pause (4 s)",
+    "circleOptions": {
+      "hand": "Hand",
+      "auto": "Nach Maus",
+      "left": "Linke Hand",
+      "right": "Rechte Hand",
+      "size": "Umfang",
+      "whole": "Ganz",
+      "half": "Halb",
+      "grid": "Durchmesser auf 0,5 m runden"
+    },
+    "hint": {
+      "select": "Auswählen: Abschnitte auf dem Platz anklicken (mit Umschalttaste weitere). Bearbeiten folgt in der Auswahl-Leiste. Tasten: V Auswählen · F Freihand · G Gerade · B Bogen · Z Zirkel · T Teilen.",
+      "free": "Freihand: Pferd unten wählen, Gangart oben, dann auf dem Platz ziehen. Jede neue Linie schließt am Ende des Wegs an und wird ein eigener Abschnitt.",
+      "line": "Gerade: klicken oder ziehen. Die Linie läuft vom Ende des Wegs zum Ziel; bei einem Richtungswechsel wendet das Pferd auf dem Wendekreis der Gangart. Umschalttaste: Winkel in 15°-Schritten.",
+      "arc": "Bogen: klicken oder ziehen. Der Bogen setzt tangential am Ende des Wegs an und endet am Ziel.",
+      "circle": "Zirkel/Volte: der seitliche Abstand der Maus bestimmt den Durchmesser. Hand nach Maus oder fest, ganz oder halb.",
+      "split": "Teilen: auf eine Linie klicken, um den Abschnitt an dieser Stelle zu teilen."
+    }
+  },
+  "draw": {
+    "label": {
+      "line": "Gerade · {len} · {gait}",
+      "lineNoHeading": "Gerade · {len} (Bogen braucht eine Richtung)",
+      "turnLine": "Wendung Ø {d} + Gerade · {len} · {gait}",
+      "tooClose": "Gerade · zu nah für den Wendekreis {gait} Ø {d}",
+      "arc": "Bogen · Ø {d} · {len} · {gait}",
+      "circle": "{name} {hand} Ø {d} · {len} · {gait}",
+      "tight": "zu eng, Wendekreis {gait} Ø {d}"
+    },
+    "shape": {
+      "volte": "Volte",
+      "halfVolte": "Halbe Volte",
+      "zirkel": "Zirkel",
+      "circle": "Kreis"
+    },
+    "hand": {
+      "left": "linke Hand",
+      "right": "rechte Hand"
+    }
+  },
   "horse": {
     "defaultName": "Pferd {number}",
     "name": "Name von Pferd {number}",

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { announceGap } from '@zephyr/core'
 import { useEventListener } from '@vueuse/core'
 
 /**
@@ -37,6 +38,21 @@ function addHorse() {
   editor.activeHorseId = planStore.addHorse((n) => t('horse.defaultName', { number: n }))
 }
 
+// ---------- drawing (M5) ----------
+const gaitList = computed(() => gaits.value ?? [])
+const tools = useDrawTools(gaitList)
+useEditorShortcuts({ canEdit: () => planStore.canEdit })
+/** the stroke being drawn replaces its horse until it is released */
+const sceneHorses = computed(() => {
+  const d = tools.draft.value
+  return d ? horses.value.map((h) => (h.id === d.id ? d : h)) : horses.value
+})
+const activeHorse = computed(() => horses.value.find((h) => h.id === editor.activeHorseId) ?? null)
+const cursor = computed(() => (editor.tool === 'select' ? 'default' : 'crosshair'))
+function announce(kind: 'halt' | 'pause') {
+  if (activeHorse.value) planStore.replaceHorse(announceGap(activeHorse.value, kind))
+}
+
 // save before leaving (SPEC: autosave also when leaving the page)
 onBeforeRouteLeave(async () => {
   if (planStore.dirty) await planStore.save()
@@ -59,16 +75,30 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · zephyr` : 'zephyr')
       @rename="planStore.rename"
     />
     <main v-if="plan && arena" class="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
-      <!-- zone 1: tools (M5) and arena -->
+      <!-- zone 1: tools and arena -->
+      <ToolPanel
+        v-model:tool="editor.tool"
+        v-model:circle="editor.circle"
+        :gaits="gaitList"
+        :draw-gait-id="tools.drawGait.value?.id ?? null"
+        :editable="planStore.canEdit"
+        :can-announce="!!activeHorse?.path.pts.length"
+        @draw-gait="planStore.setSettings({ drawGaitId: $event })"
+        @announce="announce"
+      />
       <ArenaPanel
         v-model:options="options"
         v-model:round-corners="roundCorners"
         :arena="arena"
-        :horses="horses"
-        :gaits="gaits ?? []"
+        :horses="sceneHorses"
+        :gaits="gaitList"
         :parts="plan.parts"
         :active-id="editor.activeHorseId"
         :time="editor.time"
+        :ghost="tools.ghost.value"
+        :split-hover="tools.splitHover.value"
+        :cursor="cursor"
+        @pointer="tools.onPointer"
       />
       <!-- zone 2: selection panel (M6) -->
       <!-- zone 3: timeline (M8); for now the horse lane headers -->

@@ -102,10 +102,6 @@ describe('path schema', () => {
     ['no sections', { v: 1, pts, sections: [] }],
     ['start out of range', { v: 1, pts, sections: [sec(0), sec(3)] }],
     ['starts not increasing', { v: 1, pts, sections: [sec(0), sec(2), sec(1)] }],
-    [
-      'first point jumps',
-      { v: 1, pts: [{ x: 0, y: 0, jump: true }, ...pts.slice(1)], sections: [sec(0)] },
-    ],
     ['negative gap', { v: 1, pts, sections: [{ ...sec(0), gap: -1 }] }],
     [
       'too many points',

@@ -63,8 +63,7 @@ export const pathSchema = z
       if (prev && s.start <= prev.start)
         ctx.addIssue({ code: 'custom', message: 'starts must increase', path: ['sections', k] })
     })
-    if (p.pts[0]?.jump)
-      ctx.addIssue({ code: 'custom', message: 'first point cannot jump', path: ['pts', 0] })
+    // a jump on the first point is not rejected here: normalize removes it (SPEC "Weg-Dokument")
   })
 
 /** Halt or pause announced with "+ Halt" / "+ Pause" for the next line. */
@@ -161,6 +160,43 @@ export const loginSchema = z.object({
   password: z.string().min(1).max(200),
 })
 
+/** POST /api/plans: a new empty plan, or an import of prototype JSON (`poc`). */
+export const createPlanSchema = z.object({
+  title: z.string().trim().min(1).max(200).optional(),
+  poc: z.unknown().optional(),
+  /** answers to an `unknown_gaits` response: prototype gait name → global gait id */
+  gaitMap: z.record(z.string(), id).optional(),
+  /** admins only: create unknown gaits globally from the prototype's values */
+  createGaits: z.boolean().optional(),
+})
+
+/** PATCH /api/plans/:id */
+export const patchPlanSchema = z
+  .object({
+    title: z.string().trim().min(1).max(200),
+    timing: timingSchema,
+    settings: planSettingsSchema,
+  })
+  .partial()
+  .refine((p) => Object.keys(p).length > 0, { message: 'nothing to change' })
+
+/** One row of PUT /api/gaits; rows without id are new; missing rows are archived or deleted. */
+export const gaitInputSchema = gaitSchema.omit({ id: true, archivedAt: true }).extend({
+  id: id.optional(),
+  archived: z.boolean().default(false),
+})
+export const gaitsInputSchema = z
+  .array(gaitInputSchema)
+  .min(1)
+  .max(50)
+  .refine((gs) => gs.some((g) => !g.archived), { message: 'at least one active gait' })
+
+/** PUT /api/arena */
+export const arenaInputSchema = arenaSchema
+
+export type CreatePlanInput = z.infer<typeof createPlanSchema>
+export type PatchPlanInput = z.infer<typeof patchPlanSchema>
+export type GaitInput = z.infer<typeof gaitInputSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
 export type LoginInput = z.infer<typeof loginSchema>
 export type Point = z.infer<typeof pointSchema>

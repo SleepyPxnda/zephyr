@@ -1,17 +1,11 @@
 <script setup lang="ts">
-import {
-  canvasSize,
-  timeline,
-  type Gait,
-  type Horse,
-  type Part,
-  type Point,
-  type Timeline,
-} from '@zephyr/core'
-import { useElementSize, useWindowSize } from '@vueuse/core'
+import { canvasSize, type Gait, type Horse, type Part, type Point } from '@zephyr/core'
+import { useElementSize, useEventListener, useWindowSize } from '@vueuse/core'
+import { isTyping } from '~/composables/useEditorShortcuts'
 import type { ArenaInfo } from '~/composables/useCatalog'
 import type { ArenaPointer, Ghost } from '~/composables/useDrawTools'
 import type { DisplayOptions } from '~/composables/useDisplayOptions'
+import type { HandleView, OverlayLabel } from '~/composables/useSelectTool'
 import { arenaViewKey } from '~/composables/arenaViewContext'
 
 const props = defineProps<{
@@ -23,6 +17,9 @@ const props = defineProps<{
   time: number
   ghost: Ghost | null
   splitHover: Point | null
+  selection: readonly string[]
+  handles: readonly HandleView[]
+  overlay: OverlayLabel | null
   cursor: string
 }>()
 const emit = defineEmits<{ pointer: [e: ArenaPointer] }>()
@@ -40,25 +37,23 @@ const viewport = computed(() =>
 const view = useArenaView(arenaSize, viewport)
 provide(arenaViewKey, view)
 
-// timelines per horse; horses are replaced immutably, so the object is the cache key
-const cache = shallowRef(new WeakMap<Horse, Timeline>())
-watch(
-  () => props.gaits,
-  () => (cache.value = new WeakMap()),
-)
-const timelines = computed(() => {
-  const map = new Map<string, Timeline>()
-  if (!props.gaits.length) return map
-  for (const h of props.horses) {
-    let tl = cache.value.get(h)
-    if (!tl) {
-      tl = timeline(h.path, { gaits: props.gaits, horseTack: h.tack })
-      cache.value.set(h, tl)
-    }
-    map.set(h.id, tl)
-  }
-  return map
+// + − 0: zoom in, out, fit; W: "Nur Pferde" (SPEC "Interaktionen und Tastenkürzel")
+useEventListener(window, 'keydown', (e: KeyboardEvent) => {
+  if (e.defaultPrevented || isTyping(e.target) || e.ctrlKey || e.metaKey || e.altKey) return
+  if (e.key === '+') view.zoomIn()
+  else if (e.key === '-') view.zoomOut()
+  else if (e.key === '0') view.fit()
+  else if (e.key.toLowerCase() === 'w')
+    options.value = { ...options.value, onlyHorses: !options.value.onlyHorses }
+  else return
+  e.preventDefault()
 })
+
+// timelines of what is shown (incl. a stroke being drawn)
+const timelines = useTimelines(
+  toRef(() => props.horses),
+  toRef(() => props.gaits),
+)
 </script>
 
 <template>
@@ -75,6 +70,9 @@ const timelines = computed(() => {
       :options="options"
       :ghost="ghost"
       :split-hover="splitHover"
+      :selection="selection"
+      :handles="handles"
+      :overlay="overlay"
       :cursor="cursor"
       @pointer="emit('pointer', $event)"
     />

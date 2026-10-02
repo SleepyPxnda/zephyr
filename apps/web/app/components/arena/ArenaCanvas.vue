@@ -15,6 +15,7 @@ import type { ArenaInfo } from '~/composables/useCatalog'
 import type { DisplayOptions } from '~/composables/useDisplayOptions'
 import { injectArenaView } from '~/composables/arenaViewContext'
 import type { ArenaPointer, Ghost } from '~/composables/useDrawTools'
+import type { HandleView, OverlayLabel } from '~/composables/useSelectTool'
 import { drawField, drawScene, type SceneLabels } from '~/lib/arena/render'
 
 const props = defineProps<{
@@ -29,6 +30,9 @@ const props = defineProps<{
   options: DisplayOptions
   ghost: Ghost | null
   splitHover: Point | null
+  selection: readonly string[]
+  handles: readonly HandleView[]
+  overlay: OverlayLabel | null
   /** cursor style for the current tool */
   cursor: string
 }>()
@@ -88,6 +92,9 @@ watch(
     labels.value,
     props.ghost,
     props.splitHover,
+    props.selection,
+    props.handles,
+    props.overlay,
   ],
   () => (sceneDirty = true),
 )
@@ -115,6 +122,9 @@ useRafFn(() => {
           labels: labels.value,
           ghost: props.ghost,
           splitHover: props.splitHover,
+          selection: props.selection,
+          handles: props.handles,
+          overlay: props.overlay,
           ...props.options,
         },
         tr,
@@ -154,7 +164,7 @@ const touches = new Map<number, Point>()
 const twoTouches = () => [...touches.values()].slice(0, 2) as [Point, Point]
 
 // ---------- pointer events for the tools, in metres ----------
-function toolEvent(kind: ArenaPointer['kind'], e: PointerEvent) {
+function toolEvent(kind: ArenaPointer['kind'], e: MouseEvent & { pointerId?: number }) {
   const s = local(e)
   const tr = view.transform.value
   emit('pointer', {
@@ -163,7 +173,7 @@ function toolEvent(kind: ArenaPointer['kind'], e: PointerEvent) {
     screen: s,
     shift: e.shiftKey,
     scale: tr.scale,
-    pointerId: e.pointerId,
+    pointerId: e.pointerId ?? 0,
   })
 }
 
@@ -250,6 +260,7 @@ function onPointerUp(e: PointerEvent) {
       @pointerup="onPointerUp"
       @pointercancel="onPointerUp"
       @pointerleave="toolEvent('leave', $event)"
+      @dblclick="toolEvent('dblclick', $event)"
     />
   </div>
 </template>

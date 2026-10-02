@@ -4,6 +4,7 @@ import {
   isLightColor,
   posAt,
   scaleBarMetres,
+  sectionGeom,
   sectionOf,
   sectionRange,
   toScreen,
@@ -138,6 +139,10 @@ export interface Scene {
   } | null
   /** where a click with the split tool would cut */
   splitHover: Point | null
+  /** selected sections as horseId:k */
+  selection: readonly string[]
+  handles: readonly { kind: string; x: number; y: number; pivot?: Point }[]
+  overlay: { text: string; at: Point } | null
 }
 
 const gaitName = (gaits: readonly Gait[], id: string | undefined) =>
@@ -239,6 +244,24 @@ export function drawScene(
         ctx.restore()
       })
     }
+    // selected sections: light band underneath
+    h.path.sections.forEach((_, k) => {
+      if (!s.selection.includes(`${h.id}:${k}`)) return
+      const g = sectionGeom(h.path, k)
+      ctx.save()
+      ctx.globalAlpha = 0.5
+      ctx.lineWidth = 12
+      ctx.strokeStyle = WHITE
+      ctx.beginPath()
+      let [hx, hy] = px(t, pts[g.si] as PathPoint)
+      ctx.moveTo(hx, hy)
+      for (let i = g.si + 1; i <= g.e; i++) {
+        ;[hx, hy] = px(t, pts[i] as PathPoint)
+        ctx.lineTo(hx, hy)
+      }
+      ctx.stroke()
+      ctx.restore()
+    })
     // ridden so far, solid
     if (pos && pos.i > 0) strokePath(ctx, t, pts, pos.i - 1, pos.hidden ? null : pos, h.color, 3.5)
     if (shown(h)) {
@@ -426,6 +449,64 @@ export function drawScene(
     ctx.lineWidth = 1.5
     ctx.strokeStyle = INK
     ctx.stroke()
+  }
+
+  // handles: end (circle), apex (diamond), start after a pause (square), rotate (⟳)
+  if (s.handles.length) {
+    const first = s.selection[0]?.split(':')[0]
+    const col = s.horses.find((h) => h.id === first)?.color ?? WHITE
+    for (const hd of s.handles) {
+      const [hx, hy] = px(t, hd)
+      ctx.save()
+      ctx.lineWidth = 3
+      ctx.strokeStyle = col
+      if (hd.kind === 'rot' && hd.pivot) {
+        const [pxv, pyv] = px(t, hd.pivot)
+        ctx.save()
+        ctx.setLineDash([3, 4])
+        ctx.lineWidth = 1.2
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)'
+        ctx.beginPath()
+        ctx.moveTo(pxv, pyv)
+        ctx.lineTo(hx, hy)
+        ctx.stroke()
+        ctx.restore()
+        ctx.beginPath()
+        ctx.arc(pxv, pyv, 3, 0, Math.PI * 2)
+        ctx.fillStyle = WHITE
+        ctx.fill()
+      }
+      ctx.beginPath()
+      if (hd.kind === 'start') ctx.rect(hx - 6.5, hy - 6.5, 13, 13)
+      else if (hd.kind === 'apex') {
+        ctx.moveTo(hx, hy - 8)
+        ctx.lineTo(hx + 8, hy)
+        ctx.lineTo(hx, hy + 8)
+        ctx.lineTo(hx - 8, hy)
+        ctx.closePath()
+      } else ctx.arc(hx, hy, hd.kind === 'rot' ? 9 : 7.5, 0, Math.PI * 2)
+      ctx.fillStyle = WHITE
+      ctx.fill()
+      ctx.stroke()
+      if (hd.kind === 'rot') {
+        ctx.beginPath()
+        ctx.lineWidth = 2
+        ctx.arc(hx, hy, 4.5, -Math.PI * 0.9, Math.PI * 0.5)
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.moveTo(hx + 0.5, hy + 4.5)
+        ctx.lineTo(hx - 3, hy + 2.5)
+        ctx.lineTo(hx - 1, hy + 7)
+        ctx.closePath()
+        ctx.fillStyle = col
+        ctx.fill()
+      }
+      ctx.restore()
+    }
+  }
+  if (s.overlay) {
+    const [lx, ly] = px(t, s.overlay.at)
+    label(ctx, s.overlay.text, lx + 20, ly - 18, 'left')
   }
 
   // current part, top left

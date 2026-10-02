@@ -27,5 +27,40 @@ export const useEditorStore = defineStore('editor', () => {
     snapDiameter: false,
   })
 
-  return { activeHorseId, time, tool, circle }
+  // ---------- selection (SPEC: set of horseId:sectionIndex, across horses) ----------
+  /** selected sections in the order they were selected */
+  const selection = shallowRef<string[]>([])
+  /** "Folgende hängen dran": edits also move everything after the first selected section */
+  const follow = shallowRef(true)
+  /** touch replacements for Shift (SPEC: switches in the selection panel) */
+  const multiSelect = shallowRef(false)
+  const fineRotate = shallowRef(false)
+
+  const isSelected = (key: string) => selection.value.includes(key)
+  function selectOnly(key: string) {
+    selection.value = [key]
+  }
+  function toggle(key: string) {
+    selection.value = isSelected(key)
+      ? selection.value.filter((k) => k !== key)
+      : [...selection.value, key]
+  }
+  function clearSelection() {
+    selection.value = []
+  }
+
+  return {
+    activeHorseId,
+    time,
+    tool,
+    circle,
+    selection,
+    follow,
+    multiSelect,
+    fineRotate,
+    isSelected,
+    selectOnly,
+    toggle,
+    clearSelection,
+  }
 })

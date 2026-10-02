@@ -17,7 +17,7 @@ import {
 
 /** A pointer event on the arena, already converted to metres by the canvas. */
 export interface ArenaPointer {
-  kind: 'down' | 'move' | 'up' | 'cancel' | 'leave'
+  kind: 'down' | 'move' | 'up' | 'cancel' | 'leave' | 'dblclick'
   /** position in metres (rounded to cm, kept on the arena) */
   m: Point
   /** position in CSS pixels on the canvas */

@@ -1,0 +1,7 @@
+{
+  "name": "@zephyr/poc-harness",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Generates golden reference values from reference/poc-reitwege.html (implemented in M1)"
+}

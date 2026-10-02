@@ -35,5 +35,97 @@
     "invalid_credentials": "E-Mail-Adresse oder Passwort stimmt nicht.",
     "email_taken": "Für diese E-Mail-Adresse gibt es schon ein Konto.",
     "unknown": "Das hat nicht geklappt. Bitte später noch einmal versuchen."
+  },
+  "common": {
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "loading": "Wird geladen …"
+  },
+  "roles": {
+    "owner": "Besitzer",
+    "editor": "Bearbeiten",
+    "viewer": "Nur lesen"
+  },
+  "plans": {
+    "new": "Neuer Plan",
+    "newTitle": "Neuer Plan",
+    "import": "Importieren",
+    "search": "Pläne suchen",
+    "noMatch": "Kein Plan passt zur Suche.",
+    "updated": "Geändert {date}",
+    "actions": "Aktionen für „{title}“",
+    "duplicate": "Duplizieren",
+    "remove": "Löschen",
+    "removeTitle": "„{title}“ löschen?",
+    "removeText": "Der Plan wird gelöscht und nach 30 Tagen endgültig entfernt."
+  },
+  "import": {
+    "title": "Plan importieren",
+    "description": "Einen Plan aus dem Prototyp übernehmen: JSON-Datei wählen oder den Text einfügen.",
+    "file": "JSON-Datei",
+    "text": "oder JSON-Text",
+    "planTitle": "Titel",
+    "defaultTitle": "Import",
+    "submit": "Importieren",
+    "notJson": "Der Text ist kein gültiges JSON.",
+    "failed": "Der Plan konnte nicht übernommen werden. Ist es ein Plan aus dem Prototyp?",
+    "unknownGaits": "Diese Gangarten gibt es hier noch nicht. Bitte jeweils einer vorhandenen Gangart zuordnen.",
+    "mapTo": "Gangart für „{name}“",
+    "choose": "Gangart wählen",
+    "createGaits": "Stattdessen als neue Gangarten anlegen (für alle Pläne)"
+  },
+  "editor": {
+    "back": "Zur Planübersicht",
+    "title": "Titel des Plans",
+    "loadError": "Der Plan konnte nicht geladen werden.",
+    "status": {
+      "saved": "Gespeichert",
+      "saving": "Speichert …",
+      "unsaved": "Nicht gespeichert",
+      "conflict": "Konflikt: Plan wurde woanders geändert",
+      "error": "Nicht gespeichert (Fehler)"
+    },
+    "arena": {
+      "label": "Platz",
+      "canvas": "Platz ohne Pferde | Platz mit einem Pferd | Platz mit {count} Pferden",
+      "waiting": "wartet",
+      "halt": "Halt",
+      "pause": "Pause",
+      "pending": "{kind} {seconds} s · dann weiter",
+      "pendingJump": "{kind} {seconds} s · nächste Linie beliebig ansetzen"
+    },
+    "view": {
+      "zoom": "Zoom",
+      "zoomIn": "Vergrößern",
+      "zoomOut": "Verkleinern",
+      "fit": "Einpassen",
+      "showPaths": "Wege",
+      "showNames": "Namen",
+      "onlyHorses": "Nur Pferde",
+      "roundCorners": "Ecken mit Wendekreis abrunden"
+    },
+    "lanes": {
+      "label": "Pferde",
+      "empty": "Noch keine Pferde in diesem Plan.",
+      "add": "Pferd hinzufügen"
+    }
+  },
+  "horse": {
+    "defaultName": "Pferd {number}",
+    "name": "Name von Pferd {number}",
+    "namePlaceholder": "Name",
+    "color": "Farbe von Pferd {number}",
+    "colorChoice": "Farbe wählen",
+    "ownColor": "Eigene Farbe",
+    "tack": "Sattelzeug",
+    "withTack": "mit Sattel",
+    "withoutTack": "ohne",
+    "actions": "Weitere Aktionen",
+    "clear": "Weg leeren",
+    "clearTitle": "Weg von {name} leeren?",
+    "clearText": "Alle Abschnitte dieses Pferdes werden entfernt.",
+    "remove": "Entfernen",
+    "removeTitle": "{name} entfernen?",
+    "removeText": "Das Pferd und sein Weg werden aus dem Plan entfernt."
   }
 }

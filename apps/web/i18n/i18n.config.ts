@@ -1,6 +1,9 @@
-// Number formats: German first (decimal comma), English prepared.
+// Number and date formats: German first (decimal comma), English prepared.
+const datetime = { short: { dateStyle: 'medium', timeStyle: 'short' } } as const
+
 export default defineI18nConfig(() => ({
   fallbackLocale: 'de',
+  datetimeFormats: { de: datetime, en: datetime },
   numberFormats: {
     de: {
       decimal: { style: 'decimal', minimumFractionDigits: 0, maximumFractionDigits: 2 },

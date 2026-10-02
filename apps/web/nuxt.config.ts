@@ -26,6 +26,8 @@ export default defineNuxtConfig({
     // daily at 03:00: delete soft-deleted plans after 30 days
     scheduledTasks: { '0 3 * * *': ['plans:purge'] },
   },
+  // component names as in the SPEC (HorseLaneHeader, not HorsesHorseLaneHeader)
+  components: [{ path: '~/components', pathPrefix: false }],
   css: ['~/assets/css/tailwind.css'],
   vite: {
     plugins: [tailwindcss()],

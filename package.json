@@ -11,11 +11,13 @@
     "build": "pnpm --filter @zephyr/web build",
     "lint": "pnpm -r --parallel lint",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r --parallel test",
-    "test:e2e": "pnpm --filter @zephyr/e2e e2e",
-    "check": "pnpm lint && pnpm typecheck && pnpm test",
     "format": "prettier --write .",
-    "poc:fixtures": "pnpm --filter @zephyr/poc-harness fixtures"
+    "format:check": "prettier --check .",
+    "check": "pnpm lint && pnpm typecheck && pnpm format:check",
+    "test:core": "pnpm --filter @zephyr/core test",
+    "db:generate": "pnpm --filter @zephyr/web db:generate",
+    "db:migrate": "pnpm --filter @zephyr/web db:migrate",
+    "db:seed": "pnpm --filter @zephyr/web db:seed"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

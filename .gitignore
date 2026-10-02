@@ -10,6 +10,4 @@ coverage/
 .env
 .env.*
 !.env.example
-playwright-report/
-test-results/
 .DS_Store

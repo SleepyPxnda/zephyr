@@ -124,6 +124,20 @@ export function panBy(v: ViewState, a: ArenaSize, vp: Viewport, dx: number, dy: 
   return clampView({ ...v, cx: v.cx - dx / s, cy: v.cy - dy / s }, a)
 }
 
+/**
+ * Pointer position in metres (prototype `toM`): rounded to cm and kept within the arena plus
+ * 80 % of the margin.
+ */
+export function pointerToArena(t: ViewTransform, a: ArenaSize, sx: number, sy: number): Point {
+  const m = arenaMargin(a) * 0.8
+  const p = toMetres(t, sx, sy)
+  const round = (v: number) => Math.round(v * 100) / 100
+  return {
+    x: round(Math.max(-m, Math.min(a.lengthM + m, p.x))),
+    y: round(Math.max(-m, Math.min(a.widthM + m, p.y))),
+  }
+}
+
 /** Length of the scale bar: the first of 1, 2, 5, 10, 20, 50 m that is at least 45 px long. */
 export const scaleBarMetres = (scale: number): number =>
   [1, 2, 5, 10, 20, 50].find((s) => s * scale >= 45) ?? 50

@@ -16,7 +16,7 @@ function pick(v: unknown) {
 </script>
 
 <template>
-  <div class="flex items-center gap-2">
+  <div class="flex flex-col items-start gap-2">
     <span id="gait-picker-label" class="text-sm text-muted-foreground">{{
       $t('tools.newLinesIn')
     }}</span>

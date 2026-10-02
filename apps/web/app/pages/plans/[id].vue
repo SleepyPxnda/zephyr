@@ -76,6 +76,7 @@ function onPointer(e: ArenaPointer) {
   else if (editor.tool === 'select') select.onPointer(e)
   else tools.onPointer(e)
 }
+const hint = computed(() => (editor.paste.open ? t('paste.hint') : t(`tools.hint.${editor.tool}`)))
 function announce(kind: 'halt' | 'pause') {
   if (activeHorse.value) planStore.replaceHorse(announceGap(activeHorse.value, kind))
 }
@@ -107,73 +108,79 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · zephyr` : 'zephyr')
       :editable="planStore.canEdit"
       @rename="planStore.rename"
     />
-    <main v-if="plan && arena" class="mx-auto flex w-full max-w-7xl flex-col gap-4 p-4">
-      <!-- zone 1: tools and arena -->
-      <ToolPanel
-        v-model:tool="editor.tool"
-        v-model:circle="editor.circle"
-        :gaits="gaitList"
-        :draw-gait-id="tools.drawGait.value?.id ?? null"
-        :editable="planStore.canEdit"
-        :can-announce="!!activeHorse?.path.pts.length"
-        :can-undo="planStore.canUndo"
-        :can-paste="!!editor.clipboard"
-        @draw-gait="planStore.setSettings({ drawGaitId: $event })"
-        @announce="announce"
-        @undo="planStore.undo()"
-        @paste="clip.open"
-      />
-      <ArenaPanel
-        v-model:options="options"
-        v-model:round-corners="roundCorners"
-        :arena="arena"
-        :horses="sceneHorses"
-        :gaits="gaitList"
-        :parts="plan.parts"
-        :active-id="editor.activeHorseId"
-        :time="editor.time"
-        :ghost="tools.ghost.value"
-        :split-hover="tools.splitHover.value"
-        :selection="editor.selection"
-        :handles="select.handles.value"
-        :overlay="select.overlay.value"
-        :paste-preview="clip.preview.value"
-        :cursor="cursor"
-        @pointer="onPointer"
-      />
-      <!-- zone 2: paste bar while pasting, otherwise the selection panel (directly below the arena) -->
-      <PasteBar
-        v-if="editor.paste.open"
-        v-model:link="editor.paste.link"
-        v-model:target="editor.paste.target"
-        :title="clip.label.value"
-        :multi="(editor.clipboard?.parts.length ?? 0) > 1"
-        @position="clip.setPosition"
-        @confirm="clip.confirm"
-        @cancel="clip.close"
-      />
-      <SelectionPanel
-        v-else-if="sel.summary.value"
-        v-model:follow="editor.follow"
-        v-model:multi-select="editor.multiSelect"
-        v-model:fine-rotate="editor.fineRotate"
-        :summary="sel.summary.value"
-        :title="sel.title.value"
-        :gaits="gaitList"
-        :editable="planStore.canEdit"
-        :can-merge="sel.canMerge.value"
-        @gait="sel.setGait"
-        @tack="sel.setTack"
-        @gap="sel.setGap"
-        @gap-type="sel.setGapType"
-        @rotate="sel.rotate"
-        @mirror="sel.mirror"
-        @whole="sel.whole"
-        @merge="sel.merge"
-        @remove="sel.remove"
-        @copy="clip.copy"
-        @clear="editor.clearSelection()"
-      />
+    <main v-if="plan && arena" class="flex w-full flex-col gap-4 p-4">
+      <!-- zones 1 and 2 form one surface: tool bar, arena, view bar, selection panel (SPEC) -->
+      <div class="overflow-hidden rounded-lg border bg-card">
+        <ToolPanel
+          v-model:tool="editor.tool"
+          v-model:circle="editor.circle"
+          :gaits="gaitList"
+          :draw-gait-id="tools.drawGait.value?.id ?? null"
+          :editable="planStore.canEdit"
+          :can-announce="!!activeHorse?.path.pts.length"
+          :can-undo="planStore.canUndo"
+          :can-copy="editor.selection.length > 0 || !!activeHorse?.path.pts.length"
+          :can-paste="!!editor.clipboard"
+          @draw-gait="planStore.setSettings({ drawGaitId: $event })"
+          @announce="announce"
+          @undo="planStore.undo()"
+          @copy="clip.copy"
+          @paste="clip.open"
+        >
+          <!-- while pasting, the bar shows the paste options instead of the tools -->
+          <template v-if="editor.paste.open" #paste>
+            <PasteBar
+              v-model:link="editor.paste.link"
+              v-model:target="editor.paste.target"
+              :title="clip.label.value"
+              :multi="(editor.clipboard?.parts.length ?? 0) > 1"
+              @position="clip.setPosition"
+              @confirm="clip.confirm"
+              @cancel="clip.close"
+            />
+          </template>
+        </ToolPanel>
+        <ArenaPanel
+          v-model:options="options"
+          v-model:round-corners="roundCorners"
+          :arena="arena"
+          :horses="sceneHorses"
+          :gaits="gaitList"
+          :parts="plan.parts"
+          :active-id="editor.activeHorseId"
+          :time="editor.time"
+          :ghost="tools.ghost.value"
+          :split-hover="tools.splitHover.value"
+          :selection="editor.selection"
+          :handles="select.handles.value"
+          :overlay="select.overlay.value"
+          :paste-preview="clip.preview.value"
+          :cursor="cursor"
+          :hint="hint"
+          @pointer="onPointer"
+        />
+        <SelectionPanel
+          v-if="sel.summary.value && !editor.paste.open"
+          v-model:follow="editor.follow"
+          v-model:multi-select="editor.multiSelect"
+          v-model:fine-rotate="editor.fineRotate"
+          :summary="sel.summary.value"
+          :title="sel.title.value"
+          :gaits="gaitList"
+          :editable="planStore.canEdit"
+          :can-merge="sel.canMerge.value"
+          @gait="sel.setGait"
+          @tack="sel.setTack"
+          @gap="sel.setGap"
+          @gap-type="sel.setGapType"
+          @rotate="sel.rotate"
+          @mirror="sel.mirror"
+          @whole="sel.whole"
+          @merge="sel.merge"
+          @remove="sel.remove"
+          @clear="editor.clearSelection()"
+        />
+      </div>
       <!-- zone 3: timeline (M8); for now the horse lane headers -->
       <HorseLanes
         :horses="horses"

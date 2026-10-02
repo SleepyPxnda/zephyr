@@ -23,19 +23,25 @@ const props = defineProps<{
   overlay: OverlayLabel | null
   pastePreview: readonly PastePreview[]
   cursor: string
+  hint: string
 }>()
 const emit = defineEmits<{ pointer: [e: ArenaPointer] }>()
 const options = defineModel<DisplayOptions>('options', { required: true })
 const roundCorners = defineModel<boolean>('roundCorners', { required: true })
 
-// canvas size: full width, arena aspect, at most 58 % of the window height (as in the prototype)
+// canvas height: arena aspect, at most 72 % of the window height (SPEC "Frontend")
 const wrap = useTemplateRef<HTMLElement>('wrap')
 const { width } = useElementSize(wrap)
 const { height: windowHeight } = useWindowSize()
 const arenaSize = computed(() => ({ lengthM: props.arena.lengthM, widthM: props.arena.widthM }))
-const viewport = computed(() =>
-  canvasSize(arenaSize.value, Math.max(1, width.value), Math.max(260, windowHeight.value * 0.58)),
-)
+// the canvas spans the full width; the arena is centred in it (viewTransform fits by the smaller side)
+const viewport = computed(() => {
+  const w = Math.max(1, width.value)
+  return {
+    width: w,
+    height: canvasSize(arenaSize.value, w, Math.max(320, windowHeight.value * 0.72)).height,
+  }
+})
 const view = useArenaView(arenaSize, viewport)
 provide(arenaViewKey, view)
 
@@ -59,26 +65,32 @@ const timelines = useTimelines(
 </script>
 
 <template>
-  <section ref="wrap" class="flex flex-col gap-2" :aria-label="$t('editor.arena.label')">
-    <ArenaCanvas
-      :arena="arena"
-      :viewport="viewport"
-      :horses="horses"
-      :timelines="timelines"
-      :gaits="gaits"
-      :parts="parts"
-      :active-id="activeId"
-      :time="time"
-      :options="options"
-      :ghost="ghost"
-      :split-hover="splitHover"
-      :selection="selection"
-      :handles="handles"
-      :overlay="overlay"
-      :paste-preview="pastePreview"
-      :cursor="cursor"
-      @pointer="emit('pointer', $event)"
+  <section :aria-label="$t('editor.arena.label')">
+    <div ref="wrap">
+      <ArenaCanvas
+        :arena="arena"
+        :viewport="viewport"
+        :horses="horses"
+        :timelines="timelines"
+        :gaits="gaits"
+        :parts="parts"
+        :active-id="activeId"
+        :time="time"
+        :options="options"
+        :ghost="ghost"
+        :split-hover="splitHover"
+        :selection="selection"
+        :handles="handles"
+        :overlay="overlay"
+        :paste-preview="pastePreview"
+        :cursor="cursor"
+        @pointer="emit('pointer', $event)"
+      />
+    </div>
+    <ArenaViewControls
+      v-model:options="options"
+      v-model:round-corners="roundCorners"
+      :hint="hint"
     />
-    <ArenaViewControls v-model:options="options" v-model:round-corners="roundCorners" />
   </section>
 </template>

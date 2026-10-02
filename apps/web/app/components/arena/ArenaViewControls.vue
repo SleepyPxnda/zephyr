@@ -5,6 +5,8 @@ import { injectArenaView } from '~/composables/arenaViewContext'
 
 const options = defineModel<DisplayOptions>('options', { required: true })
 const roundCorners = defineModel<boolean>('roundCorners', { required: true })
+/** one line about the current tool; the full text is in the tooltip */
+defineProps<{ hint: string }>()
 
 const view = injectArenaView()
 const { t } = useI18n()
@@ -19,10 +21,10 @@ const setOption = (key: keyof DisplayOptions, value: boolean | 'indeterminate') 
 </script>
 
 <template>
-  <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t px-2 py-1.5 text-sm">
     <div class="flex items-center gap-1" role="group" :aria-label="$t('editor.view.zoom')">
       <Button
-        variant="outline"
+        variant="ghost"
         size="icon"
         :aria-label="$t('editor.view.zoomOut')"
         @click="view.zoomOut()"
@@ -33,14 +35,14 @@ const setOption = (key: keyof DisplayOptions, value: boolean | 'indeterminate') 
         >{{ view.zoomPercent.value }} %</span
       >
       <Button
-        variant="outline"
+        variant="ghost"
         size="icon"
         :aria-label="$t('editor.view.zoomIn')"
         @click="view.zoomIn()"
       >
         <Plus />
       </Button>
-      <Button variant="outline" size="sm" @click="view.fit()">
+      <Button variant="ghost" size="sm" @click="view.fit()">
         <Maximize />
         {{ $t('editor.view.fit') }}
       </Button>
@@ -61,5 +63,13 @@ const setOption = (key: keyof DisplayOptions, value: boolean | 'indeterminate') 
       />
       <Label for="opt-round">{{ $t('editor.view.roundCorners') }}</Label>
     </div>
+    <p
+      class="min-w-0 flex-1 truncate text-right text-muted-foreground"
+      :title="hint"
+      aria-live="polite"
+      data-testid="tool-hint"
+    >
+      {{ hint }}
+    </p>
   </div>
 </template>

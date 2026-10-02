@@ -15,7 +15,7 @@ const setHalf = (v: unknown) => {
 </script>
 
 <template>
-  <div class="flex flex-wrap items-center gap-3">
+  <div class="flex flex-col items-start gap-3">
     <ToggleGroup
       type="single"
       variant="outline"

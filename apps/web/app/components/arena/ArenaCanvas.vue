@@ -241,7 +241,7 @@ function onPointerUp(e: PointerEvent) {
 
 <template>
   <div
-    class="relative overflow-hidden rounded-lg border bg-card"
+    class="relative overflow-hidden bg-card"
     :style="{ width: `${viewport.width}px`, height: `${viewport.height}px` }"
   >
     <canvas

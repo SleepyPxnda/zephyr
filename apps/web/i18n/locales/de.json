@@ -122,9 +122,11 @@
     "undo": "Rückgängig",
     "paste": "Einfügen",
     "beforeNext": "Vor nächster Linie",
+    "beforeNextHint": "Lücke vor der nächsten Linie des aktiven Pferdes",
     "nextHalt": "+ Halt (2 s)",
     "nextPause": "+ Pause (4 s)",
     "circleOptions": {
+      "label": "Volten-Optionen",
       "hand": "Hand",
       "auto": "Nach Maus",
       "left": "Linke Hand",

@@ -57,9 +57,9 @@ const drawing = computed(() => tool.value !== 'select' && tool.value !== 'split'
         @announce="emit('announce', $event)"
       />
       <CircleOptions
+        v-model="circle"
         :class="{ invisible: tool !== 'circle' }"
         :inert="tool !== 'circle'"
-        v-model="circle"
       />
     </div>
     <!-- fixed height, so the arena does not jump when the tool changes (SPEC) -->

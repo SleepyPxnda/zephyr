@@ -154,12 +154,12 @@ function onGapType(v: unknown) {
       <label class="flex items-center gap-2 text-sm">
         {{ summary.onlyFirst ? $t('selection.startAt') : $t('selection.gapBefore') }}
         <Input
+          v-model="gapText"
           type="number"
           class="h-8 w-24"
           min="0"
           max="3600"
           step="0.1"
-          v-model="gapText"
           :placeholder="$t('selection.mixed')"
           :disabled="!editable"
           data-testid="selection-gap"

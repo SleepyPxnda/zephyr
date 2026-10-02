@@ -72,6 +72,7 @@ class Pen {
       hand: this.hand,
       half: this.half,
       shift,
+      snapDiameter: true, // the harness drew with "Einrasten" on
     })
   }
   free(h: Horse, raw: Point[]): Horse {

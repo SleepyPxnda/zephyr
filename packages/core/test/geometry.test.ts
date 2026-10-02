@@ -77,6 +77,7 @@ describe('golden: geometry tools', () => {
       hand: c.hand,
       half: c.half,
       shift: c.shift,
+      snapDiameter: true, // the prototype recorded with "Einrasten" on
     })
     const out = c.out
     if (!out || out === 'inside') throw new Error('unexpected fixture')
@@ -162,10 +163,35 @@ describe('geometry', () => {
       { x: 0, y: 0 },
       0,
       { x: 3, y: -6.2 },
-      { turnDiameter: 6, roundCorners: true, hand: 'auto', half: false, shift: false },
+      {
+        turnDiameter: 6,
+        roundCorners: true,
+        hand: 'auto',
+        half: false,
+        shift: false,
+        snapDiameter: true,
+      },
     )
     expect(f.diameter).toBe(6)
     expect(f.hand).toBe('left')
     expect(f.length).toBeCloseTo(6 * Math.PI, 10)
+  })
+  it('uses the exact lateral distance without the grid (at least 1 m)', () => {
+    const opts = {
+      turnDiameter: 6,
+      roundCorners: true,
+      hand: 'auto' as const,
+      half: false,
+      shift: false,
+    }
+    expect(figure('circle', { x: 0, y: 0 }, 0, { x: 3, y: -6.2 }, opts).diameter).toBeCloseTo(
+      6.2,
+      10,
+    )
+    expect(figure('circle', { x: 0, y: 0 }, 0, { x: 3, y: -0.3 }, opts).diameter).toBe(1)
+    expect(figure('circle', { x: 0, y: 0 }, null, { x: 7.3, y: 0 }, opts).diameter).toBeCloseTo(
+      7.3,
+      10,
+    )
   })
 })

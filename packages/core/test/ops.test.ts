@@ -84,7 +84,10 @@ describe.each(ops.map((o) => [o.name, o] as const))('golden op: %s', (_, op) => 
       result = horses.map((q) => (q === h && r ? { ...q, path: r.path } : q))
     } else if (kind === 'regenerate') {
       const h = horses[op.info.horse ?? -1] as Horse
-      const path = dragEnd(h.path, op.info.k ?? 0, op.info.E ?? { x: 0, y: 0 }, false, { gaits })
+      const path = dragEnd(h.path, op.info.k ?? 0, op.info.E ?? { x: 0, y: 0 }, false, {
+        gaits,
+        snapDiameter: true,
+      })
       result = horses.map((q) => (q === h && path ? { ...q, path } : q))
     } else if (kind === 'paste') {
       const clip = copySelection(horses, keys, ctx)

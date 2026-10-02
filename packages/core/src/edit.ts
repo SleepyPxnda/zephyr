@@ -443,7 +443,7 @@ export function dragEnd(
   k: number,
   E: Point,
   follow: boolean,
-  ctx: HorseContext,
+  ctx: HorseContext & { snapDiameter?: boolean },
 ): Path | null {
   const g = sectionGeom(path, k)
   const p = toStrokes(path)
@@ -463,6 +463,7 @@ export function dragEnd(
             hand: m.hand,
             half: m.half,
             shift: false,
+            snapDiameter: ctx.snapDiameter,
           })
     if (!res.pts.length) return null
     const diff = spliceSection(p, k, g, res.pts)

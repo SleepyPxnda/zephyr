@@ -6,8 +6,9 @@ export const LINE_STEP = 0.5
 export const ARC_STEP = 0.4
 /** Angle snapping with Shift: 15° steps. */
 export const SNAP_ANGLE = Math.PI / 12
-/** Volte diameters snap to this grid (m). */
+/** Volte diameters snap to this grid (m) when `snapDiameter` is on. */
 export const VOLTE_GRID = 0.5
+const snapToGrid = (d: number) => Math.round(d / VOLTE_GRID) * VOLTE_GRID
 
 /** Points from a (exclusive) to b (inclusive), at most LINE_STEP apart. */
 export function sampleLine(a: Point, b: Point): Point[] {
@@ -134,6 +135,8 @@ export interface FigureOptions {
   half: boolean
   /** Shift held: snap the angle to 15° */
   shift: boolean
+  /** round volte diameters to 0.5 m (switch in the volte options; off by default) */
+  snapDiameter?: boolean
 }
 
 export interface Figure {
@@ -254,8 +257,9 @@ export function figure(
     const nL = { x: h.y, y: -h.x }
     const sideDot = (E.x - S.x) * nL.x + (E.y - S.y) * nL.y
     const side = o.hand === 'left' ? 1 : o.hand === 'right' ? -1 : sideDot >= 0 ? 1 : -1
-    // SPEC: diameter = lateral distance of the pointer on a 0.5 m grid
-    const d = Math.max(1, Math.round(Math.abs(sideDot) / VOLTE_GRID) * VOLTE_GRID)
+    // diameter = lateral distance of the pointer, at least 1 m, optionally on the 0.5 m grid
+    const lateral = Math.abs(sideDot)
+    const d = Math.max(1, o.snapDiameter ? snapToGrid(lateral) : lateral)
     const n = { x: nL.x * side, y: nL.y * side }
     const R = d / 2
     const C = { x: S.x + n.x * R, y: S.y + n.y * R }
@@ -293,7 +297,8 @@ export function figure(
     ux = Math.cos(a)
     uy = Math.sin(a)
   }
-  d = Math.max(1, Math.round(d / VOLTE_GRID) * VOLTE_GRID)
+  // as in the prototype: without the grid the distance is used as it is
+  if (o.snapDiameter) d = Math.max(1, snapToGrid(d))
   const R = d / 2
   const C = { x: S.x + ux * R, y: S.y + uy * R }
   const a0 = Math.atan2(S.y - C.y, S.x - C.x)

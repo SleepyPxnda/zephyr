@@ -22,6 +22,9 @@ export default defineNuxtConfig({
   },
   nitro: {
     errorHandler: '~~/server/error',
+    experimental: { tasks: true },
+    // daily at 03:00: delete soft-deleted plans after 30 days
+    scheduledTasks: { '0 3 * * *': ['plans:purge'] },
   },
   css: ['~/assets/css/tailwind.css'],
   vite: {

@@ -47,12 +47,18 @@ const arenaSize = computed(() =>
 const tools = useDrawTools(gaitList)
 const select = useSelectTool(gaitList)
 const sel = useSelectionActions(gaitList, arenaSize)
+const clip = useClipboardTools(gaitList)
 useEditorShortcuts({
   canEdit: () => planStore.canEdit,
   undo: () => planStore.undo(),
   selectAll: sel.selectAll,
   clearSelection: () => editor.clearSelection(),
   removeSelection: sel.remove,
+  copy: clip.copy,
+  openPaste: clip.open,
+  pasteOpen: () => editor.paste.open,
+  confirmPaste: clip.confirm,
+  cancelPaste: clip.close,
 })
 /** a stroke being drawn or a drag being previewed replaces the stored horses until released */
 const sceneHorses = computed(() => {
@@ -61,9 +67,13 @@ const sceneHorses = computed(() => {
   return d ? horses.value.map((h) => (h.id === d.id ? d : h)) : horses.value
 })
 const activeHorse = computed(() => horses.value.find((h) => h.id === editor.activeHorseId) ?? null)
-const cursor = computed(() => (editor.tool === 'select' ? select.cursor.value : 'crosshair'))
+const cursor = computed(() =>
+  editor.paste.open ? 'move' : editor.tool === 'select' ? select.cursor.value : 'crosshair',
+)
+/** while pasting, the arena moves the preview; otherwise the current tool gets the pointer */
 function onPointer(e: ArenaPointer) {
-  if (editor.tool === 'select') select.onPointer(e)
+  if (editor.paste.open) clip.onPointer(e)
+  else if (editor.tool === 'select') select.onPointer(e)
   else tools.onPointer(e)
 }
 function announce(kind: 'halt' | 'pause') {
@@ -107,9 +117,11 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · zephyr` : 'zephyr')
         :editable="planStore.canEdit"
         :can-announce="!!activeHorse?.path.pts.length"
         :can-undo="planStore.canUndo"
+        :can-paste="!!editor.clipboard"
         @draw-gait="planStore.setSettings({ drawGaitId: $event })"
         @announce="announce"
         @undo="planStore.undo()"
+        @paste="clip.open"
       />
       <ArenaPanel
         v-model:options="options"
@@ -125,12 +137,23 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · zephyr` : 'zephyr')
         :selection="editor.selection"
         :handles="select.handles.value"
         :overlay="select.overlay.value"
+        :paste-preview="clip.preview.value"
         :cursor="cursor"
         @pointer="onPointer"
       />
-      <!-- zone 2: selection panel, the only place to edit (directly below the arena) -->
+      <!-- zone 2: paste bar while pasting, otherwise the selection panel (directly below the arena) -->
+      <PasteBar
+        v-if="editor.paste.open"
+        v-model:link="editor.paste.link"
+        v-model:target="editor.paste.target"
+        :title="clip.label.value"
+        :multi="(editor.clipboard?.parts.length ?? 0) > 1"
+        @position="clip.setPosition"
+        @confirm="clip.confirm"
+        @cancel="clip.close"
+      />
       <SelectionPanel
-        v-if="sel.summary.value"
+        v-else-if="sel.summary.value"
         v-model:follow="editor.follow"
         v-model:multi-select="editor.multiSelect"
         v-model:fine-rotate="editor.fineRotate"
@@ -148,6 +171,7 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · zephyr` : 'zephyr')
         @whole="sel.whole"
         @merge="sel.merge"
         @remove="sel.remove"
+        @copy="clip.copy"
         @clear="editor.clearSelection()"
       />
       <!-- zone 3: timeline (M8); for now the horse lane headers -->

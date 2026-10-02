@@ -6,6 +6,7 @@ import type { ArenaInfo } from '~/composables/useCatalog'
 import type { ArenaPointer, Ghost } from '~/composables/useDrawTools'
 import type { DisplayOptions } from '~/composables/useDisplayOptions'
 import type { HandleView, OverlayLabel } from '~/composables/useSelectTool'
+import type { PastePreview } from '~/composables/useClipboardTools'
 import { arenaViewKey } from '~/composables/arenaViewContext'
 
 const props = defineProps<{
@@ -20,6 +21,7 @@ const props = defineProps<{
   selection: readonly string[]
   handles: readonly HandleView[]
   overlay: OverlayLabel | null
+  pastePreview: readonly PastePreview[]
   cursor: string
 }>()
 const emit = defineEmits<{ pointer: [e: ArenaPointer] }>()
@@ -73,6 +75,7 @@ const timelines = useTimelines(
       :selection="selection"
       :handles="handles"
       :overlay="overlay"
+      :paste-preview="pastePreview"
       :cursor="cursor"
       @pointer="emit('pointer', $event)"
     />

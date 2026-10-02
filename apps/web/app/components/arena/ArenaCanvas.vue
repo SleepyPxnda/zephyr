@@ -16,6 +16,7 @@ import type { DisplayOptions } from '~/composables/useDisplayOptions'
 import { injectArenaView } from '~/composables/arenaViewContext'
 import type { ArenaPointer, Ghost } from '~/composables/useDrawTools'
 import type { HandleView, OverlayLabel } from '~/composables/useSelectTool'
+import type { PastePreview } from '~/composables/useClipboardTools'
 import { drawField, drawScene, type SceneLabels } from '~/lib/arena/render'
 
 const props = defineProps<{
@@ -33,6 +34,7 @@ const props = defineProps<{
   selection: readonly string[]
   handles: readonly HandleView[]
   overlay: OverlayLabel | null
+  pastePreview: readonly PastePreview[]
   /** cursor style for the current tool */
   cursor: string
 }>()
@@ -95,6 +97,7 @@ watch(
     props.selection,
     props.handles,
     props.overlay,
+    props.pastePreview,
   ],
   () => (sceneDirty = true),
 )
@@ -125,6 +128,7 @@ useRafFn(() => {
           selection: props.selection,
           handles: props.handles,
           overlay: props.overlay,
+          pastePreview: props.pastePreview,
           ...props.options,
         },
         tr,

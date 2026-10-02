@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Gait, Hand } from '@zephyr/core'
-import { Undo2 } from '@lucide/vue'
+import { ClipboardPaste, Undo2 } from '@lucide/vue'
 import type { Tool } from '~/stores/editor'
 
 /** Zone 1, above the arena: tools, gait for new lines, volte options, + Halt/+ Pause, undo, hint. */
@@ -10,6 +10,7 @@ defineProps<{
   editable: boolean
   canAnnounce: boolean
   canUndo: boolean
+  canPaste: boolean
 }>()
 const tool = defineModel<Tool>('tool', { required: true })
 const circle = defineModel<{ hand: Hand; half: boolean; snapDiameter: boolean }>('circle', {
@@ -19,6 +20,7 @@ const emit = defineEmits<{
   drawGait: [id: string]
   announce: [kind: 'halt' | 'pause']
   undo: []
+  paste: []
 }>()
 
 const drawing = computed(() => tool.value !== 'select' && tool.value !== 'split')
@@ -47,6 +49,16 @@ const drawing = computed(() => tool.value !== 'select' && tool.value !== 'split'
       >
         <Undo2 />
         {{ $t('tools.undo') }}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        :disabled="!editable || !canPaste"
+        data-testid="paste"
+        @click="emit('paste')"
+      >
+        <ClipboardPaste />
+        {{ $t('tools.paste') }}
       </Button>
     </div>
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2">

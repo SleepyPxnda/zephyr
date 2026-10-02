@@ -143,6 +143,8 @@ export interface Scene {
   selection: readonly string[]
   handles: readonly { kind: string; x: number; y: number; pivot?: Point }[]
   overlay: { text: string; at: Point } | null
+  /** parts about to be pasted */
+  pastePreview: readonly { color: string; pts: readonly PathPoint[]; from: Point | null }[]
 }
 
 const gaitName = (gaits: readonly Gait[], id: string | undefined) =>
@@ -391,6 +393,29 @@ export function drawScene(
       ly - 18,
       'left',
     )
+  }
+
+  // paste preview: dashed in the colour of the receiving horse
+  for (const part of s.pastePreview) {
+    const first = part.pts[0]
+    if (!first) continue
+    ctx.save()
+    ctx.setLineDash([8, 5])
+    ctx.beginPath()
+    let [qx, qy] = px(t, part.from ?? first)
+    ctx.moveTo(qx, qy)
+    part.pts.forEach((q, i) => {
+      ;[qx, qy] = px(t, q)
+      if (q.jump && i > 0) ctx.moveTo(qx, qy)
+      else ctx.lineTo(qx, qy)
+    })
+    ctx.lineWidth = 6
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)'
+    ctx.stroke()
+    ctx.lineWidth = 3
+    ctx.strokeStyle = part.color
+    ctx.stroke()
+    ctx.restore()
   }
 
   // preview of the figure being drawn: dashed, red when tighter than the turning circle

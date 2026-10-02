@@ -1,7 +1,16 @@
 <script setup lang="ts">
-import { canvasSize, timeline, type Gait, type Horse, type Part, type Timeline } from '@zephyr/core'
+import {
+  canvasSize,
+  timeline,
+  type Gait,
+  type Horse,
+  type Part,
+  type Point,
+  type Timeline,
+} from '@zephyr/core'
 import { useElementSize, useWindowSize } from '@vueuse/core'
 import type { ArenaInfo } from '~/composables/useCatalog'
+import type { ArenaPointer, Ghost } from '~/composables/useDrawTools'
 import type { DisplayOptions } from '~/composables/useDisplayOptions'
 import { arenaViewKey } from '~/composables/arenaViewContext'
 
@@ -12,7 +21,11 @@ const props = defineProps<{
   parts: readonly Part[]
   activeId: string | null
   time: number
+  ghost: Ghost | null
+  splitHover: Point | null
+  cursor: string
 }>()
+const emit = defineEmits<{ pointer: [e: ArenaPointer] }>()
 const options = defineModel<DisplayOptions>('options', { required: true })
 const roundCorners = defineModel<boolean>('roundCorners', { required: true })
 
@@ -60,6 +73,10 @@ const timelines = computed(() => {
       :active-id="activeId"
       :time="time"
       :options="options"
+      :ghost="ghost"
+      :split-hover="splitHover"
+      :cursor="cursor"
+      @pointer="emit('pointer', $event)"
     />
     <ArenaViewControls v-model:options="options" v-model:round-corners="roundCorners" />
   </section>

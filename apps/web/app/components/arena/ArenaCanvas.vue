@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  pointerToArena,
   toMetres,
   viewKeeping,
   type Gait,
@@ -13,6 +14,7 @@ import { useDevicePixelRatio, useEventListener, useRafFn } from '@vueuse/core'
 import type { ArenaInfo } from '~/composables/useCatalog'
 import type { DisplayOptions } from '~/composables/useDisplayOptions'
 import { injectArenaView } from '~/composables/arenaViewContext'
+import type { ArenaPointer, Ghost } from '~/composables/useDrawTools'
 import { drawField, drawScene, type SceneLabels } from '~/lib/arena/render'
 
 const props = defineProps<{
@@ -25,7 +27,12 @@ const props = defineProps<{
   activeId: string | null
   time: number
   options: DisplayOptions
+  ghost: Ghost | null
+  splitHover: Point | null
+  /** cursor style for the current tool */
+  cursor: string
 }>()
+const emit = defineEmits<{ pointer: [e: ArenaPointer] }>()
 
 const { t, n } = useI18n()
 const view = injectArenaView()
@@ -79,6 +86,8 @@ watch(
     props.time,
     ...Object.values(props.options),
     labels.value,
+    props.ghost,
+    props.splitHover,
   ],
   () => (sceneDirty = true),
 )
@@ -104,6 +113,8 @@ useRafFn(() => {
           activeId: props.activeId,
           time: props.time,
           labels: labels.value,
+          ghost: props.ghost,
+          splitHover: props.splitHover,
           ...props.options,
         },
         tr,
@@ -142,10 +153,26 @@ let gesture: Gesture | null = null
 const touches = new Map<number, Point>()
 const twoTouches = () => [...touches.values()].slice(0, 2) as [Point, Point]
 
+// ---------- pointer events for the tools, in metres ----------
+function toolEvent(kind: ArenaPointer['kind'], e: PointerEvent) {
+  const s = local(e)
+  const tr = view.transform.value
+  emit('pointer', {
+    kind,
+    m: pointerToArena(tr, props.arena, s.x, s.y),
+    screen: s,
+    shift: e.shiftKey,
+    scale: tr.scale,
+    pointerId: e.pointerId,
+  })
+}
+
 function onPointerDown(e: PointerEvent) {
   if (e.pointerType === 'touch') {
     touches.set(e.pointerId, local(e))
     if (touches.size === 2) {
+      // a second finger aborts the stroke and starts pinch zoom
+      toolEvent('cancel', e)
       const [a, b] = twoTouches()
       const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
       gesture = {
@@ -154,19 +181,23 @@ function onPointerDown(e: PointerEvent) {
         z0: view.view.value.zoom,
         m: toMetres(view.transform.value, mid.x, mid.y),
       }
+      return
     }
-    return
-  }
-  if (e.button === 1 || e.altKey) {
+    if (touches.size > 2) return
+  } else if (e.button === 1 || e.altKey) {
     e.preventDefault()
     gesture = { kind: 'pan', last: { x: e.clientX, y: e.clientY } }
     sceneCanvas.value?.setPointerCapture(e.pointerId)
-  }
+    return
+  } else if (e.button !== 0) return
+  e.preventDefault()
+  sceneCanvas.value?.setPointerCapture(e.pointerId)
+  toolEvent('down', e)
 }
 
 function onPointerMove(e: PointerEvent) {
   if (e.pointerType === 'touch' && touches.has(e.pointerId)) touches.set(e.pointerId, local(e))
-  if (!gesture) return
+  if (!gesture) return toolEvent('move', e)
   if (gesture.kind === 'pan') {
     view.pan(e.clientX - gesture.last.x, e.clientY - gesture.last.y)
     gesture.last = { x: e.clientX, y: e.clientY }
@@ -189,7 +220,8 @@ function onPointerMove(e: PointerEvent) {
 
 function onPointerUp(e: PointerEvent) {
   touches.delete(e.pointerId)
-  if (gesture?.kind === 'pan' || touches.size < 2) gesture = null
+  if (!gesture) return toolEvent(e.type === 'pointercancel' ? 'cancel' : 'up', e)
+  if (gesture.kind === 'pan' || touches.size < 2) gesture = null
 }
 </script>
 
@@ -208,6 +240,7 @@ function onPointerUp(e: PointerEvent) {
     <canvas
       ref="scene"
       class="absolute inset-0 size-full touch-none"
+      :style="{ cursor }"
       :width="pxSize.width"
       :height="pxSize.height"
       role="img"
@@ -216,6 +249,7 @@ function onPointerUp(e: PointerEvent) {
       @pointermove="onPointerMove"
       @pointerup="onPointerUp"
       @pointercancel="onPointerUp"
+      @pointerleave="toolEvent('leave', $event)"
     />
   </div>
 </template>

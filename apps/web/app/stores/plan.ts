@@ -97,6 +97,8 @@ export const usePlanStore = defineStore('plan', () => {
     mapHorse(id, (h) => ({ ...h, ...patch }))
   const clearPath = (id: string) =>
     mapHorse(id, (h) => ({ ...h, path: { v: 1, pts: [], sections: [] }, pending: null }))
+  /** Puts a changed horse (path, pending gap) back into the plan. */
+  const replaceHorse = (horse: Horse) => mapHorse(horse.id, () => horse)
   const removeHorse = (id: string) =>
     update((c) => ({ ...c, horses: c.horses.filter((h) => h.id !== id) }))
 
@@ -115,6 +117,7 @@ export const usePlanStore = defineStore('plan', () => {
     addHorse,
     updateHorse,
     clearPath,
+    replaceHorse,
     removeHorse,
   }
 })

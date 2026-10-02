@@ -25,6 +25,7 @@ const INK = '#2E2A3D'
 const LABEL_BG = 'rgba(30, 26, 20, 0.78)'
 const WHITE = '#FFFFFF'
 const TIGHT = 'rgba(214, 40, 40, 0.75)'
+const TIGHT_SOLID = '#D62828'
 const MARGIN_BG = '#2B2722'
 const FONT = '"Inter Variable", system-ui, sans-serif'
 
@@ -127,6 +128,16 @@ export interface Scene {
   showNames: boolean
   onlyHorses: boolean
   labels: SceneLabels
+  /** preview of the line, arc or volte being drawn */
+  ghost: {
+    start: Point
+    figure: { pts: readonly Point[]; tight: boolean; center?: Point; R?: number }
+    color: string
+    label: string
+    at: Point
+  } | null
+  /** where a click with the split tool would cut */
+  splitHover: Point | null
 }
 
 const gaitName = (gaits: readonly Gait[], id: string | undefined) =>
@@ -357,6 +368,64 @@ export function drawScene(
       ly - 18,
       'left',
     )
+  }
+
+  // preview of the figure being drawn: dashed, red when tighter than the turning circle
+  const g = s.ghost
+  if (g && g.figure.pts.length) {
+    ctx.save()
+    if (g.figure.center && g.figure.R) {
+      const [cx, cy] = px(t, g.figure.center)
+      ctx.setLineDash([3, 4])
+      ctx.lineWidth = 1
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)'
+      ctx.beginPath()
+      ctx.arc(cx, cy, 2.5, 0, Math.PI * 2)
+      ctx.stroke()
+    }
+    ctx.setLineDash([7, 5])
+    ctx.beginPath()
+    let [gx, gy] = px(t, g.start)
+    ctx.moveTo(gx, gy)
+    for (const q of g.figure.pts) {
+      ;[gx, gy] = px(t, q)
+      ctx.lineTo(gx, gy)
+    }
+    ctx.lineWidth = 5
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)'
+    ctx.stroke()
+    ctx.lineWidth = 2.5
+    ctx.strokeStyle = g.figure.tight ? TIGHT_SOLID : g.color
+    ctx.stroke()
+    ctx.restore()
+    if (g.label) {
+      const [lx, ly] = px(t, g.at)
+      ctx.font = `600 12px ${FONT}`
+      const w = ctx.measureText(g.label).width
+      const bx = Math.min(Math.max(4, lx + 14), vp.width - w - 16)
+      label(ctx, g.label, bx + 6, Math.max(14, ly - 20), 'left')
+    }
+  }
+
+  // split tool: where a click would cut
+  if (s.splitHover) {
+    const [hx, hy] = px(t, s.splitHover)
+    const color = s.horses.find((h) => h.id === s.activeId)?.color ?? WHITE
+    ctx.beginPath()
+    ctx.arc(hx, hy, 7, 0, Math.PI * 2)
+    ctx.fillStyle = WHITE
+    ctx.fill()
+    ctx.lineWidth = 3
+    ctx.strokeStyle = color
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(hx - 3, hy)
+    ctx.lineTo(hx + 3, hy)
+    ctx.moveTo(hx, hy - 3)
+    ctx.lineTo(hx, hy + 3)
+    ctx.lineWidth = 1.5
+    ctx.strokeStyle = INK
+    ctx.stroke()
   }
 
   // current part, top left

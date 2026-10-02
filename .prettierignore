@@ -1,4 +1,6 @@
 reference/
+.claude/
+.mcp.json
 pnpm-lock.yaml
 .nuxt/
 .output/

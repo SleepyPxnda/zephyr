@@ -25,6 +25,7 @@ const emit = defineEmits<{
   whole: []
   merge: []
   remove: []
+  copy: []
   clear: []
 }>()
 const follow = defineModel<boolean>('follow', { required: true })
@@ -33,6 +34,14 @@ const fineRotate = defineModel<boolean>('fineRotate', { required: true })
 
 const { t, n } = useI18n()
 const confirmRemove = shallowRef(false)
+// short confirmation on the button, as in the prototype
+const copied = shallowRef(false)
+const resetCopied = useTimeoutFn(() => (copied.value = false), 1500, { immediate: false })
+function onCopy() {
+  emit('copy')
+  copied.value = true
+  resetCopied.start()
+}
 const dec1 = (v: number) => n(v, { maximumFractionDigits: 1, minimumFractionDigits: 1 })
 
 const info = computed(() => {
@@ -226,6 +235,9 @@ function onGapType(v: unknown) {
       <Button variant="secondary" size="sm" @click="emit('whole')">{{
         $t('selection.whole')
       }}</Button>
+      <Button variant="secondary" size="sm" data-testid="copy" @click="onCopy">
+        {{ copied ? $t('selection.copied') : $t('selection.copy') }}
+      </Button>
       <Button
         variant="secondary"
         size="sm"

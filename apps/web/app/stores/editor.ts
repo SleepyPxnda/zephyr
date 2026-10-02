@@ -1,4 +1,4 @@
-import type { Hand } from '@zephyr/core'
+import type { Clipboard, Hand, PasteLink, PasteTarget, Point } from '@zephyr/core'
 
 export type Tool = 'select' | 'free' | 'line' | 'arc' | 'circle' | 'split'
 /** Keyboard shortcuts of the tools (SPEC "Interaktionen und Tastenkürzel"). */
@@ -49,7 +49,19 @@ export const useEditorStore = defineStore('editor', () => {
     selection.value = []
   }
 
+  // ---------- clipboard (M7); kept when switching plans ----------
+  const clipboard = shallowRef<Clipboard | null>(null)
+  /** paste bar: open, preview offset (m), join, target horses */
+  const paste = ref<{ open: boolean; off: Point; link: PasteLink; target: PasteTarget }>({
+    open: false,
+    off: { x: 0, y: 0 },
+    link: 'line',
+    target: 'same',
+  })
+
   return {
+    clipboard,
+    paste,
     activeHorseId,
     time,
     tool,

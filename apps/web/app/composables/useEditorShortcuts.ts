@@ -14,11 +14,16 @@ export interface ShortcutActions {
   selectAll: () => void
   clearSelection: () => void
   removeSelection: () => void
+  copy: () => void
+  openPaste: () => void
+  pasteOpen: () => boolean
+  confirmPaste: () => void
+  cancelPaste: () => void
 }
 
 /**
- * Editor keyboard shortcuts: tools (V F G B Z T), Strg/Cmd+Z, Strg/Cmd+A, Esc, Entf/Rücktaste.
- * Zoom (+ − 0) and W live with the arena; playback keys follow with M9, clipboard with M7.
+ * Editor keyboard shortcuts: tools (V F G B Z T), Strg/Cmd+Z, +A, +C, +V, Enter, Esc,
+ * Entf/Rücktaste. Zoom (+ − 0) and W live with the arena; playback keys follow with M9.
  */
 export function useEditorShortcuts(a: ShortcutActions) {
   const editor = useEditorStore()
@@ -29,12 +34,18 @@ export function useEditorShortcuts(a: ShortcutActions) {
     if (mod && !e.altKey) {
       if (key === 'z' && !e.shiftKey && a.canEdit()) a.undo()
       else if (key === 'a') a.selectAll()
+      else if (key === 'c') a.copy()
+      else if (key === 'v' && a.canEdit()) a.openPaste()
       else return
       e.preventDefault()
       return
     }
     if (e.altKey) return
-    if (e.key === 'Escape') a.clearSelection()
+    if (e.key === 'Escape') {
+      // Esc cancels pasting first, otherwise it clears the selection (SPEC)
+      if (a.pasteOpen()) a.cancelPaste()
+      else a.clearSelection()
+    } else if (e.key === 'Enter' && a.pasteOpen()) a.confirmPaste()
     else if ((e.key === 'Delete' || e.key === 'Backspace') && a.canEdit()) a.removeSelection()
     else if (TOOL_KEYS[key] && a.canEdit() && !e.shiftKey) editor.tool = TOOL_KEYS[key]
     else return

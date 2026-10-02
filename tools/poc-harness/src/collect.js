@@ -55,9 +55,16 @@
     }));
   }
 
+  function runOp(name) {
+    const poc = window.__poc;
+    const info = window.__ops[name](poc);
+    return clone({ name, before: window.__opBefore, after: poc.serialize(), info, field: { w: 40, h: 20 } });
+  }
+
   window.__harness = {
-    names: () => ({ drawn: Object.keys(window.__scenarios), raw: Object.keys(window.__rawPlans) }),
+    names: () => ({ drawn: Object.keys(window.__scenarios), raw: Object.keys(window.__rawPlans), ops: Object.keys(window.__ops) }),
     runPlan,
     runGeometry,
+    runOp,
   };
 })();

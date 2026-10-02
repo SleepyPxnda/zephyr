@@ -28,7 +28,7 @@ function patchedPoc(): string {
     html.slice(0, at) +
     own('inject.js') +
     html.slice(at) +
-    `\n<script>${own('scenarios.js')}</script>\n<script>${own('collect.js')}</script>`
+    `\n<script>${own('scenarios.js')}</script>\n<script>${own('ops.js')}</script>\n<script>${own('collect.js')}</script>`
   )
 }
 
@@ -62,6 +62,7 @@ async function main() {
     const names = (await page.evaluate('window.__harness.names()')) as {
       drawn: string[]
       raw: string[]
+      ops: string[]
     }
     for (const [kind, list] of [
       ['drawn', names.drawn],
@@ -74,6 +75,10 @@ async function main() {
         write(`plans/${name}.json`, plan)
       }
     }
+
+    const ops: unknown[] = []
+    for (const name of names.ops) ops.push(await page.evaluate(`window.__harness.runOp(${JSON.stringify(name)})`))
+    write('ops.json', ops)
 
     const geometry = await page.evaluate(
       `window.__harness.runGeometry(${JSON.stringify(geometryCases())})`,

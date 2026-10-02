@@ -25,17 +25,48 @@ import {
 } from '../src'
 import { uuid } from './helpers'
 
-const GAITS: Gait[] = [{ id: uuid(1), name: 'Trab', color: '#9CC5EA', speedTack: 3.6, speedBare: 3.9, turnDiameter: 6, archivedAt: null }]
-const sec = (start: number) => ({ start, gaitId: uuid(1), gap: 0, gapType: 'halt' as const, tack: null })
-const horse = (n: number, path: Path): Horse => ({ id: uuid(700 + n), number: n, name: '', color: '#c0392b', tack: true, path, pending: null })
+const GAITS: Gait[] = [
+  {
+    id: uuid(1),
+    name: 'Trab',
+    color: '#9CC5EA',
+    speedTack: 3.6,
+    speedBare: 3.9,
+    turnDiameter: 6,
+    archivedAt: null,
+  },
+]
+const sec = (start: number) => ({
+  start,
+  gaitId: uuid(1),
+  gap: 0,
+  gapType: 'halt' as const,
+  tack: null,
+})
+const horse = (n: number, path: Path): Horse => ({
+  id: uuid(700 + n),
+  number: n,
+  name: '',
+  color: '#c0392b',
+  tack: true,
+  path,
+  pending: null,
+})
 // straight freehand-like path along x with two sections
-const straight: Path = { v: 1, pts: Array.from({ length: 9 }, (_, i) => ({ x: i, y: 0 })), sections: [sec(0), sec(5)] }
+const straight: Path = {
+  v: 1,
+  pts: Array.from({ length: 9 }, (_, i) => ({ x: i, y: 0 })),
+  sections: [sec(0), sec(5)],
+}
 
 describe('selection', () => {
   const a = horse(1, straight)
   const b = horse(2, straight)
   it('groups keys by horse in selection order and drops invalid ones', () => {
-    const g = selectionGroups([a, b], [selKey(b.id, 1), selKey(a.id, 1), selKey(b.id, 0), selKey(b.id, 0), selKey(a.id, 7), 'x:1'])
+    const g = selectionGroups(
+      [a, b],
+      [selKey(b.id, 1), selKey(a.id, 1), selKey(b.id, 0), selKey(b.id, 0), selKey(a.id, 7), 'x:1'],
+    )
     expect(g.map((q) => [q.horse.id, q.ks])).toEqual([
       [b.id, [0, 1]],
       [a.id, [1]],
@@ -89,7 +120,17 @@ describe('shape drags (own reference cases)', () => {
   it('a remembered line is rebuilt to the new end', () => {
     const line: Path = {
       v: 1,
-      pts: [{ x: 0, y: 0, geo: { kind: 'line', E: { x: 2, y: 0 }, hand: 'auto', half: false, round: true } }, { x: 0.5, y: 0 }, { x: 1, y: 0 }, { x: 1.5, y: 0 }, { x: 2, y: 0 }],
+      pts: [
+        {
+          x: 0,
+          y: 0,
+          geo: { kind: 'line', E: { x: 2, y: 0 }, hand: 'auto', half: false, round: true },
+        },
+        { x: 0.5, y: 0 },
+        { x: 1, y: 0 },
+        { x: 1.5, y: 0 },
+        { x: 2, y: 0 },
+      ],
       sections: [sec(0)],
     }
     const p = dragEnd(line, 0, { x: 3, y: 0 }, false, { gaits: GAITS })
@@ -99,11 +140,26 @@ describe('shape drags (own reference cases)', () => {
   it('apex on a figure makes an arc through start, apex and end', () => {
     const line: Path = {
       v: 1,
-      pts: [{ x: 0, y: 0, geo: { kind: 'line', E: { x: 4, y: 0 }, hand: 'auto', half: false, round: true } }, { x: 2, y: 0 }, { x: 4, y: 0 }],
+      pts: [
+        {
+          x: 0,
+          y: 0,
+          geo: { kind: 'line', E: { x: 4, y: 0 }, hand: 'auto', half: false, round: true },
+        },
+        { x: 2, y: 0 },
+        { x: 4, y: 0 },
+      ],
       sections: [sec(0)],
     }
     const p = dragApex(line, 0, { x: 2, y: 0 }, { x: 2, y: -2 })
-    expect(p.pts[0]?.geo).toEqual({ kind: 'arc3', E: { x: 4, y: 0 }, M: { x: 2, y: -2 }, hand: 'auto', half: false, round: true })
+    expect(p.pts[0]?.geo).toEqual({
+      kind: 'arc3',
+      E: { x: 4, y: 0 },
+      M: { x: 2, y: -2 },
+      hand: 'auto',
+      half: false,
+      round: true,
+    })
     // semicircle of radius 2 around (2, 0): all points 2 m from the centre
     p.pts.forEach((q) => expect(Math.hypot(q.x - 2, q.y)).toBeCloseTo(2, 1))
     expect(p.pts.at(-1)).toEqual({ x: 4, y: 0 })
@@ -111,11 +167,16 @@ describe('shape drags (own reference cases)', () => {
   it('apex on freehand bends with a sine weight, ends fixed', () => {
     const p = dragApex(straight, 1, { x: 6, y: 0 }, { x: 6, y: 2 })
     // section 1: S = point 4, points 5..7 inner, 8 fixed; weights sin(π·1/4), sin(π·2/4), sin(π·3/4)
-    const w = [0, Math.sin(Math.PI / 4), 1, Math.sin((3 * Math.PI) / 4), 0].map((v) => +(2 * v).toFixed(2))
+    const w = [0, Math.sin(Math.PI / 4), 1, Math.sin((3 * Math.PI) / 4), 0].map(
+      (v) => +(2 * v).toFixed(2),
+    )
     expect(p.pts.slice(4).map((q) => q.y)).toEqual(w)
   })
   it('dragging the start after a pause moves it fully and fades out to the end', () => {
-    const jumped: Path = { ...straight, pts: straight.pts.map((q, i) => (i === 5 ? { ...q, jump: true } : q)) }
+    const jumped: Path = {
+      ...straight,
+      pts: straight.pts.map((q, i) => (i === 5 ? { ...q, jump: true } : q)),
+    }
     const p = dragStart(jumped, 1, 0, 3)
     // section 1 = points 5..8 (3 m): weights 1, 2/3, 1/3, 0
     expect(p.pts.slice(5).map((q) => q.y)).toEqual([3, 2, 1, 0])
@@ -124,7 +185,10 @@ describe('shape drags (own reference cases)', () => {
 
 describe('properties', () => {
   const arbPath = fc
-    .array(fc.record({ x: fc.integer({ min: 0, max: 4000 }), y: fc.integer({ min: 0, max: 2000 }) }), { minLength: 3, maxLength: 25 })
+    .array(
+      fc.record({ x: fc.integer({ min: 0, max: 4000 }), y: fc.integer({ min: 0, max: 2000 }) }),
+      { minLength: 3, maxLength: 25 },
+    )
     .chain((raw) =>
       fc.record({
         pts: fc.constant(raw.map((q) => ({ x: q.x / 100, y: q.y / 100 }) as PathPoint)),
@@ -140,24 +204,34 @@ describe('properties', () => {
 
   it('mirroring twice gives the original (all modes)', () => {
     fc.assert(
-      fc.property(arbPath, fc.constantFrom('hand' as const, 'ac' as const, 'eb' as const), fc.boolean(), (path, mode, follow) => {
-        const h = horse(1, path)
-        const keys = wholePathKeys([h])
-        const once = mirrorSelection([h], keys, mode, follow, { lengthM: 40, widthM: 22.5 })
-        const twice = mirrorSelection(once, keys, mode, follow, { lengthM: 40, widthM: 22.5 })
-        // coordinates are stored in cm: allow one rounding step per mirror
-        close(twice[0]?.path ?? path, path, 0.011)
-      }),
+      fc.property(
+        arbPath,
+        fc.constantFrom('hand' as const, 'ac' as const, 'eb' as const),
+        fc.boolean(),
+        (path, mode, follow) => {
+          const h = horse(1, path)
+          const keys = wholePathKeys([h])
+          const once = mirrorSelection([h], keys, mode, follow, { lengthM: 40, widthM: 22.5 })
+          const twice = mirrorSelection(once, keys, mode, follow, { lengthM: 40, widthM: 22.5 })
+          // coordinates are stored in cm: allow one rounding step per mirror
+          close(twice[0]?.path ?? path, path, 0.011)
+        },
+      ),
     )
   })
   it('rotating by a and −a gives the original', () => {
     fc.assert(
-      fc.property(arbPath, fc.double({ min: -Math.PI, max: Math.PI, noNaN: true }), fc.boolean(), (path, a, follow) => {
-        const h = horse(1, path)
-        const keys = [selKey(h.id, 0)]
-        const back = rotateSelection(rotateSelection([h], keys, a, follow), keys, -a, follow)
-        close(back[0]?.path ?? path, path, 0.011)
-      }),
+      fc.property(
+        arbPath,
+        fc.double({ min: -Math.PI, max: Math.PI, noNaN: true }),
+        fc.boolean(),
+        (path, a, follow) => {
+          const h = horse(1, path)
+          const keys = [selKey(h.id, 0)]
+          const back = rotateSelection(rotateSelection([h], keys, a, follow), keys, -a, follow)
+          close(back[0]?.path ?? path, path, 0.011)
+        },
+      ),
     )
   })
 })
@@ -168,7 +242,9 @@ describe('architecture', () => {
     for (const f of readdirSync(dir)) {
       const src = readFileSync(join(dir, f), 'utf8')
       const specs = [...src.matchAll(/from '([^']+)'/g)].map((m) => m[1])
-      specs.forEach((s) => expect(s === 'zod' || s?.startsWith('./'), `${f} imports ${s}`).toBe(true))
+      specs.forEach((s) =>
+        expect(s === 'zod' || s?.startsWith('./'), `${f} imports ${s}`).toBe(true),
+      )
       expect(src).not.toMatch(/\b(window|document|localStorage|navigator)\.[a-zA-Z]/)
     }
   })

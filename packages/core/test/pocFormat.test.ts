@@ -22,9 +22,10 @@ describe.each(planFixtureNames())('golden import/export: %s', (name) => {
       if (!ex) throw new Error('fixture')
       expect(h.path).toEqual(expectedPath(ex, idOf))
       expect(h.tack).toBe(ex.tack)
-      const pending = ex.pendJump || ex.pendGap
-        ? { gap: ex.pendGap?.w ?? 0, gapType: ex.pendGap?.t ?? 'pause', jump: ex.pendJump }
-        : null
+      const pending =
+        ex.pendJump || ex.pendGap
+          ? { gap: ex.pendGap?.w ?? 0, gapType: ex.pendGap?.t ?? 'pause', jump: ex.pendJump }
+          : null
       expect(h.pending).toEqual(pending)
     })
     expect(plan.settings.drawGaitId).toBe(idOf(fx.drawGait))
@@ -33,8 +34,20 @@ describe.each(planFixtureNames())('golden import/export: %s', (name) => {
   it('exports what the prototype would serialize', () => {
     const res = fromPoc(fx.input, { gaits, newId: idGen(), title: name })
     if (!res.ok) throw new Error('import')
-    const out = toPoc(res.plan, gaits) as { horses: Record<string, unknown>[]; drawGait: string; bpm: number; parts: unknown[] }
-    const ex = fx.exported as { horses: Record<string, unknown>[]; bpm: number; beat0: number; meter: number; zoom: number; parts: unknown[] }
+    const out = toPoc(res.plan, gaits) as {
+      horses: Record<string, unknown>[]
+      drawGait: string
+      bpm: number
+      parts: unknown[]
+    }
+    const ex = fx.exported as {
+      horses: Record<string, unknown>[]
+      bpm: number
+      beat0: number
+      meter: number
+      zoom: number
+      parts: unknown[]
+    }
     const pocIdOfGlobal = new Map(fx.gaits.map((g) => [idOf(g.id), g.id]))
     expect(out.horses.length).toBe(ex.horses.length)
     out.horses.forEach((h, i) => {
@@ -58,8 +71,24 @@ describe.each(planFixtureNames())('golden import/export: %s', (name) => {
 
 describe('fromPoc', () => {
   const gaits: Gait[] = [
-    { id: uuid(1), name: 'Schritt', color: '#A8DCC4', speedTack: 1.6, speedBare: 1.7, turnDiameter: 2, archivedAt: null },
-    { id: uuid(2), name: 'Trab', color: '#9CC5EA', speedTack: 3.6, speedBare: 3.9, turnDiameter: 6, archivedAt: null },
+    {
+      id: uuid(1),
+      name: 'Schritt',
+      color: '#A8DCC4',
+      speedTack: 1.6,
+      speedBare: 1.7,
+      turnDiameter: 2,
+      archivedAt: null,
+    },
+    {
+      id: uuid(2),
+      name: 'Trab',
+      color: '#9CC5EA',
+      speedTack: 3.6,
+      speedBare: 3.9,
+      turnDiameter: 6,
+      archivedAt: null,
+    },
   ]
   const plan = {
     drawGait: 'a',
@@ -72,8 +101,23 @@ describe('fromPoc', () => {
     meter: 3,
     zoom: 200,
     musicName: 'Bolero.mp3',
-    parts: [{ name: 'A', a: 2, b: 1 }, { name: 'B', a: 0, b: 4, c: 'nope' }],
-    horses: [{ name: 'X', num: 2, pts: [{ x: 0, y: 0 }, { x: 4, y: 0 }, { x: 8, y: 0 }], strokes: [0, 2], gaits: ['a', 'b'] }],
+    parts: [
+      { name: 'A', a: 2, b: 1 },
+      { name: 'B', a: 0, b: 4, c: 'nope' },
+    ],
+    horses: [
+      {
+        name: 'X',
+        num: 2,
+        pts: [
+          { x: 0, y: 0 },
+          { x: 4, y: 0 },
+          { x: 8, y: 0 },
+        ],
+        strokes: [0, 2],
+        gaits: ['a', 'b'],
+      },
+    ],
   }
   it('asks for gaits it cannot match by name', () => {
     const res = fromPoc(plan, { gaits, newId: idGen(), title: 't' })
@@ -86,7 +130,9 @@ describe('fromPoc', () => {
     expect(res.plan.horses[0]?.path.sections.map((s) => s.gaitId)).toEqual([uuid(2), uuid(1)])
     expect(res.plan.timing).toEqual({ bpm: 260, beat0: 0, meter: 3, musicId: null })
     expect(res.plan.settings).toEqual({ timelineZoom: 90, drawGaitId: uuid(2), roundCorners: true })
-    expect(res.plan.parts).toEqual([{ id: expect.any(String), name: 'B', start: 0, end: 4, color: '#7c6fd6' }])
+    expect(res.plan.parts).toEqual([
+      { id: expect.any(String), name: 'B', start: 0, end: 4, color: '#7c6fd6' },
+    ])
     expect(res.musicName).toBe('Bolero.mp3')
   })
   it('rejects data without horses', () => {
@@ -94,7 +140,21 @@ describe('fromPoc', () => {
     expect(() => fromPoc('nope', { gaits, newId: idGen(), title: 't' })).toThrow()
   })
   it('accepts the old "players" key and default gaits', () => {
-    const res = fromPoc({ players: [{ pts: [{ x: 1, y: 1 }, { x: 2, y: 1 }], strokes: [0], gaits: ['g2'] }] }, { gaits, newId: idGen(), title: 't' })
+    const res = fromPoc(
+      {
+        players: [
+          {
+            pts: [
+              { x: 1, y: 1 },
+              { x: 2, y: 1 },
+            ],
+            strokes: [0],
+            gaits: ['g2'],
+          },
+        ],
+      },
+      { gaits, newId: idGen(), title: 't' },
+    )
     if (!res.ok) throw new Error('import')
     expect(res.plan.horses[0]).toMatchObject({ name: '', number: 1, color: '#c0392b', tack: true })
     expect(res.plan.horses[0]?.path.sections[0]?.gaitId).toBe(uuid(2))

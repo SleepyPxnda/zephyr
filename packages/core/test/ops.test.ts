@@ -71,8 +71,10 @@ describe.each(ops.map((o) => [o.name, o] as const))('golden op: %s', (_, op) => 
     const ctx = { gaits }
     const kind = op.name.split('-')[0]
     let result: Horse[]
-    if (kind === 'rotate') result = rotateSelection(horses, keys, op.info.angle ?? 0, !!op.info.follow)
-    else if (kind === 'mirror') result = mirrorSelection(horses, keys, op.info.mode ?? 'hand', !!op.info.follow, arena)
+    if (kind === 'rotate')
+      result = rotateSelection(horses, keys, op.info.angle ?? 0, !!op.info.follow)
+    else if (kind === 'mirror')
+      result = mirrorSelection(horses, keys, op.info.mode ?? 'hand', !!op.info.follow, arena)
     else if (kind === 'delete') result = deleteSelection(horses, keys, ctx)
     else if (kind === 'merge') result = mergeSelection(horses, keys)
     else if (kind === 'split') {

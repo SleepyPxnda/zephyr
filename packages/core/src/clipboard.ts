@@ -1,5 +1,13 @@
 import { selectionGroups, type HorseContext } from './edit'
-import { clonePoint, fromStrokes, normalizeStrokes, sectionGeom, sectionRange, toStrokes, type Strokes } from './path'
+import {
+  clonePoint,
+  fromStrokes,
+  normalizeStrokes,
+  sectionGeom,
+  sectionRange,
+  toStrokes,
+  type Strokes,
+} from './path'
 import type { Horse, PathPoint, Point } from './schemas'
 import { timeline } from './timeline'
 import { dist, r2 } from './vec'
@@ -64,9 +72,15 @@ function copyPart(horse: Horse, ks: readonly number[], ctx: HorseContext): ClipP
 }
 
 /** Copies exactly the selected sections, also non-adjacent and across horses (Strg+C). */
-export function copySelection(horses: readonly Horse[], keys: Iterable<string>, ctx: HorseContext): Clipboard | null {
+export function copySelection(
+  horses: readonly Horse[],
+  keys: Iterable<string>,
+  ctx: HorseContext,
+): Clipboard | null {
   const groups = selectionGroups(horses, keys)
-  const parts = groups.filter((g) => g.horse.path.pts.length > 1 && g.ks.length).map((g) => copyPart(g.horse, g.ks, ctx))
+  const parts = groups
+    .filter((g) => g.horse.path.pts.length > 1 && g.ks.length)
+    .map((g) => copyPart(g.horse, g.ks, ctx))
   if (!parts.length) return null
   const tMin = Math.min(...parts.map((q) => q.t0))
   parts.forEach((q) => (q.tOff = q.t0 - tMin))
@@ -79,10 +93,18 @@ export type PasteTarget = 'same' | 'from'
 export type PasteLink = 'line' | 'gap'
 
 /** Which horse receives which part (null = no horse). A single part always goes to the active horse. */
-export function pasteTargets(clip: Clipboard, horses: readonly Horse[], activeId: string | null, target: PasteTarget): (Horse | null)[] {
+export function pasteTargets(
+  clip: Clipboard,
+  horses: readonly Horse[],
+  activeId: string | null,
+  target: PasteTarget,
+): (Horse | null)[] {
   if (clip.parts.length === 1) return horses.filter((h) => h.id === activeId).slice(0, 1)
   if (target === 'same') return clip.parts.map((q) => horses.find((h) => h.id === q.from) ?? null)
-  const i0 = Math.max(0, horses.findIndex((h) => h.id === activeId))
+  const i0 = Math.max(
+    0,
+    horses.findIndex((h) => h.id === activeId),
+  )
   return clip.parts.map((_, i) => horses[i0 + i] ?? null)
 }
 
@@ -93,10 +115,16 @@ export const pasteAnchor = (h: Horse | null): Point | null => {
 }
 
 /** Offset for the paste preview: at the path end of the first target, or at the original place. */
-export function pasteOffset(clip: Clipboard, firstTarget: Horse | null, kind: 'end' | 'orig'): Point {
+export function pasteOffset(
+  clip: Clipboard,
+  firstTarget: Horse | null,
+  kind: 'end' | 'orig',
+): Point {
   const end = pasteAnchor(firstTarget)
   const first = clip.parts[0]?.pts[0]
-  return kind === 'end' && end && first ? { x: end.x - first.x, y: end.y - first.y } : { x: 0, y: 0 }
+  return kind === 'end' && end && first
+    ? { x: end.x - first.x, y: end.y - first.y }
+    : { x: 0, y: 0 }
 }
 
 /** Points of a part moved by `off`, as the preview shows them. */
@@ -129,7 +157,12 @@ export interface PasteOptions {
  * point) or, when it starts elsewhere, with a straight line or a pause; an announced
  * halt/pause becomes the gap before it.
  */
-export function paste(horses: readonly Horse[], clip: Clipboard, o: PasteOptions, ctx: HorseContext): Horse[] {
+export function paste(
+  horses: readonly Horse[],
+  clip: Clipboard,
+  o: PasteOptions,
+  ctx: HorseContext,
+): Horse[] {
   const targets = pasteTargets(clip, horses, o.activeId, o.target)
   const used = targets.filter((h): h is Horse => !!h)
   if (!used.length) return [...horses]

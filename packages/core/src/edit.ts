@@ -56,16 +56,21 @@ export type PointFn = (q: Point) => Point
 export const rotFn = (P0: Point, a: number): PointFn => {
   const c = Math.cos(a)
   const s = Math.sin(a)
-  return (q) => ({ x: P0.x + (q.x - P0.x) * c - (q.y - P0.y) * s, y: P0.y + (q.x - P0.x) * s + (q.y - P0.y) * c })
+  return (q) => ({
+    x: P0.x + (q.x - P0.x) * c - (q.y - P0.y) * s,
+    y: P0.y + (q.x - P0.x) * s + (q.y - P0.y) * c,
+  })
 }
 
 /** Reflection at the line through P0 with unit direction u. */
-export const mirFn = (P0: Point, u: Point): PointFn => (q) => {
-  const vx = q.x - P0.x
-  const vy = q.y - P0.y
-  const d = vx * u.x + vy * u.y
-  return { x: P0.x + 2 * d * u.x - vx, y: P0.y + 2 * d * u.y - vy }
-}
+export const mirFn =
+  (P0: Point, u: Point): PointFn =>
+  (q) => {
+    const vx = q.x - P0.x
+    const vy = q.y - P0.y
+    const d = vx * u.x + vy * u.y
+    return { x: P0.x + 2 * d * u.x - vx, y: P0.y + 2 * d * u.y - vy }
+  }
 
 /** Applies fn to points [from, to] of a private point list, including remembered figure points. */
 function transformPts(pts: PathPoint[], from: number, to: number, fn: PointFn): void {
@@ -141,7 +146,11 @@ const replace = (horses: readonly Horse[], changed: ReadonlyMap<string, Path>): 
     return path ? { ...h, path } : h
   })
 
-function applyToAffected(horses: readonly Horse[], aff: readonly Affected[], edit: (pts: PathPoint[], a: Affected) => void): Horse[] {
+function applyToAffected(
+  horses: readonly Horse[],
+  aff: readonly Affected[],
+  edit: (pts: PathPoint[], a: Affected) => void,
+): Horse[] {
   const changed = new Map<string, Path>()
   for (const a of aff) {
     const s = toStrokes(a.horse.path)
@@ -152,15 +161,28 @@ function applyToAffected(horses: readonly Horse[], aff: readonly Affected[], edi
 }
 
 /** Rotate the selection by `angle` (rad) around the group pivot (buttons ±15°, ⟳ handle). */
-export function rotateSelection(horses: readonly Horse[], keys: Iterable<string>, angle: number, follow: boolean): Horse[] {
+export function rotateSelection(
+  horses: readonly Horse[],
+  keys: Iterable<string>,
+  angle: number,
+  follow: boolean,
+): Horse[] {
   const groups = selectionGroups(horses, keys)
   if (!groups.length) return [...horses]
   const fn = rotFn(groupPivot(affected(groups, false)), angle)
-  return applyToAffected(horses, affected(groups, follow), (pts, a) => a.ranges.forEach(([f, t]) => transformPts(pts, f, t, fn)))
+  return applyToAffected(horses, affected(groups, follow), (pts, a) =>
+    a.ranges.forEach(([f, t]) => transformPts(pts, f, t, fn)),
+  )
 }
 
 /** Move the selection by (dx, dy) metres (dragging on the arena). */
-export function moveSelection(horses: readonly Horse[], keys: Iterable<string>, dx: number, dy: number, follow: boolean): Horse[] {
+export function moveSelection(
+  horses: readonly Horse[],
+  keys: Iterable<string>,
+  dx: number,
+  dy: number,
+  follow: boolean,
+): Horse[] {
   const fn: PointFn = (q) => ({ x: q.x + dx, y: q.y + dy })
   return applyToAffected(horses, affected(selectionGroups(horses, keys), follow), (pts, a) =>
     a.ranges.forEach(([f, t]) => transformPts(pts, f, t, fn)),
@@ -205,7 +227,10 @@ export function mirrorSelection(
   const aff = affected(selectionGroups(horses, keys), follow)
   return applyToAffected(horses, aff, (pts, x) => {
     if (mode === 'ac' || mode === 'eb') {
-      const fn = mode === 'ac' ? mirFn({ x: 0, y: arena.widthM / 2 }, { x: 1, y: 0 }) : mirFn({ x: arena.lengthM / 2, y: 0 }, { x: 0, y: 1 })
+      const fn =
+        mode === 'ac'
+          ? mirFn({ x: 0, y: arena.widthM / 2 }, { x: 1, y: 0 })
+          : mirFn({ x: arena.lengthM / 2, y: 0 }, { x: 0, y: 1 })
       x.ranges.forEach(([f, t]) => {
         transformPts(pts, f, t, fn)
         flipHands(pts, f, t)
@@ -276,11 +301,16 @@ export interface HorseContext {
 }
 
 /** Deletes every selected section (highest index first per horse). */
-export function deleteSelection(horses: readonly Horse[], keys: Iterable<string>, ctx: HorseContext): Horse[] {
+export function deleteSelection(
+  horses: readonly Horse[],
+  keys: Iterable<string>,
+  ctx: HorseContext,
+): Horse[] {
   const changed = new Map<string, Path>()
   for (const { horse, ks } of selectionGroups(horses, keys)) {
     let path = horse.path
-    for (const k of [...ks].reverse()) path = deleteSection(path, k, { gaits: ctx.gaits, horseTack: horse.tack })
+    for (const k of [...ks].reverse())
+      path = deleteSection(path, k, { gaits: ctx.gaits, horseTack: horse.tack })
     changed.set(horse.id, path)
   }
   return replace(horses, changed)
@@ -342,7 +372,10 @@ export function editHandles(path: Path, k: number): Handle[] {
 }
 
 /** Position of the ⟳ rotate handle: beside the far end of the selection, `offset` metres out. */
-export function rotateHandle(groups: readonly SelGroup[], offset: number): { x: number; y: number; pivot: Point } | null {
+export function rotateHandle(
+  groups: readonly SelGroup[],
+  offset: number,
+): { x: number; y: number; pivot: Point } | null {
   const aff = affected(groups, false)
   if (!aff.length) return null
   const P0 = groupPivot(aff)
@@ -388,7 +421,12 @@ const shiftAfter = (pts: PathPoint[], from: number, dx: number, dy: number) =>
   transformPts(pts, from, pts.length - 1, (q) => ({ x: q.x + dx, y: q.y + dy }))
 
 /** Replaces the points after the start S of section k by `fresh` and fixes the following starts. */
-function spliceSection(p: ReturnType<typeof toStrokes>, k: number, g: SectionGeom, fresh: Point[]): number {
+function spliceSection(
+  p: ReturnType<typeof toStrokes>,
+  k: number,
+  g: SectionGeom,
+  fresh: Point[],
+): number {
   const oldCount = g.e - g.si
   const diff = fresh.length - oldCount
   p.pts.splice(g.si + 1, oldCount, ...fresh.map((q) => ({ x: r2(q.x), y: r2(q.y) })))
@@ -400,7 +438,13 @@ function spliceSection(p: ReturnType<typeof toStrokes>, k: number, g: SectionGeo
  * Drag the end of section k to E (prototype `applyEdit` mode "end"): remembered figures are
  * rebuilt (`regenerate`), freehand follows weighted by distance along the section.
  */
-export function dragEnd(path: Path, k: number, E: Point, follow: boolean, ctx: HorseContext): Path | null {
+export function dragEnd(
+  path: Path,
+  k: number,
+  E: Point,
+  follow: boolean,
+  ctx: HorseContext,
+): Path | null {
   const g = sectionGeom(path, k)
   const p = toStrokes(path)
   const oldEnd = { ...(p.pts[g.e] as PathPoint) }
@@ -445,7 +489,11 @@ export function dragEnd(path: Path, k: number, E: Point, follow: boolean, ctx: H
   return normalize(fromStrokes(p))
 }
 
-function cumulative(pts: readonly PathPoint[], from: number, to: number): { total: number; cum: number[] } {
+function cumulative(
+  pts: readonly PathPoint[],
+  from: number,
+  to: number,
+): { total: number; cum: number[] } {
   let total = 0
   const cum = [0]
   for (let i = from + 1; i <= to; i++) {
@@ -470,7 +518,14 @@ export function dragApex(path: Path, k: number, h0: Point, M: Point): Path {
     const res = arc3Points({ x: S.x, y: S.y }, M, E)
     spliceSection(p, k, g, res.pts)
     const first = p.pts[p.strokes[k] as number] as PathPoint
-    first.geo = { kind: 'arc3', E, M: { x: r2(M.x), y: r2(M.y) }, hand: 'auto', half: false, round: true }
+    first.geo = {
+      kind: 'arc3',
+      E,
+      M: { x: r2(M.x), y: r2(M.y) },
+      hand: 'auto',
+      half: false,
+      round: true,
+    }
     if (g.own && g.s0 > 0) first.jump = true
   } else {
     const dx = M.x - h0.x

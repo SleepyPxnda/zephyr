@@ -96,7 +96,7 @@ export function normalizeStrokes(p: Strokes, opts: NormalizeOptions = {}): void 
   }
   // The prototype runs this pass once, which can leave e.g. [0, 2, 1] behind for corrupt input.
   // Repeating it until nothing changes keeps the prototype's result whenever that one is valid.
-  for (let removed = true; removed; ) {
+  for (let removed = true; removed;) {
     removed = false
     for (let k = p.strokes.length - 1; k >= 1; k--) {
       if (at(p.strokes, k) >= p.pts.length || at(p.strokes, k) <= at(p.strokes, k - 1)) {
@@ -176,7 +176,12 @@ export function sectionGeom(path: Path, k: number): SectionGeom {
  * Clicks closer than `snapDist` metres to an existing point split there. Returns the new
  * section index, or null when no split is possible.
  */
-export function splitAt(path: Path, i: number, f: number, snapDist: number): { path: Path; k: number } | null {
+export function splitAt(
+  path: Path,
+  i: number,
+  f: number,
+  snapDist: number,
+): { path: Path; k: number } | null {
   const p = toStrokes(path)
   const a = at(p.pts, i - 1)
   const b0 = at(p.pts, i)
@@ -184,7 +189,8 @@ export function splitAt(path: Path, i: number, f: number, snapDist: number): { p
   let b = f * seg < snapDist ? i - 1 : (1 - f) * seg < snapDist ? i : null
   if (b === null) {
     p.pts.splice(i, 0, { x: r2(a.x + (b0.x - a.x) * f), y: r2(a.y + (b0.y - a.y) * f) })
-    for (let k = 0; k < p.strokes.length; k++) if (at(p.strokes, k) > i) p.strokes[k] = at(p.strokes, k) + 1
+    for (let k = 0; k < p.strokes.length; k++)
+      if (at(p.strokes, k) > i) p.strokes[k] = at(p.strokes, k) + 1
     b = i
   }
   const start = b + 1
@@ -200,11 +206,20 @@ export function splitAt(path: Path, i: number, f: number, snapDist: number): { p
 }
 
 /** Merges adjacent sections `ks` into the first of them (prototype `mergeSel`). */
-export function mergeSections(path: Path, ks: readonly number[], opts: NormalizeOptions = {}): Path | null {
+export function mergeSections(
+  path: Path,
+  ks: readonly number[],
+  opts: NormalizeOptions = {},
+): Path | null {
   const sorted = [...ks].sort((x, y) => x - y)
   const first = sorted[0]
   const last = sorted[sorted.length - 1]
-  if (first === undefined || last === undefined || sorted.length < 2 || last - first + 1 !== sorted.length)
+  if (
+    first === undefined ||
+    last === undefined ||
+    sorted.length < 2 ||
+    last - first + 1 !== sorted.length
+  )
     return null
   const p = toStrokes(path)
   for (let j = last; j > first; j--) {

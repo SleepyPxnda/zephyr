@@ -149,7 +149,10 @@ function loadHorse(p: Rec): LegacyHorse {
     gt: Array.isArray(p.gapTypes) ? p.gapTypes.map((t) => (t ? String(t) : null)) : [],
     tack: [],
     pendJump: !!p.pendJump,
-    pendGap: isRec(p.pendGap) && plus(pendGap.w) > 0 ? { w: plus(pendGap.w), t: pendGap.t === 'pause' ? 'pause' : 'halt' } : null,
+    pendGap:
+      isRec(p.pendGap) && plus(pendGap.w) > 0
+        ? { w: plus(pendGap.w), t: pendGap.t === 'pause' ? 'pause' : 'halt' }
+        : null,
   }
 }
 
@@ -165,8 +168,7 @@ export interface FromPocOptions {
 }
 
 export type FromPocResult =
-  | { ok: true; plan: PlanContent; musicName: string }
-  | { ok: false; unknownGaits: string[] }
+  { ok: true; plan: PlanContent; musicName: string } | { ok: false; unknownGaits: string[] }
 
 /** Converts prototype JSON into a plan document. Throws PocFormatError on unusable input. */
 export function fromPoc(data: unknown, o: FromPocOptions): FromPocResult {
@@ -196,7 +198,8 @@ export function fromPoc(data: unknown, o: FromPocOptions): FromPocResult {
 
   // match the gaits that are actually used by name; ask for the rest
   const globalByName = new Map<string, string>()
-  for (const g of o.gaits) if (!globalByName.has(nameKey(g.name))) globalByName.set(nameKey(g.name), g.id)
+  for (const g of o.gaits)
+    if (!globalByName.has(nameKey(g.name))) globalByName.set(nameKey(g.name), g.id)
   const globalIds = new Set(o.gaits.map((g) => g.id))
   const resolve = (pocId: string): string | null => {
     const name = pocGaits.find((g) => g.id === pocId)?.name ?? ''
@@ -205,7 +208,9 @@ export function fromPoc(data: unknown, o: FromPocOptions): FromPocResult {
     return globalByName.get(nameKey(name)) ?? null
   }
   const used = new Set(loaded.flatMap(({ h }) => h.sg))
-  const unknown = [...used].filter((id) => !resolve(id)).map((id) => pocGaits.find((g) => g.id === id)?.name ?? id)
+  const unknown = [...used]
+    .filter((id) => !resolve(id))
+    .map((id) => pocGaits.find((g) => g.id === id)?.name ?? id)
   if (unknown.length) return { ok: false, unknownGaits: [...new Set(unknown)] }
 
   const planHorses: Horse[] = loaded.map(({ p, h }, i) => {
@@ -233,7 +238,10 @@ export function fromPoc(data: unknown, o: FromPocOptions): FromPocResult {
       name: str(q.name).slice(0, 60),
       start: Math.max(0, plus(q.a)),
       end: plus(q.b),
-      color: typeof q.c === 'string' && HEX.test(q.c) ? q.c : (PART_COLORS[i % PART_COLORS.length] as string),
+      color:
+        typeof q.c === 'string' && HEX.test(q.c)
+          ? q.c
+          : (PART_COLORS[i % PART_COLORS.length] as string),
     }))
 
   const bpm = plus(d.bpm) > 0 ? Math.min(260, Math.max(1, plus(d.bpm))) : null
@@ -242,7 +250,12 @@ export function fromPoc(data: unknown, o: FromPocOptions): FromPocResult {
     musicName: str(d.musicName),
     plan: {
       title: o.title.slice(0, 200) || 'Plan',
-      timing: { bpm, beat0: plus(d.beat0) >= 0 ? plus(d.beat0) : 0, meter: plus(d.meter) === 3 ? 3 : 4, musicId: null },
+      timing: {
+        bpm,
+        beat0: plus(d.beat0) >= 0 ? plus(d.beat0) : 0,
+        meter: plus(d.meter) === 3 ? 3 : 4,
+        musicId: null,
+      },
       settings: {
         timelineZoom: Math.min(90, Math.max(6, plus(d.zoom) || 24)),
         drawGaitId: resolve(drawGait),
@@ -271,10 +284,23 @@ export function toPoc(plan: PlanContent, gaits: readonly Gait[]): Rec {
     meter: plan.timing.meter,
     zoom: plan.settings.timelineZoom,
     musicName: '',
-    parts: plan.parts.map((q, i) => ({ id: i + 1, name: q.name, a: q.start, b: q.end, c: q.color })),
+    parts: plan.parts.map((q, i) => ({
+      id: i + 1,
+      name: q.name,
+      a: q.start,
+      b: q.end,
+      c: q.color,
+    })),
     gaits: gaits
       .filter((g) => !g.archivedAt || usedIds.has(g.id) || g.id === drawGait)
-      .map((g) => ({ id: g.id, name: g.name, w: g.speedTack, o: g.speedBare, md: g.turnDiameter, c: g.color })),
+      .map((g) => ({
+        id: g.id,
+        name: g.name,
+        w: g.speedTack,
+        o: g.speedBare,
+        md: g.turnDiameter,
+        c: g.color,
+      })),
     horses: plan.horses.map((h) => ({
       name: h.name,
       num: h.number,

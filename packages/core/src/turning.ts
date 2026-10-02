@@ -51,7 +51,13 @@ export function curveRadii(pts: readonly PathPoint[]): number[] {
     // a corner turns (almost) all at one point; a bend spreads the turn over the whole window
     const a1 = turnAngle(P(i - 1), P(i), P(i + 1))
     const th = turnAngle(A, B, Cp)
-    if (a1 !== null && th !== null && th > CORNER_MIN_TURN && a1 > CORNER_SHARE * th && (j < i - 1 || k > i + 1))
+    if (
+      a1 !== null &&
+      th !== null &&
+      th > CORNER_MIN_TURN &&
+      a1 > CORNER_SHARE * th &&
+      (j < i - 1 || k > i + 1)
+    )
       R[i] = 0
   }
   return R

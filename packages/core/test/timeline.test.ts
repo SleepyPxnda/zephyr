@@ -11,7 +11,14 @@ import {
   type Path,
   type PositionState,
 } from '../src'
-import { expectedPath, globalGaits, planFixture, planFixtureNames, uuid, type PocPos } from './helpers'
+import {
+  expectedPath,
+  globalGaits,
+  planFixture,
+  planFixtureNames,
+  uuid,
+  type PocPos,
+} from './helpers'
 
 const TOL = 1e-6
 const num = (v: number | null): number => (v === null ? Infinity : v)
@@ -36,9 +43,14 @@ describe.each(planFixtureNames())('golden: %s', (name) => {
   fx.horses.forEach((h, hi) => {
     const path = expectedPath(h.normalized, idOf)
     const ctx = { gaits, horseTack: h.normalized.tack }
-    const pending = h.normalized.pendJump || h.normalized.pendGap
-      ? { gap: h.normalized.pendGap?.w ?? 0, gapType: h.normalized.pendGap?.t ?? 'pause', jump: h.normalized.pendJump }
-      : null
+    const pending =
+      h.normalized.pendJump || h.normalized.pendGap
+        ? {
+            gap: h.normalized.pendGap?.w ?? 0,
+            gapType: h.normalized.pendGap?.t ?? 'pause',
+            jump: h.normalized.pendJump,
+          }
+        : null
 
     it(`horse ${hi}: radii`, () => {
       const R = curveRadii(path.pts)
@@ -65,7 +77,9 @@ describe.each(planFixtureNames())('golden: %s', (name) => {
         close(s.minR, e.minR, `secs[${k}].minR`)
       })
       // the prototype keeps speeds in a Float32Array
-      tl.vs.forEach((v, i) => expect(Math.abs(v - (ex.vs[i] ?? NaN))).toBeLessThan(1e-6 * Math.max(1, v)))
+      tl.vs.forEach((v, i) =>
+        expect(Math.abs(v - (ex.vs[i] ?? NaN))).toBeLessThan(1e-6 * Math.max(1, v)),
+      )
       expect(tl.tight.map((f) => (f ? 2 : 0))).toEqual(ex.flag)
     })
 
@@ -121,12 +135,32 @@ describe('reference cases (SPEC "Teststrategie")', () => {
 })
 
 const GAITS: Gait[] = [
-  { id: uuid(1), name: 'Schritt', color: '#A8DCC4', speedTack: 1.6, speedBare: 1.7, turnDiameter: 2, archivedAt: null },
-  { id: uuid(2), name: 'Trab', color: '#9CC5EA', speedTack: 3.6, speedBare: 3.9, turnDiameter: 6, archivedAt: null },
+  {
+    id: uuid(1),
+    name: 'Schritt',
+    color: '#A8DCC4',
+    speedTack: 1.6,
+    speedBare: 1.7,
+    turnDiameter: 2,
+    archivedAt: null,
+  },
+  {
+    id: uuid(2),
+    name: 'Trab',
+    color: '#9CC5EA',
+    speedTack: 3.6,
+    speedBare: 3.9,
+    turnDiameter: 6,
+    archivedAt: null,
+  },
 ]
 const straight: Path = {
   v: 1,
-  pts: [{ x: 0, y: 0 }, { x: 3.6, y: 0 }, { x: 7.2, y: 0 }],
+  pts: [
+    { x: 0, y: 0 },
+    { x: 3.6, y: 0 },
+    { x: 7.2, y: 0 },
+  ],
   sections: [
     { start: 0, gaitId: uuid(2), gap: 1, gapType: 'halt', tack: null },
     { start: 2, gaitId: uuid(2), gap: 2, gapType: 'pause', tack: false },
@@ -143,7 +177,10 @@ describe('timeline', () => {
     expect(sectionTimes(straight, tl, 1)).toEqual({ a: 4, b: 4 + 3.6 / 3.9 })
   })
   it('falls back to the first gait for unknown ids', () => {
-    const p: Path = { ...straight, sections: [{ start: 0, gaitId: uuid(9), gap: 1, gapType: 'halt', tack: null }] }
+    const p: Path = {
+      ...straight,
+      sections: [{ start: 0, gaitId: uuid(9), gap: 1, gapType: 'halt', tack: null }],
+    }
     expect(timeline(p, { gaits: GAITS, horseTack: true }).total).toBeCloseTo(1 + 7.2 / 1.6, 10)
   })
   it('needs at least one gait', () => {
@@ -165,15 +202,35 @@ describe('timeline', () => {
   it('arrival times never decrease', () => {
     fc.assert(
       fc.property(
-        fc.array(fc.record({ x: fc.double({ min: 0, max: 40, noNaN: true }), y: fc.double({ min: 0, max: 20, noNaN: true }), jump: fc.boolean() }), { minLength: 1, maxLength: 40 }),
-        fc.array(fc.record({ start: fc.nat(40), gap: fc.double({ min: 0, max: 10, noNaN: true }) }), { maxLength: 6 }),
+        fc.array(
+          fc.record({
+            x: fc.double({ min: 0, max: 40, noNaN: true }),
+            y: fc.double({ min: 0, max: 20, noNaN: true }),
+            jump: fc.boolean(),
+          }),
+          { minLength: 1, maxLength: 40 },
+        ),
+        fc.array(
+          fc.record({ start: fc.nat(40), gap: fc.double({ min: 0, max: 10, noNaN: true }) }),
+          { maxLength: 6 },
+        ),
         (raw, secs) => {
-          const pts = raw.map(({ x, y, jump }, i) => (jump && i ? { x, y, jump: true as const } : { x, y }))
-          const starts = [...new Set([0, ...secs.map((s) => s.start % pts.length)])].sort((a, b) => a - b)
+          const pts = raw.map(({ x, y, jump }, i) =>
+            jump && i ? { x, y, jump: true as const } : { x, y },
+          )
+          const starts = [...new Set([0, ...secs.map((s) => s.start % pts.length)])].sort(
+            (a, b) => a - b,
+          )
           const path: Path = {
             v: 1,
             pts,
-            sections: starts.map((start, k) => ({ start, gaitId: uuid(1 + (k % 2)), gap: secs[k]?.gap ?? 0, gapType: 'halt', tack: null })),
+            sections: starts.map((start, k) => ({
+              start,
+              gaitId: uuid(1 + (k % 2)),
+              gap: secs[k]?.gap ?? 0,
+              gapType: 'halt',
+              tack: null,
+            })),
           }
           const tl = timeline(path, { gaits: GAITS, horseTack: k(raw.length) })
           for (let i = 1; i < tl.ts.length; i++) {

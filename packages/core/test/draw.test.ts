@@ -47,17 +47,42 @@ class Pen {
     return this.gaits.find((g) => g.id === this.gait)?.turnDiameter ?? 0
   }
   start(h: Horse, pt: Point): Horse {
-    return drawFigure(h, { kind: 'line', down: pt, up: pt, moved: false, gaitId: this.gait, turnDiameter: this.md(), roundCorners: this.round, hand: this.hand, half: this.half, shift: false })
+    return drawFigure(h, {
+      kind: 'line',
+      down: pt,
+      up: pt,
+      moved: false,
+      gaitId: this.gait,
+      turnDiameter: this.md(),
+      roundCorners: this.round,
+      hand: this.hand,
+      half: this.half,
+      shift: false,
+    })
   }
   draw(h: Horse, kind: FigureKind, E: Point, shift = false, jumpTo?: Point): Horse {
-    return drawFigure(h, { kind, down: jumpTo ?? E, up: E, moved: true, gaitId: this.gait, turnDiameter: this.md(), roundCorners: this.round, hand: this.hand, half: this.half, shift })
+    return drawFigure(h, {
+      kind,
+      down: jumpTo ?? E,
+      up: E,
+      moved: true,
+      gaitId: this.gait,
+      turnDiameter: this.md(),
+      roundCorners: this.round,
+      hand: this.hand,
+      half: this.half,
+      shift,
+    })
   }
   free(h: Horse, raw: Point[]): Horse {
     return drawFreehand(h, raw, this.gait, 1 / SCALE)
   }
 }
 const wave = (x0: number, y0: number, len: number, amp: number, n: number): Point[] =>
-  Array.from({ length: n + 1 }, (_, i) => ({ x: x0 + (len * i) / n, y: y0 + amp * Math.sin((i / n) * Math.PI * 3) }))
+  Array.from({ length: n + 1 }, (_, i) => ({
+    x: x0 + (len * i) / n,
+    y: y0 + amp * Math.sin((i / n) * Math.PI * 3),
+  }))
 
 const scenarios: Record<string, (pen: Pen) => Horse[]> = {
   'lines-corner': (pen) => {
@@ -120,7 +145,13 @@ const scenarios: Record<string, (pen: Pen) => Horse[]> = {
   freehand: (pen) => {
     let p = pen.free(emptyHorse(1), wave(2, 10, 30, 3, 240))
     pen.setGait('g1')
-    p = pen.free(p, [{ x: 32.3, y: 10.1 }, { x: 33, y: 12 }, { x: 34, y: 15 }, { x: 34.05, y: 15.02 }, { x: 36, y: 16 }])
+    p = pen.free(p, [
+      { x: 32.3, y: 10.1 },
+      { x: 33, y: 12 },
+      { x: 34, y: 15 },
+      { x: 34.05, y: 15.02 },
+      { x: 36, y: 16 },
+    ])
     return [pen.free(p, wave(36, 18, -20, 1.5, 120))]
   },
   'halt-pause': (pen) => {
@@ -159,32 +190,88 @@ describe.each(Object.entries(scenarios))('golden drawing: %s', (name, run) => {
       const ex = fx.horses[i]?.normalized
       if (!ex) throw new Error('fixture')
       expect(h.path).toEqual(expectedPath(ex, idOf))
-      const pending = ex.pendJump || ex.pendGap ? { gap: ex.pendGap?.w ?? 0, gapType: ex.pendGap?.t ?? 'pause', jump: ex.pendJump } : null
+      const pending =
+        ex.pendJump || ex.pendGap
+          ? { gap: ex.pendGap?.w ?? 0, gapType: ex.pendGap?.t ?? 'pause', jump: ex.pendJump }
+          : null
       expect(h.pending).toEqual(pending)
     })
   })
 })
 
 describe('drawing', () => {
-  const gaits: Gait[] = [{ id: uuid(1), name: 'Trab', color: '#9CC5EA', speedTack: 3.6, speedBare: 3.9, turnDiameter: 6, archivedAt: null }]
-  const style = { gaitId: uuid(1), turnDiameter: 6, roundCorners: true, hand: 'auto' as const, half: false, shift: false }
+  const gaits: Gait[] = [
+    {
+      id: uuid(1),
+      name: 'Trab',
+      color: '#9CC5EA',
+      speedTack: 3.6,
+      speedBare: 3.9,
+      turnDiameter: 6,
+      archivedAt: null,
+    },
+  ]
+  const style = {
+    gaitId: uuid(1),
+    turnDiameter: 6,
+    roundCorners: true,
+    hand: 'auto' as const,
+    half: false,
+    shift: false,
+  }
   it('a click without dragging on an empty path only sets the start point', () => {
-    const h = drawFigure(emptyHorse(1), { ...style, kind: 'circle', down: { x: 1, y: 1 }, up: { x: 1.1, y: 1 }, moved: false })
+    const h = drawFigure(emptyHorse(1), {
+      ...style,
+      kind: 'circle',
+      down: { x: 1, y: 1 },
+      up: { x: 1.1, y: 1 },
+      moved: false,
+    })
     expect(h.path.pts).toEqual([{ x: 1, y: 1 }])
     expect(figureStart(h)).toEqual({ S: { x: 1, y: 1 }, hd: null })
   })
   it('a click without dragging on a path draws the figure up to the click', () => {
-    let h = drawFigure(emptyHorse(1), { ...style, kind: 'line', down: { x: 0, y: 0 }, up: { x: 0, y: 0 }, moved: false })
-    h = drawFigure(h, { ...style, kind: 'line', down: { x: 4, y: 0 }, up: { x: 4, y: 0 }, moved: false })
+    let h = drawFigure(emptyHorse(1), {
+      ...style,
+      kind: 'line',
+      down: { x: 0, y: 0 },
+      up: { x: 0, y: 0 },
+      moved: false,
+    })
+    h = drawFigure(h, {
+      ...style,
+      kind: 'line',
+      down: { x: 4, y: 0 },
+      up: { x: 4, y: 0 },
+      moved: false,
+    })
     expect(h.path.pts.at(-1)).toEqual({ x: 4, y: 0 })
     // the figure is remembered on the first point of its section (here: the start point)
-    expect(h.path.pts[0]?.geo).toEqual({ kind: 'line', E: { x: 4, y: 0 }, hand: 'auto', half: false, round: true })
+    expect(h.path.pts[0]?.geo).toEqual({
+      kind: 'line',
+      E: { x: 4, y: 0 },
+      hand: 'auto',
+      half: false,
+      round: true,
+    })
     expect(h.path.sections).toHaveLength(1)
     expect(gaits).toHaveLength(1)
   })
   it('after "+ Pause" there is no start for the next figure', () => {
-    let h = drawFigure(emptyHorse(1), { ...style, kind: 'line', down: { x: 0, y: 0 }, up: { x: 0, y: 0 }, moved: false })
-    h = drawFigure(h, { ...style, kind: 'line', down: { x: 4, y: 0 }, up: { x: 4, y: 0 }, moved: true })
+    let h = drawFigure(emptyHorse(1), {
+      ...style,
+      kind: 'line',
+      down: { x: 0, y: 0 },
+      up: { x: 0, y: 0 },
+      moved: false,
+    })
+    h = drawFigure(h, {
+      ...style,
+      kind: 'line',
+      down: { x: 4, y: 0 },
+      up: { x: 4, y: 0 },
+      moved: true,
+    })
     expect(announceGap(h, 'pause').pending).toEqual({ gap: 4, gapType: 'pause', jump: true })
     expect(announceGap(h, 'halt').pending).toEqual({ gap: 2, gapType: 'halt', jump: false })
     expect(figureStart(announceGap(h, 'pause')).S).toBeNull()

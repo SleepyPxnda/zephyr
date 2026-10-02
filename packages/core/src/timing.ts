@@ -30,7 +30,13 @@ export function snapTime(t: number, o: SnapOptions): number {
  * gap shrinks by Δ (at least 0), so following sections are only pushed; with `ripple` (Shift)
  * gap[k+1] stays and everything after moves along.
  */
-export function moveSectionTime(path: Path, k: number, start0: number, target: number, ripple: boolean): Path {
+export function moveSectionTime(
+  path: Path,
+  k: number,
+  start0: number,
+  target: number,
+  ripple: boolean,
+): Path {
   const g0 = path.sections.map((s) => s.gap)
   let delta = Math.max(0, target) - start0
   let gk = (g0[k] ?? 0) + delta

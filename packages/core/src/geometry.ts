@@ -13,7 +13,8 @@ export const VOLTE_GRID = 0.5
 export function sampleLine(a: Point, b: Point): Point[] {
   const n = Math.max(1, Math.ceil(dist(a, b) / LINE_STEP))
   const out: Point[] = []
-  for (let i = 1; i <= n; i++) out.push({ x: a.x + ((b.x - a.x) * i) / n, y: a.y + ((b.y - a.y) * i) / n })
+  for (let i = 1; i <= n; i++)
+    out.push({ x: a.x + ((b.x - a.x) * i) / n, y: a.y + ((b.y - a.y) * i) / n })
   return out
 }
 
@@ -29,7 +30,12 @@ export interface Turn {
  * (prototype `turnThenStraight`). Null when no turn is needed (< 2°, or E closer than
  * 0.3 m); 'inside' when E lies inside the turning circle.
  */
-export function turnThenStraight(S: Point, hd: number, E: Point, R: number): Turn | null | 'inside' {
+export function turnThenStraight(
+  S: Point,
+  hd: number,
+  E: Point,
+  R: number,
+): Turn | null | 'inside' {
   const h = { x: Math.cos(hd), y: Math.sin(hd) }
   const v = { x: E.x - S.x, y: E.y - S.y }
   const cr = cross(h, v)
@@ -87,8 +93,16 @@ export function arc3Points(S: Point, M: Point, E: Point): { pts: Point[]; R: num
   const cy = E.y
   const d = 2 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by))
   if (Math.abs(d) < 1e-6) return { pts: [...sampleLine(S, M), ...sampleLine(M, E)], R: Infinity }
-  const ux = ((ax * ax + ay * ay) * (by - cy) + (bx * bx + by * by) * (cy - ay) + (cx * cx + cy * cy) * (ay - by)) / d
-  const uy = ((ax * ax + ay * ay) * (cx - bx) + (bx * bx + by * by) * (ax - cx) + (cx * cx + cy * cy) * (bx - ax)) / d
+  const ux =
+    ((ax * ax + ay * ay) * (by - cy) +
+      (bx * bx + by * by) * (cy - ay) +
+      (cx * cx + cy * cy) * (ay - by)) /
+    d
+  const uy =
+    ((ax * ax + ay * ay) * (cx - bx) +
+      (bx * bx + by * by) * (ax - cx) +
+      (cx * cx + cy * cy) * (bx - ax)) /
+    d
   const R = Math.hypot(ax - ux, ay - uy)
   const TAU = Math.PI * 2
   const norm = (a: number) => ((a % TAU) + TAU) % TAU
@@ -108,7 +122,8 @@ export function arc3Points(S: Point, M: Point, E: Point): { pts: Point[]; R: num
 
 export type FigureKind = 'line' | 'arc' | 'circle'
 /** What was drawn; the UI turns it into a localised label. */
-export type FigureShape = 'line' | 'lineTooClose' | 'turnLine' | 'arc' | 'volte' | 'halfVolte' | 'zirkel' | 'circle'
+export type FigureShape =
+  'line' | 'lineTooClose' | 'turnLine' | 'arc' | 'volte' | 'halfVolte' | 'zirkel' | 'circle'
 
 export interface FigureOptions {
   /** turning circle diameter of the drawing gait (m) */
@@ -154,7 +169,13 @@ const snapAngle = (a: number) => Math.round(a / SNAP_ANGLE) * SNAP_ANGLE
  * Builds a line, tangential arc or volte from the path end S with heading hd towards the
  * pointer E (prototype `geometry`).
  */
-export function figure(kind: FigureKind, S: Point, hd: number | null, E: Point, o: FigureOptions): Figure {
+export function figure(
+  kind: FigureKind,
+  S: Point,
+  hd: number | null,
+  E: Point,
+  o: FigureOptions,
+): Figure {
   if (kind === 'line') {
     if (o.shift) {
       const a = snapAngle(Math.atan2(E.y - S.y, E.x - S.x))
@@ -165,15 +186,35 @@ export function figure(kind: FigureKind, S: Point, hd: number | null, E: Point, 
     if (hd !== null && o.roundCorners && Rt > 0.05) {
       const turned = turnThenStraight(S, hd, E, Rt)
       if (turned === 'inside')
-        return { pts: sampleLine(S, E), end: E, length: dist(S, E), shape: 'lineTooClose', tight: true }
+        return {
+          pts: sampleLine(S, E),
+          end: E,
+          length: dist(S, E),
+          shape: 'lineTooClose',
+          tight: true,
+        }
       if (turned)
-        return { pts: turned.pts, end: E, length: turned.length, shape: 'turnLine', tight: false, center: turned.center, R: turned.R }
+        return {
+          pts: turned.pts,
+          end: E,
+          length: turned.length,
+          shape: 'turnLine',
+          tight: false,
+          center: turned.center,
+          R: turned.R,
+        }
     }
     return { pts: sampleLine(S, E), end: E, length: dist(S, E), shape: 'line', tight: false }
   }
   if (kind === 'arc') {
     const v = { x: E.x - S.x, y: E.y - S.y }
-    const straight: Figure = { pts: sampleLine(S, E), end: E, length: dist(S, E), shape: 'line', tight: false }
+    const straight: Figure = {
+      pts: sampleLine(S, E),
+      end: E,
+      length: dist(S, E),
+      shape: 'line',
+      tight: false,
+    }
     if (hd === null) return straight
     const h = { x: Math.cos(hd), y: Math.sin(hd) }
     const n = { x: -h.y, y: h.x }
@@ -200,7 +241,10 @@ export function figure(kind: FigureKind, S: Point, hd: number | null, E: Point, 
       pts.push({ x: C.x + R * Math.cos(a), y: C.y + R * Math.sin(a) })
     }
     pts[pts.length - 1] = { x: E.x, y: E.y }
-    return withTurnCheck({ pts, end: E, length: len, shape: 'arc', tight: false, center: C, R, diameter: R * 2 }, o.turnDiameter)
+    return withTurnCheck(
+      { pts, end: E, length: len, shape: 'arc', tight: false, center: C, R, diameter: R * 2 },
+      o.turnDiameter,
+    )
   }
   // circle / volte
   const turnsA = o.half ? Math.PI : Math.PI * 2

@@ -79,7 +79,10 @@ export const readFixture = <T>(name: string): T =>
 export const uuid = (n: number): string => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`
 
 /** Global gaits with the same values as the prototype's gaits; ids are UUIDs keyed by PoC id. */
-export function globalGaits(pocGaits: PocGait[]): { gaits: Gait[]; idOf: (pocId: string) => string } {
+export function globalGaits(pocGaits: PocGait[]): {
+  gaits: Gait[]
+  idOf: (pocId: string) => string
+} {
   const ids = new Map(pocGaits.map((g, i) => [g.id, uuid(100 + i)]))
   const gaits: Gait[] = pocGaits.map((g) => ({
     id: ids.get(g.id) ?? '',

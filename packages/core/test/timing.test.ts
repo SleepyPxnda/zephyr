@@ -5,7 +5,13 @@ import { uuid } from './helpers'
 const path = (gaps: number[]): Path => ({
   v: 1,
   pts: Array.from({ length: gaps.length * 2 }, (_, i) => ({ x: i, y: 0 })),
-  sections: gaps.map((gap, k) => ({ start: k * 2, gaitId: uuid(1), gap, gapType: 'halt' as const, tack: null })),
+  sections: gaps.map((gap, k) => ({
+    start: k * 2,
+    gaitId: uuid(1),
+    gap,
+    gapType: 'halt' as const,
+    tack: null,
+  })),
 })
 const gapsOf = (p: Path) => p.sections.map((s) => s.gap)
 

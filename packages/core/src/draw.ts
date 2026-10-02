@@ -27,7 +27,9 @@ function pushSection(p: Strokes, gaitId: string, pending: Pending | null): void 
   p.sg.push(gaitId)
   p.tack.push(null)
   p.gaps.push(pending && pending.gap > 0 ? pending.gap : 0)
-  p.gt.push(pending ? (pending.gap > 0 ? pending.gapType : pending.jump ? 'pause' : 'halt') : 'halt')
+  p.gt.push(
+    pending ? (pending.gap > 0 ? pending.gapType : pending.jump ? 'pause' : 'halt') : 'halt',
+  )
 }
 
 function firstPoint(p: Strokes, pt: Point, gaitId: string): void {
@@ -90,7 +92,14 @@ export function drawFigure(h: Horse, g: FigureGesture): Horse {
     normalizeStrokes(p)
     const E = g.kind === 'circle' ? up : fig.end
     const first = p.pts[p.strokes[p.strokes.length - 1] as number]
-    if (first) first.geo = { kind: g.kind, E: { x: r2(E.x), y: r2(E.y) }, hand: g.hand, half: g.half, round: g.roundCorners }
+    if (first)
+      first.geo = {
+        kind: g.kind,
+        E: { x: r2(E.x), y: r2(E.y) },
+        hand: g.hand,
+        half: g.half,
+        round: g.roundCorners,
+      }
   } else if (!fresh) return h
   normalizeStrokes(p)
   return { ...h, path: fromStrokes(p), pending }
@@ -130,7 +139,12 @@ export function freehandEnd(h: Horse): Horse {
 }
 
 /** A complete freehand stroke through the raw pointer positions. */
-export function drawFreehand(h: Horse, raw: readonly Point[], gaitId: string, metresPerPx: number): Horse {
+export function drawFreehand(
+  h: Horse,
+  raw: readonly Point[],
+  gaitId: string,
+  metresPerPx: number,
+): Horse {
   const [first, ...rest] = raw
   if (!first) return h
   let out = freehandBegin(h, first, gaitId, metresPerPx)

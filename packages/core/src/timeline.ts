@@ -62,7 +62,13 @@ export function timeline(path: Path, ctx: TimelineContext): Timeline {
   if (!ctx.gaits.length) throw new Error('no gaits defined')
   const ts: number[] = []
   const t0s: number[] = []
-  const secs: SectionTiming[] = path.sections.map(() => ({ dist: 0, time: 0, start: 0, minR: Infinity, tight: 0 }))
+  const secs: SectionTiming[] = path.sections.map(() => ({
+    dist: 0,
+    time: 0,
+    start: 0,
+    minR: Infinity,
+    tight: 0,
+  }))
   const R = curveRadii(pts)
   const vs = new Array<number>(n).fill(0)
   const tight = new Array<boolean>(n).fill(false)
@@ -134,11 +140,17 @@ export interface Position {
  * in a halt at the end of the previous section (visible); in a pause hidden; otherwise
  * linear between two points.
  */
-export function posAt(path: Path, tl: Timeline, t: number, pending: Pending | null): Position | null {
+export function posAt(
+  path: Path,
+  tl: Timeline,
+  t: number,
+  pending: Pending | null,
+): Position | null {
   const pts = path.pts
   const first = pts[0]
   if (!first) return null
-  if (t < (tl.ts[0] as number)) return { x: first.x, y: first.y, i: 0, state: 'waiting', hidden: false }
+  if (t < (tl.ts[0] as number))
+    return { x: first.x, y: first.y, i: 0, state: 'waiting', hidden: false }
   if (pts.length === 1) return { x: first.x, y: first.y, i: 0, state: 'done', hidden: false }
   for (let i = 1; i < pts.length; i++) {
     const a = pts[i - 1] as PathPoint
@@ -154,7 +166,13 @@ export function posAt(path: Path, tl: Timeline, t: number, pending: Pending | nu
       const span = ti - t0
       const f = span > 0 ? (t - t0) / span : 1
       const b = pts[i] as PathPoint
-      return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, i, state: 'moving', hidden: false }
+      return {
+        x: a.x + (b.x - a.x) * f,
+        y: a.y + (b.y - a.y) * f,
+        i,
+        state: 'moving',
+        hidden: false,
+      }
     }
   }
   const last = pts[pts.length - 1] as PathPoint

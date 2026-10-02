@@ -24,15 +24,18 @@ interface Case {
   hand: Hand
   half: boolean
   shift: boolean
-  out: null | 'inside' | {
-    pts: Point[]
-    label?: string
-    end?: Point
-    center?: Point
-    R?: number | null
-    tight?: boolean
-    len?: number
-  }
+  out:
+    | null
+    | 'inside'
+    | {
+        pts: Point[]
+        label?: string
+        end?: Point
+        center?: Point
+        R?: number | null
+        tight?: boolean
+        len?: number
+      }
 }
 
 const cases = readFixture<Case[]>('geometry.json')
@@ -81,9 +84,13 @@ describe('golden: geometry tools', () => {
     if (out.end) {
       expect(Math.abs(res.end.x - out.end.x) + Math.abs(res.end.y - out.end.y)).toBeLessThan(TOL)
     }
-    if (out.R !== undefined) expect(Math.abs((res.R ?? NaN) - (out.R ?? Infinity))).toBeLessThan(TOL)
+    if (out.R !== undefined)
+      expect(Math.abs((res.R ?? NaN) - (out.R ?? Infinity))).toBeLessThan(TOL)
     if (out.center) {
-      expect(Math.abs((res.center?.x ?? NaN) - out.center.x) + Math.abs((res.center?.y ?? NaN) - out.center.y)).toBeLessThan(TOL)
+      expect(
+        Math.abs((res.center?.x ?? NaN) - out.center.x) +
+          Math.abs((res.center?.y ?? NaN) - out.center.y),
+      ).toBeLessThan(TOL)
     }
     expect(res.tight).toBe(!!out.tight)
     const label = out.label ?? ''
@@ -130,14 +137,33 @@ describe('geometry', () => {
   })
   it('names voltes by diameter (SPEC: Volte 6/8/10 m, Zirkel 20 m, sonst Kreis)', () => {
     const S = { x: 0, y: 0 }
-    const opts = { turnDiameter: 0, roundCorners: true, hand: 'left' as const, half: false, shift: false }
+    const opts = {
+      turnDiameter: 0,
+      roundCorners: true,
+      hand: 'left' as const,
+      half: false,
+      shift: false,
+    }
     const at = (d: number) => figure('circle', S, 0, { x: 1, y: -d }, opts)
-    expect([6, 8, 10, 20, 15, 12].map((d) => at(d).shape)).toEqual(['volte', 'volte', 'volte', 'zirkel', 'circle', 'circle'])
+    expect([6, 8, 10, 20, 15, 12].map((d) => at(d).shape)).toEqual([
+      'volte',
+      'volte',
+      'volte',
+      'zirkel',
+      'circle',
+      'circle',
+    ])
     expect(figure('circle', S, null, { x: 15, y: 0 }, opts).shape).toBe('circle')
     expect(figure('circle', S, 0, { x: 1, y: -6 }, { ...opts, half: true }).shape).toBe('halfVolte')
   })
   it('snaps the volte diameter to 0.5 m', () => {
-    const f = figure('circle', { x: 0, y: 0 }, 0, { x: 3, y: -6.2 }, { turnDiameter: 6, roundCorners: true, hand: 'auto', half: false, shift: false })
+    const f = figure(
+      'circle',
+      { x: 0, y: 0 },
+      0,
+      { x: 3, y: -6.2 },
+      { turnDiameter: 6, roundCorners: true, hand: 'auto', half: false, shift: false },
+    )
     expect(f.diameter).toBe(6)
     expect(f.hand).toBe('left')
     expect(f.length).toBeCloseTo(6 * Math.PI, 10)

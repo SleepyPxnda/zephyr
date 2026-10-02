@@ -42,8 +42,9 @@ export function useEditorShortcuts(a: ShortcutActions) {
     }
     if (e.altKey) return
     if (e.key === 'Escape') {
-      // Esc cancels pasting first, otherwise it clears the selection (SPEC)
+      // Esc cancels pasting first; in another tool it returns to "Auswählen"; else clears the selection
       if (a.pasteOpen()) a.cancelPaste()
+      else if (editor.tool !== 'select') editor.tool = 'select'
       else a.clearSelection()
     } else if (e.key === 'Enter' && a.pasteOpen()) a.confirmPaste()
     else if ((e.key === 'Delete' || e.key === 'Backspace') && a.canEdit()) a.removeSelection()

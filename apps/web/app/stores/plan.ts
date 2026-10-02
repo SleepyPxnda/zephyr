@@ -6,6 +6,8 @@ export type SaveStatus = 'saved' | 'saving' | 'unsaved' | 'conflict' | 'error'
 
 /** Autosave 1.5 s after the last change (SPEC "Speichern und Konflikte"). */
 const AUTOSAVE_MS = 1500
+/** Undo steps kept (SPEC "Zustand"). */
+const HISTORY_MAX = 150
 
 /**
  * The open plan document: loading, changes, autosave with `If-Match`. The document is replaced
@@ -27,6 +29,7 @@ export const usePlanStore = defineStore('plan', () => {
     role.value = r
     dirty.value = false
     status.value = 'saved'
+    history.value = []
   }
 
   const content = (p: Plan): PlanContent => {
@@ -95,10 +98,51 @@ export const usePlanStore = defineStore('plan', () => {
   }
   const updateHorse = (id: string, patch: Partial<Pick<Horse, 'name' | 'color' | 'tack'>>) =>
     mapHorse(id, (h) => ({ ...h, ...patch }))
+
+  // ---------- path changes with undo (SPEC "useHistory") ----------
+
+  /** One entry: path and announced gap of every horse an action changed (group = one step). */
+  type HistoryEntry = Map<string, Pick<Horse, 'path' | 'pending'>>
+  const history = shallowRef<HistoryEntry[]>([])
+
+  /** Changes paths of one or more horses as a single undo step. */
+  function editHorses(fn: (horses: readonly Horse[]) => readonly Horse[]) {
+    const p = plan.value
+    if (!p || !canEdit.value) return
+    const next = fn(p.horses)
+    const entry: HistoryEntry = new Map()
+    for (const h of p.horses) {
+      const n = next.find((q) => q.id === h.id)
+      if (n && (n.path !== h.path || n.pending !== h.pending))
+        entry.set(h.id, { path: h.path, pending: h.pending })
+    }
+    if (!entry.size) return
+    history.value = [...history.value, entry].slice(-HISTORY_MAX)
+    update((c) => ({ ...c, horses: [...next] }))
+  }
+
+  function undo() {
+    const entry = history.value.at(-1)
+    if (!entry) return
+    history.value = history.value.slice(0, -1)
+    update((c) => ({
+      ...c,
+      horses: c.horses.map((h) => {
+        const before = entry.get(h.id)
+        return before ? { ...h, ...before } : h
+      }),
+    }))
+  }
+
   const clearPath = (id: string) =>
-    mapHorse(id, (h) => ({ ...h, path: { v: 1, pts: [], sections: [] }, pending: null }))
+    editHorses((hs) =>
+      hs.map((h) =>
+        h.id === id ? { ...h, path: { v: 1, pts: [], sections: [] }, pending: null } : h,
+      ),
+    )
   /** Puts a changed horse (path, pending gap) back into the plan. */
-  const replaceHorse = (horse: Horse) => mapHorse(horse.id, () => horse)
+  const replaceHorse = (horse: Horse) =>
+    editHorses((hs) => hs.map((h) => (h.id === horse.id ? horse : h)))
   const removeHorse = (id: string) =>
     update((c) => ({ ...c, horses: c.horses.filter((h) => h.id !== id) }))
 
@@ -119,5 +163,8 @@ export const usePlanStore = defineStore('plan', () => {
     clearPath,
     replaceHorse,
     removeHorse,
+    editHorses,
+    undo,
+    canUndo: computed(() => history.value.length > 0),
   }
 })

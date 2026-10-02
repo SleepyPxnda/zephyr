@@ -5,6 +5,7 @@ import type { Horse } from '@zephyr/core'
 defineProps<{ horses: readonly Horse[]; activeId: string | null; editable: boolean }>()
 const emit = defineEmits<{
   select: [id: string]
+  selectWhole: [id: string]
   add: []
   update: [id: string, patch: Partial<Pick<Horse, 'name' | 'color' | 'tack'>>]
   clear: [id: string]
@@ -24,6 +25,7 @@ const emit = defineEmits<{
       :active="h.id === activeId"
       :editable="editable"
       @select="emit('select', h.id)"
+      @select-whole="emit('selectWhole', h.id)"
       @update="emit('update', h.id, $event)"
       @clear="emit('clear', h.id)"
       @remove="emit('remove', h.id)"

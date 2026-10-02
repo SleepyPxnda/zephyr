@@ -8,12 +8,12 @@ export default defineI18nConfig(() => ({
     de: {
       decimal: { style: 'decimal', minimumFractionDigits: 0, maximumFractionDigits: 2 },
       metres: { style: 'unit', unit: 'meter', maximumFractionDigits: 1 },
-      seconds: { style: 'unit', unit: 'second', maximumFractionDigits: 1 },
+      seconds: { style: 'unit', unit: 'second', unitDisplay: 'narrow', maximumFractionDigits: 1 },
     },
     en: {
       decimal: { style: 'decimal', minimumFractionDigits: 0, maximumFractionDigits: 2 },
       metres: { style: 'unit', unit: 'meter', maximumFractionDigits: 1 },
-      seconds: { style: 'unit', unit: 'second', maximumFractionDigits: 1 },
+      seconds: { style: 'unit', unit: 'second', unitDisplay: 'narrow', maximumFractionDigits: 1 },
     },
   },
 }))

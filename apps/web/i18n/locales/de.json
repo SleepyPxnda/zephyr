@@ -119,6 +119,7 @@
     "circle": "Zirkel/Volte",
     "split": "Teilen",
     "newLinesIn": "Neue Linien in",
+    "undo": "Rückgängig",
     "beforeNext": "Vor nächster Linie",
     "nextHalt": "+ Halt (2 s)",
     "nextPause": "+ Pause (4 s)",
@@ -162,7 +163,40 @@
       "right": "rechte Hand"
     }
   },
+  "select": {
+    "rotated": "Gedreht {deg}°"
+  },
+  "selection": {
+    "label": "Auswahl",
+    "titleOne": "{name} · Abschnitt {k}",
+    "titleMany": "{count} Abschnitte · {names}",
+    "clear": "Auswahl aufheben (Esc)",
+    "sharpCorner": "enthält eine spitze Ecke",
+    "tightest": "engste Stelle Ø {d}",
+    "tooTight": "{m} enger als der Wendekreis",
+    "gait": "Gangart",
+    "mixed": "gemischt",
+    "tack": "Sattelzeug",
+    "tackDefault": "Standard",
+    "startAt": "Start bei",
+    "gapBefore": "Lücke davor",
+    "gapType": "Art der Lücke",
+    "rotate": "Drehen",
+    "mirror": "Spiegeln",
+    "mirrorHand": "Hand wechseln",
+    "mirrorLong": "Längsachse",
+    "mirrorCross": "Querachse",
+    "follow": "Folgende hängen dran",
+    "whole": "Ganzer Weg",
+    "merge": "Zusammenführen",
+    "remove": "Löschen",
+    "removeTitle": "Abschnitt löschen? | Abschnitt löschen? | {count} Abschnitte löschen?",
+    "removeText": "Folgende Abschnitte behalten ihre Zeit; an der Stelle entsteht eine Pause. Rückgängig mit Strg+Z.",
+    "multiSelect": "Mehrfachauswahl",
+    "fineRotate": "Drehen in 15°-Schritten"
+  },
   "horse": {
+    "selectWhole": "Ganzen Weg von Pferd {number} auswählen",
     "defaultName": "Pferd {number}",
     "name": "Name von Pferd {number}",
     "namePlaceholder": "Name",

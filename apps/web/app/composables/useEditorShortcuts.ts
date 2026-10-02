@@ -8,15 +8,36 @@ export function isTyping(target: EventTarget | null): boolean {
   return el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)
 }
 
-/** Editor keyboard shortcuts; selection, undo and clipboard keys follow with M6/M7. */
-export function useEditorShortcuts(o: { canEdit: () => boolean }) {
+export interface ShortcutActions {
+  canEdit: () => boolean
+  undo: () => void
+  selectAll: () => void
+  clearSelection: () => void
+  removeSelection: () => void
+}
+
+/**
+ * Editor keyboard shortcuts: tools (V F G B Z T), Strg/Cmd+Z, Strg/Cmd+A, Esc, Entf/Rücktaste.
+ * Zoom (+ − 0) and W live with the arena; playback keys follow with M9, clipboard with M7.
+ */
+export function useEditorShortcuts(a: ShortcutActions) {
   const editor = useEditorStore()
   useEventListener(window, 'keydown', (e: KeyboardEvent) => {
-    if (e.defaultPrevented || isTyping(e.target) || e.ctrlKey || e.metaKey || e.altKey) return
-    const tool = TOOL_KEYS[e.key.toLowerCase()]
-    if (tool && o.canEdit()) {
-      editor.tool = tool
+    if (e.defaultPrevented || isTyping(e.target)) return
+    const mod = e.ctrlKey || e.metaKey
+    const key = e.key.toLowerCase()
+    if (mod && !e.altKey) {
+      if (key === 'z' && !e.shiftKey && a.canEdit()) a.undo()
+      else if (key === 'a') a.selectAll()
+      else return
       e.preventDefault()
+      return
     }
+    if (e.altKey) return
+    if (e.key === 'Escape') a.clearSelection()
+    else if ((e.key === 'Delete' || e.key === 'Backspace') && a.canEdit()) a.removeSelection()
+    else if (TOOL_KEYS[key] && a.canEdit() && !e.shiftKey) editor.tool = TOOL_KEYS[key]
+    else return
+    e.preventDefault()
   })
 }

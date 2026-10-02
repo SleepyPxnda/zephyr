@@ -6,6 +6,7 @@ import { buttonVariants } from '~/components/ui/button'
 const props = defineProps<{ horse: Horse; active: boolean; editable: boolean }>()
 const emit = defineEmits<{
   select: []
+  selectWhole: []
   update: [patch: Partial<Pick<Horse, 'name' | 'color' | 'tack'>>]
   clear: []
   remove: []
@@ -43,18 +44,27 @@ function runConfirmed() {
     :class="active ? 'border-ring ring-2 ring-ring/40' : ''"
     @click="emit('select')"
   >
+    <!-- SPEC: a click on the horse number selects the whole path -->
+    <button
+      type="button"
+      class="flex size-8 shrink-0 items-center justify-center rounded-full border border-foreground/60 text-sm font-bold"
+      :class="numberClass"
+      :style="{ backgroundColor: horse.color }"
+      :aria-label="t('horse.selectWhole', { number: horse.number })"
+      :data-testid="`horse-number-${horse.number}`"
+      @click.stop="emit('selectWhole')"
+    >
+      {{ horse.number }}
+    </button>
     <Popover>
       <PopoverTrigger as-child>
         <button
           type="button"
-          class="flex size-8 shrink-0 items-center justify-center rounded-full border border-foreground/60 text-sm font-bold"
-          :class="numberClass"
+          class="size-5 shrink-0 rounded-sm border border-foreground/60"
           :style="{ backgroundColor: horse.color }"
           :aria-label="t('horse.color', { number: horse.number })"
           :disabled="!editable"
-        >
-          {{ horse.number }}
-        </button>
+        />
       </PopoverTrigger>
       <PopoverContent class="w-auto">
         <div class="grid grid-cols-5 gap-2" role="group" :aria-label="t('horse.colorChoice')">

@@ -1,4 +1,5 @@
 import {
+  DeleteObjectsCommand,
   HeadBucketCommand,
   PutBucketCorsCommand,
   PutObjectCommand,
@@ -48,6 +49,17 @@ export async function allowBrowserReads(s3: S3Client, bucket: string): Promise<v
       },
     }),
   )
+}
+
+/** Removes objects, at most 1000 per request (S3 limit). */
+export async function deleteObjects(s3: S3Client, bucket: string, keys: string[]): Promise<void> {
+  for (let i = 0; i < keys.length; i += 1000)
+    await s3.send(
+      new DeleteObjectsCommand({
+        Bucket: bucket,
+        Delete: { Objects: keys.slice(i, i + 1000).map((Key) => ({ Key })), Quiet: true },
+      }),
+    )
 }
 
 export async function bucketReady(s3: S3Client, bucket: string): Promise<boolean> {

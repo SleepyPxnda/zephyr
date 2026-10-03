@@ -15,6 +15,27 @@
       "when": 1790971136431,
       "tag": "0001_init",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791031199947,
+      "tag": "0002_purge_users",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791031558347,
+      "tag": "0003_drop_password_auth",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791031702838,
+      "tag": "0004_discord_users",
+      "breakpoints": true
     }
   ]
 }

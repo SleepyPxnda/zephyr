@@ -1,8 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { S3Client } from '@aws-sdk/client-s3'
-import { emailSchema, passwordSchema } from '@zephyr/core'
 import { count, eq } from 'drizzle-orm'
-import { hashPassword } from '../lib/password'
 import { putObject } from '../lib/storage'
 import type { Db } from './client'
 import { arena, files, gaits, users } from './schema'
@@ -17,9 +15,17 @@ export const DEFAULT_GAITS = [
 /** Placeholder size in the 16:9 ratio of the hall image until the real measurements are known. */
 export const PLACEHOLDER_ARENA = { lengthM: 40, widthM: 22.5 }
 
+/** Made-up accounts for development: one of each status (ids are not real Discord ids). */
+export const DEMO_USERS = [
+  { discordId: '100000000000000001', username: 'anna', name: 'Anna (Demo)', status: 'active' },
+  { discordId: '100000000000000002', username: 'ben', name: 'Ben (Demo)', status: 'pending' },
+  { discordId: '100000000000000003', username: 'clara', name: 'Clara (Demo)', status: 'rejected' },
+] as const
+
 export interface SeedOptions {
-  adminEmail: string
-  adminPassword: string
+  superAdminDiscordId: string
+  /** also create DEMO_USERS (never in production) */
+  demoUsers: boolean
   hallImage: Uint8Array
   s3: S3Client
   bucket: string
@@ -27,29 +33,46 @@ export interface SeedOptions {
 
 export interface SeedResult {
   adminCreated: boolean
+  demoUsersCreated: number
   gaitsCreated: number
   arenaCreated: boolean
 }
 
 /** Idempotent: creates what is missing and never overwrites existing data. */
 export async function seed(db: Db, o: SeedOptions): Promise<SeedResult> {
-  const email = emailSchema.parse(o.adminEmail)
-  const password = passwordSchema.parse(o.adminPassword)
-  const result: SeedResult = { adminCreated: false, gaitsCreated: 0, arenaCreated: false }
+  const result: SeedResult = {
+    adminCreated: false,
+    demoUsersCreated: 0,
+    gaitsCreated: 0,
+    arenaCreated: false,
+  }
 
-  let [admin] = await db.select().from(users).where(eq(users.email, email))
-  if (!admin) {
-    ;[admin] = await db
+  // the super admin: name and avatar follow at the first Discord sign-in
+  const [created] = await db
+    .insert(users)
+    .values({
+      discordId: o.superAdminDiscordId,
+      // placeholder until the first sign-in; the id cannot collide with a Discord name
+      username: o.superAdminDiscordId,
+      name: 'Admin',
+      status: 'active',
+      role: 'admin',
+      decidedAt: new Date(),
+    })
+    .onConflictDoNothing()
+    .returning()
+  result.adminCreated = !!created
+  const [admin] = await db.select().from(users).where(eq(users.discordId, o.superAdminDiscordId))
+  if (!admin) throw new Error('admin account could not be created')
+
+  if (o.demoUsers) {
+    const demo = await db
       .insert(users)
-      .values({ email, name: 'Admin', passwordHash: await hashPassword(password), role: 'admin' })
+      .values(DEMO_USERS.map((u) => ({ ...u })))
       .onConflictDoNothing()
       .returning()
-    result.adminCreated = !!admin
-    admin ??= (await db.select().from(users).where(eq(users.email, email)))[0]
-  } else if (admin.role !== 'admin') {
-    await db.update(users).set({ role: 'admin' }).where(eq(users.id, admin.id))
+    result.demoUsersCreated = demo.length
   }
-  if (!admin) throw new Error('admin account could not be created')
 
   const [{ n } = { n: 0 }] = await db.select({ n: count() }).from(gaits)
   if (n === 0) {

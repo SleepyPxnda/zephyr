@@ -1,12 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   geoSchema,
-  loginSchema,
   MAX_PATH_POINTS,
   partSchema,
   pathSchema,
   planContentSchema,
-  registerSchema,
   type PlanContent,
 } from '../src'
 import { uuid } from './helpers'
@@ -68,25 +66,6 @@ describe('plan schema', () => {
     ],
   ])('rejects %s', (_, change) => {
     expect(planContentSchema.safeParse(change(plan())).success).toBe(false)
-  })
-})
-
-describe('auth inputs', () => {
-  it('normalizes e-mail addresses and requires 10 characters of password', () => {
-    expect(
-      registerSchema.parse({ email: ' Anna@Example.DE ', name: ' Anna ', password: '0123456789' }),
-    ).toEqual({
-      email: 'anna@example.de',
-      name: 'Anna',
-      password: '0123456789',
-    })
-    expect(
-      registerSchema.safeParse({ email: 'anna@example.de', name: 'A', password: 'short' }).success,
-    ).toBe(false)
-    expect(
-      registerSchema.safeParse({ email: 'nope', name: 'A', password: '0123456789' }).success,
-    ).toBe(false)
-    expect(loginSchema.safeParse({ email: 'anna@example.de', password: '' }).success).toBe(false)
   })
 })
 

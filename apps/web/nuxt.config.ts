@@ -26,6 +26,12 @@ export default defineNuxtConfig({
     // daily at 03:00: delete soft-deleted plans after 30 days
     scheduledTasks: { '0 3 * * *': ['plans:purge'] },
   },
+  // dev-only sign-in without Discord (server/dev/dev-login.ts); not part of production builds
+  $development: {
+    nitro: {
+      handlers: [{ route: '/auth/dev-login', method: 'get', handler: '~~/server/dev/dev-login' }],
+    },
+  },
   // component names as in the SPEC (HorseLaneHeader, not HorsesHorseLaneHeader)
   components: [{ path: '~/components', pathPrefix: false }],
   css: ['~/assets/css/tailwind.css'],

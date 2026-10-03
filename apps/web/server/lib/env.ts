@@ -20,3 +20,21 @@ export function serverEnv(source: Record<string, string | undefined> = process.e
   cached ??= envSchema.parse(source)
   return cached
 }
+
+/** Sign-in settings; separate from serverEnv so that migrations do not need them. */
+const authEnvSchema = z.object({
+  /** Discord user id of the super admin: always active and admin */
+  SUPER_ADMIN_DISCORD_ID: z.string().regex(/^\d{17,20}$/),
+  /** optional: Discord webhook announcing new access requests; empty counts as unset */
+  DISCORD_WEBHOOK_URL: z.union([z.literal('').transform(() => undefined), z.url()]).optional(),
+})
+
+export type AuthEnv = z.infer<typeof authEnvSchema>
+
+let cachedAuth: AuthEnv | undefined
+
+export function authEnv(source: Record<string, string | undefined> = process.env): AuthEnv {
+  if (source !== process.env) return authEnvSchema.parse(source)
+  cachedAuth ??= authEnvSchema.parse(source)
+  return cachedAuth
+}

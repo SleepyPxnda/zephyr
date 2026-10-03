@@ -171,21 +171,6 @@ export const adminUserPatchSchema = z
   .partial()
   .refine((p) => Object.keys(p).length > 0, { message: 'nothing to change' })
 
-export const emailSchema = z.string().trim().toLowerCase().pipe(z.email().max(254))
-/** At least 10 characters; long passphrases are welcome, but bounded for hashing. */
-export const passwordSchema = z.string().min(10).max(200)
-
-export const registerSchema = z.object({
-  email: emailSchema,
-  name: z.string().trim().min(1).max(80),
-  password: passwordSchema,
-})
-
-export const loginSchema = z.object({
-  email: emailSchema,
-  password: z.string().min(1).max(200),
-})
-
 /** POST /api/plans: a new empty plan, or an import of prototype JSON (`poc`). */
 export const createPlanSchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
@@ -221,8 +206,8 @@ export const gaitsInputSchema = z
 export const arenaInputSchema = arenaSchema
 
 export const memberRoleSchema = z.enum(['viewer', 'editor'])
-/** POST /api/plans/:id/members: share with an existing account */
-export const memberInviteSchema = z.object({ email: emailSchema, role: memberRoleSchema })
+/** POST /api/plans/:id/members: share with an approved account by Discord user name */
+export const memberInviteSchema = z.object({ username: usernameSchema, role: memberRoleSchema })
 /** PUT /api/plans/:id/members/:userId */
 export const memberUpdateSchema = z.object({ role: memberRoleSchema })
 /** read link token: 32 random bytes, base64url */
@@ -231,8 +216,6 @@ export const shareTokenSchema = z.string().regex(/^[\w-]{43}$/)
 export type CreatePlanInput = z.infer<typeof createPlanSchema>
 export type PatchPlanInput = z.infer<typeof patchPlanSchema>
 export type GaitInput = z.infer<typeof gaitInputSchema>
-export type RegisterInput = z.infer<typeof registerSchema>
-export type LoginInput = z.infer<typeof loginSchema>
 export type MemberRole = z.infer<typeof memberRoleSchema>
 export type Point = z.infer<typeof pointSchema>
 export type GeoKind = z.infer<typeof geoKindSchema>

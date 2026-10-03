@@ -9,31 +9,20 @@
   },
   "auth": {
     "email": "E-Mail-Adresse",
-    "password": "Passwort",
-    "name": "Name",
     "login": {
       "title": "Anmelden",
-      "submit": "Anmelden",
-      "switch": "Noch kein Konto?",
-      "switchLink": "Registrieren"
+      "description": "Melde dich mit Discord an. Beim ersten Mal entsteht eine Zugangsanfrage, die ein Admin freigibt.",
+      "discord": "Mit Discord anmelden"
     },
-    "register": {
-      "title": "Konto anlegen",
-      "submit": "Konto anlegen",
-      "passwordHint": "Mindestens 10 Zeichen.",
-      "switch": "Schon registriert?",
-      "switchLink": "Anmelden"
+    "status": {
+      "pending": "Deine Anfrage ist eingegangen und wartet auf Freigabe.",
+      "rejected": "Dein Zugang wurde nicht freigegeben.",
+      "error": "Die Anmeldung bei Discord ist fehlgeschlagen. Bitte noch einmal versuchen."
     },
     "logout": "Abmelden",
     "busy": "Bitte warten …"
   },
   "errors": {
-    "email": "Bitte eine gültige E-Mail-Adresse eingeben.",
-    "name": "Bitte einen Namen eingeben.",
-    "passwordLength": "Das Passwort braucht mindestens 10 Zeichen.",
-    "passwordRequired": "Bitte das Passwort eingeben.",
-    "invalid_credentials": "E-Mail-Adresse oder Passwort stimmt nicht.",
-    "email_taken": "Für diese E-Mail-Adresse gibt es schon ein Konto.",
     "unknown": "Das hat nicht geklappt. Bitte später noch einmal versuchen."
   },
   "common": {

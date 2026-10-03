@@ -1,3 +1,4 @@
+import { discordAvatarUrl } from '@zephyr/core'
 import { eq } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { users } from '../db/schema'
@@ -5,13 +6,17 @@ import { hasRole, planRoleOf, type PlanRole } from '../lib/access'
 
 export type AppUser = typeof users.$inferSelect
 
-/** Session user, re-read from the database (deleted accounts and role changes count at once). */
+/**
+ * Session user, re-read from the database (deleted or blocked accounts and role changes count at
+ * once).
+ */
 export async function requireUser(event: H3Event): Promise<AppUser> {
   const session = await getUserSession(event)
   const id = session.user?.id
   if (!id) throw problem(401, 'unauthenticated', 'Bitte anmelden.')
   const [user] = await useDb().select().from(users).where(eq(users.id, id))
-  if (!user) {
+  // blocked or not (yet) approved accounts lose their session at once
+  if (!user || user.status !== 'active') {
     await clearUserSession(event)
     throw problem(401, 'unauthenticated', 'Bitte anmelden.')
   }
@@ -41,10 +46,11 @@ export async function requirePlanRole(
   return { user, role }
 }
 
-/** What goes into the (encrypted) session cookie: only what identifies the user. */
+/** What goes into the (encrypted) session cookie: only what identifies and shows the user. */
 export const sessionUser = (u: AppUser) => ({
   id: u.id,
-  email: u.email,
+  username: u.username,
   name: u.name,
+  avatarUrl: discordAvatarUrl(u.discordId, u.avatar),
   role: u.role,
 })

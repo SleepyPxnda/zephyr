@@ -7,8 +7,6 @@ export type ProblemCode =
   | 'forbidden'
   | 'not_found'
   | 'validation'
-  | 'invalid_credentials'
-  | 'email_taken'
   | 'csrf'
   | 'revision_conflict'
   | 'unknown_gaits'

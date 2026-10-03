@@ -1,9 +1,12 @@
+import type { UserRole } from '@zephyr/core'
+
 declare module '#auth-utils' {
   interface User {
     id: string
-    email: string
+    username: string
     name: string
-    role: 'user' | 'admin'
+    avatarUrl: string
+    role: UserRole
   }
 }
 

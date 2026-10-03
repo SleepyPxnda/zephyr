@@ -1,5 +1,5 @@
-// Every page needs an account, except sign-in, sign-up and the read-only view of share links.
-const PUBLIC = new Set(['/login', '/register'])
+// Every page needs an account, except sign-in and the read-only view of share links.
+const PUBLIC = new Set(['/login'])
 
 export default defineNuxtRouteMiddleware((to) => {
   const { loggedIn } = useUserSession()

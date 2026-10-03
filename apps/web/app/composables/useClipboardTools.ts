@@ -1,13 +1,15 @@
 import {
   copySelection,
   dist,
+  insertAnchor,
+  insertClips,
+  partClips,
   partPoints,
-  paste,
-  pasteAnchor,
-  pasteOffset,
   pasteTargets,
+  pasteTime,
   wholePathKeys,
   type Gait,
+  type Horse,
   type PathPoint,
   type Point,
 } from '@zephyr/core'
@@ -16,7 +18,7 @@ import type { ArenaPointer } from './useDrawTools'
 export interface PastePreview {
   color: string
   pts: PathPoint[]
-  /** the straight connection from the path end, if any */
+  /** the connecting line from the previous section's end, if any */
   from: Point | null
 }
 
@@ -25,7 +27,8 @@ const SNAP_PX = 14
 
 /**
  * Copy and paste (SPEC "Kopieren und Einfügen", prototype `copySel` / `doPaste`): copies exactly
- * the selection (or the active horse's whole path), pastes with a movable preview.
+ * the selection (or the active horse's whole path), pastes with a movable preview right after
+ * the selection (without one at the playhead), as in SPEC "Umsortieren und Verbindungen".
  */
 export function useClipboardTools(gaits: Ref<readonly Gait[]>) {
   const planStore = usePlanStore()
@@ -51,10 +54,24 @@ export function useClipboardTools(gaits: Ref<readonly Gait[]>) {
     return !!clip
   }
 
-  function setPosition(kind: 'end' | 'orig') {
+  const ctx = () => ({ gaits: gaits.value })
+  /** time part i is pasted at: parts of several horses keep their offsets */
+  const partTime = (i: number) => {
     const clip = editor.clipboard
-    if (clip)
-      editor.paste = { ...editor.paste, off: pasteOffset(clip, targets.value[0] ?? null, kind) }
+    const multi = (clip?.parts.length ?? 0) > 1
+    return editor.paste.t + (multi ? (clip?.parts[i]?.tOff ?? 0) : 0)
+  }
+  /** where part i would continue: end of the section before it */
+  const anchorOf = (i: number, h: Horse | null | undefined) =>
+    h ? insertAnchor(h, partTime(i), ctx()) : null
+
+  /** "An den Vorgänger": the first point onto the end of the previous section; or the original place */
+  function setPosition(kind: 'end' | 'orig') {
+    const first = editor.clipboard?.parts[0]?.pts[0]
+    const end = anchorOf(0, targets.value[0])
+    const off =
+      kind === 'end' && end && first ? { x: end.x - first.x, y: end.y - first.y } : { x: 0, y: 0 }
+    editor.paste = { ...editor.paste, off }
   }
 
   /** Strg+V: opens the paste bar; several parts default to their place and a pause. */
@@ -67,6 +84,7 @@ export function useClipboardTools(gaits: Ref<readonly Gait[]>) {
       off: { x: 0, y: 0 },
       link: multi ? 'gap' : 'line',
       target: editor.paste.target,
+      t: pasteTime(horses.value, editor.selection, editor.time, ctx()),
     }
     if (!targets.value.some(Boolean)) {
       editor.paste = { ...editor.paste, open: false }
@@ -80,20 +98,26 @@ export function useClipboardTools(gaits: Ref<readonly Gait[]>) {
     drag = null
   }
 
-  /** Enter: one undo step for all receiving horses. */
+  /** Enter: one undo step for all receiving horses; the pasted sections become the selection. */
   function confirm() {
     const clip = editor.clipboard
     if (!clip || !editor.paste.open) return
-    const { link, target, off } = editor.paste
-    planStore.editHorses((hs) =>
-      paste(
-        hs,
-        clip,
-        { activeId: editor.activeHorseId, target, link, off },
-        { gaits: gaits.value },
-      ),
-    )
-    editor.clearSelection()
+    const { link, off } = editor.paste
+    const keys: string[] = []
+    const into = targets.value
+    planStore.editHorses((hs) => {
+      let out = [...hs]
+      clip.parts.forEach((part, i) => {
+        const h = out.find((q) => q.id === into[i]?.id)
+        if (!h) return
+        const clips = partClips({ ...part, pts: partPoints(part, off) }, link)
+        const res = insertClips(h, clips, partTime(i), editor.gapFill, ctx())
+        out = out.map((q) => (q.id === h.id ? res.horse : q))
+        keys.push(...res.keys)
+      })
+      return out
+    })
+    editor.selection = keys
     close()
   }
 
@@ -104,7 +128,7 @@ export function useClipboardTools(gaits: Ref<readonly Gait[]>) {
       const h = targets.value[i]
       if (!h) return []
       const pts = partPoints(part, editor.paste.off)
-      const end = pasteAnchor(h)
+      const end = anchorOf(i, h)
       return [{ color: h.color, pts, from: editor.paste.link === 'line' && end ? end : null }]
     })
   })
@@ -139,7 +163,7 @@ export function useClipboardTools(gaits: Ref<readonly Gait[]>) {
         y: drag.off0.y + (e.screen.y - drag.screen0.y) / e.scale,
       }
       const first = clip.parts[0]?.pts[0]
-      const end = pasteAnchor(targets.value[0] ?? null)
+      const end = anchorOf(0, targets.value[0])
       if (first && end && dist(end, { x: first.x + off.x, y: first.y + off.y }) * e.scale < SNAP_PX)
         off = { x: end.x - first.x, y: end.y - first.y }
       editor.paste = { ...editor.paste, off }

@@ -158,6 +158,8 @@ function strokePath(
   end: Point | null,
   color: string,
   width: number,
+  /** segments (by end point) left out, e.g. connecting lines drawn on their own */
+  skip?: ReadonlySet<number>,
 ) {
   const first = pts[0]
   if (!first) return
@@ -167,7 +169,7 @@ function strokePath(
   for (let i = 1; i <= to && i < pts.length; i++) {
     const q = pts[i] as PathPoint
     ;[x, y] = px(t, q)
-    if (q.jump) ctx.moveTo(x, y)
+    if (q.jump || skip?.has(i)) ctx.moveTo(x, y)
     else ctx.lineTo(x, y)
   }
   if (end) {
@@ -204,11 +206,24 @@ export function drawScene(
     const pos = posAt(h.path, tl, s.time, h.pending)
     const active = h.id === s.activeId
     if (shown(h)) {
-      // planned path, dashed
+      // planned path, dashed; automatic connecting lines thin and finely dashed
+      const links = new Set(h.path.sections.flatMap((sec) => (sec.link ? [sec.start] : [])))
       ctx.save()
       ctx.globalAlpha = active ? 0.8 : 0.55
       ctx.setLineDash([6, 6])
-      strokePath(ctx, t, pts, pts.length - 1, null, h.color, 2)
+      strokePath(ctx, t, pts, pts.length - 1, null, h.color, 2, links)
+      ctx.setLineDash([2, 4])
+      ctx.lineWidth = 1.5
+      ctx.strokeStyle = h.color
+      ctx.beginPath()
+      for (const i of links) {
+        const a = pts[i - 1]
+        const b = pts[i]
+        if (!a || !b) continue
+        ctx.moveTo(...px(t, a))
+        ctx.lineTo(...px(t, b))
+      }
+      ctx.stroke()
       ctx.restore()
       const hd = headingAt(pts, pts.length - 1)
       const last = pts[pts.length - 1] as PathPoint
@@ -312,6 +327,7 @@ export function drawScene(
   const ap = s.horses.find((h) => h.id === s.activeId)
   if (!s.onlyHorses && ap && ap.path.pts.length > 1) {
     ap.path.sections.forEach((sec, k) => {
+      if (sec.link) return
       const { s: st, e } = sectionRange(ap.path, k)
       const from = Math.max(0, st - 1)
       if (e <= from) return

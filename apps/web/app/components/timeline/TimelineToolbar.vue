@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { bpmFromTaps, PLAYBACK_RATES, type Timing } from '@zephyr/core'
+import { bpmFromTaps, PLAYBACK_RATES, type GapType, type Timing } from '@zephyr/core'
 import {
   ChevronDown,
   Grid3x3,
@@ -28,6 +28,10 @@ const rate = defineModel<number>('rate', { required: true })
 const zoom = defineModel<number>('zoom', { required: true })
 const snapBeat = defineModel<boolean>('snapBeat', { required: true })
 const magnet = defineModel<boolean>('magnet', { required: true })
+const gapFill = defineModel<GapType>('gapFill', { required: true })
+const setGapFill = (v: unknown) => {
+  if (v === 'halt' || v === 'pause') gapFill.value = v
+}
 const emit = defineEmits<{
   timing: [patch: Partial<Timing>]
   addHorse: []
@@ -260,6 +264,28 @@ const onZoom = (v: number[] | undefined) => {
           <TooltipContent class="max-w-72">
             <b>{{ $t('timeline.magnet') }}</b> · {{ $t('timeline.magnetHint') }}
           </TooltipContent>
+        </Tooltip>
+      </div>
+
+      <!-- type of gaps that come up when blocks are moved or pasted -->
+      <div class="flex items-center gap-2">
+        <span id="gap-fill" class="text-muted-foreground">{{ $t('timeline.gapFill') }}</span>
+        <Tooltip>
+          <TooltipTrigger as-child>
+            <ToggleGroup
+              type="single"
+              variant="outline"
+              size="sm"
+              :model-value="gapFill"
+              aria-labelledby="gap-fill"
+              data-testid="gap-fill"
+              @update:model-value="setGapFill"
+            >
+              <ToggleGroupItem value="halt">{{ $t('editor.arena.halt') }}</ToggleGroupItem>
+              <ToggleGroupItem value="pause">{{ $t('editor.arena.pause') }}</ToggleGroupItem>
+            </ToggleGroup>
+          </TooltipTrigger>
+          <TooltipContent class="max-w-72">{{ $t('timeline.gapFillHint') }}</TooltipContent>
         </Tooltip>
       </div>
 

@@ -5,7 +5,9 @@ import {
   dragPart,
   dragTarget,
   laneBlocks,
+  moveClips,
   moveSectionTime,
+  parseSelKey,
   nextAnchorStart,
   playEnd,
   sectionTimes,
@@ -53,6 +55,10 @@ export interface TimelinePointer {
   x: number
   shift: boolean
   alt: boolean
+  /** Ctrl or Cmd: copy instead of move */
+  ctrl: boolean
+  /** horse lane under the pointer (dragging a block into another lane) */
+  lane?: string
   target: TimelineTarget
 }
 
@@ -61,14 +67,20 @@ type Drag =
       kind: 'section'
       horseId: string
       k: number
+      /** sections moved together: the pressed one, or the selection of that horse */
+      ks: number[]
+      /** automatic connecting lines are only selected, never dragged */
+      link: boolean
       onGap: boolean
       x0: number
       start0: number
       len: number
-      ripple: boolean
+      shift: boolean
       base: readonly Horse[]
       anchors: Anchor[]
       moved: boolean
+      /** keys of the dropped sections in the preview */
+      keys: string[]
     }
   | {
       kind: 'part'
@@ -87,9 +99,10 @@ const NO_TIMING: Timing = { bpm: null, beat0: 0, meter: 4, musicId: null }
 
 /**
  * The timeline (SPEC "Zeitleiste und Wiedergabe", prototype `onTrackDown/Move/Up`, part drag):
- * click seeks and selects, dragging moves sections in time (following ones are only pushed,
- * Shift moves all), parts are drawn, moved and resized. Drags snap to edges (magnet), otherwise
- * to the beat or 0.1 s, preview on a copy and are saved when released.
+ * click seeks and selects; dragging moves sections like clips (SPEC "Umsortieren und
+ * Verbindungen": reorder, into another lane, Shift keeps the hole, Ctrl copies, Esc cancels);
+ * parts are drawn, moved and resized. Drags snap to edges (magnet), otherwise to the beat or
+ * 0.1 s, preview on a copy and are saved when released.
  */
 export function useTimelineEdit(gaits: Ref<readonly Gait[]>) {
   const planStore = usePlanStore()
@@ -176,11 +189,18 @@ export function useTimelineEdit(gaits: Ref<readonly Gait[]>) {
     if (!drag) return
     if (e.kind === 'move') return move(drag, e)
     const d = drag
-    drag = null
     if (e.kind === 'up') up(d, e)
+    cancelDrag()
+  }
+
+  /** Esc while dragging: nothing is saved. */
+  function cancelDrag() {
+    const was = !!drag
+    drag = null
     previewHorses.value = null
     previewParts.value = null
     guide.value = null
+    return was
   }
 
   function down(e: TimelinePointer) {
@@ -189,19 +209,32 @@ export function useTimelineEdit(gaits: Ref<readonly Gait[]>) {
       const h = horses.value.find((q) => q.id === horseId)
       const tl = timelines.value.get(horseId)
       if (!h || !tl) return
-      const { a, b } = sectionTimes(h.path, tl, k)
+      // a selected section takes the other selected sections of its horse along
+      const key = selKey(horseId, k)
+      const ks = editor.isSelected(key)
+        ? editor.selection.flatMap((s) => {
+            const p = parseSelKey(s)
+            return p.horseId === horseId && !h.path.sections[p.k]?.link ? [p.k] : []
+          })
+        : [k]
+      ks.sort((x, y) => x - y)
+      const a = sectionTimes(h.path, tl, ks[0] ?? k).a
+      const b = sectionTimes(h.path, tl, ks[ks.length - 1] ?? k).b
       drag = {
         kind: 'section',
         horseId,
         k,
+        ks: ks.length ? ks : [k],
+        link: !!h.path.sections[k]?.link,
         onGap: !!e.target.gap,
         x0: e.x,
         start0: a,
         len: b - a,
-        ripple: e.shift,
+        shift: e.shift,
         base: horses.value,
-        anchors: anchors({ horseId }),
+        anchors: anchors({}),
         moved: false,
+        keys: [],
       }
       return
     }
@@ -233,24 +266,41 @@ export function useTimelineEdit(gaits: Ref<readonly Gait[]>) {
     const dx = e.x - d.x0
     if (!d.moved && Math.abs(dx) < DRAG_PX) return
     if (!planStore.canEdit) return
+    if (d.kind === 'section' && d.link) return
     d.moved = true
-    if (d.kind === 'section') return moveSection(d, dx, e.alt)
+    if (d.kind === 'section') return moveSection(d, dx, e)
     movePart(d, e, dx)
   }
 
-  function moveSection(d: Extract<Drag, { kind: 'section' }>, dx: number, alt: boolean) {
+  function moveSection(d: Extract<Drag, { kind: 'section' }>, dx: number, e: TimelinePointer) {
+    const toId = e.lane ?? d.horseId
+    // the dragged sections themselves are no snap targets
+    const own = new Set(d.ks.map((k) => selKey(d.horseId, k)))
+    const targets = d.anchors.filter(
+      (a) => !(a.ownerId === d.horseId && a.k !== null && own.has(selKey(d.horseId, a.k))),
+    )
     const { start, hit } = dragTarget(
       d.start0 + dx / pps.value,
       d.len,
-      d.anchors,
-      magnetRange(alt),
+      targets,
+      magnetRange(e.alt),
       snapOpts.value,
     )
-    previewHorses.value = d.base.map((h) =>
-      h.id === d.horseId
-        ? { ...h, path: moveSectionTime(h.path, d.k, d.start0, start, d.ripple) }
-        : h,
+    const res = moveClips(
+      d.base,
+      {
+        fromId: d.horseId,
+        ks: d.ks,
+        toId,
+        t: start,
+        copy: e.ctrl,
+        keepHole: e.shift,
+        fill: editor.gapFill,
+      },
+      { gaits: gaits.value },
     )
+    previewHorses.value = res.horses
+    d.keys = res.keys
     guide.value = hit ? { t: hit.anchor.t, text: describe(hit) } : null
   }
 
@@ -291,15 +341,22 @@ export function useTimelineEdit(gaits: Ref<readonly Gait[]>) {
   function up(d: Drag, e: TimelinePointer) {
     if (d.kind === 'seek') return
     if (d.kind === 'section') {
+      const moved = previewHorses.value
       if (d.moved) {
-        const moved = previewHorses.value?.find((h) => h.id === d.horseId)
-        if (moved) planStore.editHorses((hs) => hs.map((h) => (h.id === d.horseId ? moved : h)))
+        // one undo step, also when two horses changed
+        if (moved)
+          planStore.editHorses((hs) => hs.map((h) => moved.find((q) => q.id === h.id) ?? h))
+        const first = d.keys[0]
+        if (first) {
+          editor.activeHorseId = parseSelKey(first).horseId
+          editor.selection = d.keys
+        }
         return
       }
       // click: select the section (Shift or the touch switch adds) and jump to its start
       const key = selKey(d.horseId, d.k)
       editor.activeHorseId = d.horseId
-      if (d.ripple || editor.multiSelect) return editor.toggle(key)
+      if (d.shift || editor.multiSelect) return editor.toggle(key)
       editor.selectOnly(key)
       const gap = d.base.find((h) => h.id === d.horseId)?.path.sections[d.k]?.gap ?? 0
       return seek(d.onGap ? d.start0 - gap : d.start0)
@@ -398,6 +455,7 @@ export function useTimelineEdit(gaits: Ref<readonly Gait[]>) {
     span,
     guide,
     preview: computed(() => previewHorses.value),
+    cancelDrag,
     previewParts: computed(() => previewParts.value),
     horseName,
     seek,

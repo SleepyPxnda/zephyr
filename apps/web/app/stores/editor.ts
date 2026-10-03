@@ -1,4 +1,4 @@
-import type { Clipboard, Hand, PasteLink, PasteTarget, Point } from '@zephyr/core'
+import type { Clipboard, GapType, Hand, PasteLink, PasteTarget, Point } from '@zephyr/core'
 
 export type Tool = 'select' | 'free' | 'line' | 'arc' | 'circle' | 'split'
 /** Keyboard shortcuts of the tools (SPEC "Interaktionen und Tastenkürzel"). */
@@ -54,6 +54,8 @@ export const useEditorStore = defineStore('editor', () => {
   const snapBeat = shallowRef(true)
   /** magnet: snap dragged blocks to edges (Alt switches it off while dragging) */
   const magnet = shallowRef(true)
+  /** "Lücken: Halt | Pause": type of gaps that come up when blocks are moved or pasted */
+  const gapFill = shallowRef<GapType>('halt')
   /** the part shown in the part editor */
   const partId = shallowRef<string | null>(null)
   /** length of the loaded music (s); 0 without music (M9) */
@@ -61,17 +63,25 @@ export const useEditorStore = defineStore('editor', () => {
 
   // ---------- clipboard (M7); kept when switching plans ----------
   const clipboard = shallowRef<Clipboard | null>(null)
-  /** paste bar: open, preview offset (m), join, target horses */
-  const paste = ref<{ open: boolean; off: Point; link: PasteLink; target: PasteTarget }>({
+  /** paste bar: open, preview offset (m), join, target horses, time to paste at (s) */
+  const paste = ref<{
+    open: boolean
+    off: Point
+    link: PasteLink
+    target: PasteTarget
+    t: number
+  }>({
     open: false,
     off: { x: 0, y: 0 },
     link: 'line',
     target: 'same',
+    t: 0,
   })
 
   return {
     snapBeat,
     magnet,
+    gapFill,
     partId,
     musicDuration,
     clipboard,

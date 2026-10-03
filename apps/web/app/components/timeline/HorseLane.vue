@@ -50,6 +50,8 @@ const items = computed(() => {
     const dur = duration(b.b - b.a)
     const gapType = s?.gapType ?? 'halt'
     const gapLen = b.gap ? b.gap.b - b.gap.a : 0
+    const link = !!s?.link
+    const times = { name, k: b.k + 1, from: clock(b.a), to: clock(b.b) }
     return {
       ...b,
       gaitName: gait?.name ?? '',
@@ -58,14 +60,11 @@ const items = computed(() => {
       bare,
       selected,
       dur,
+      link,
       label: [
-        t('timeline.blockLabel', {
-          name,
-          k: b.k + 1,
-          gait: gait?.name ?? '',
-          from: clock(b.a),
-          to: clock(b.b),
-        }),
+        link
+          ? t('timeline.linkLabel', times)
+          : t('timeline.blockLabel', { ...times, gait: gait?.name ?? '' }),
         sec ? n(sec.dist, 'metres') : '',
         dur,
         bare ? t('timeline.bare') : '',
@@ -110,7 +109,11 @@ const endLabel = computed(() =>
         @remove="emit('remove')"
       />
     </div>
-    <div class="relative h-14 shrink-0 touch-none" :style="{ width: `${width}px` }">
+    <div
+      class="relative h-14 shrink-0 touch-none"
+      :style="{ width: `${width}px` }"
+      :data-lane="horse.id"
+    >
       <span
         v-if="!horse.path.pts.length"
         class="absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground"
@@ -146,6 +149,7 @@ const endLabel = computed(() =>
           :tight="b.tight"
           :selected="b.selected"
           :duration="b.dur"
+          :link="b.link"
           :label="b.label"
           @key="emit('key', b.k, $event)"
         />

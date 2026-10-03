@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useEventListener } from '@vueuse/core'
 import { selKey, type Gait, type Horse } from '@zephyr/core'
 import {
   LANE_HEADER_PX,
@@ -94,15 +95,32 @@ function send(kind: 'down' | 'move' | 'up' | 'cancel', e: PointerEvent) {
   const el = content.value
   if (!el || !pointerTarget) return
   const t = (e.clientX - el.getBoundingClientRect().left - LANE_HEADER_PX) / props.ctl.pps.value
+  // pointer capture keeps events on the container: the lane under the pointer is looked up
+  const lane = document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLElement>('[data-lane]')
+    ?.dataset.lane
   props.ctl.onPointer({
     kind,
     t,
     x: e.clientX,
     shift: e.shiftKey,
     alt: e.altKey,
+    ctrl: e.ctrlKey || e.metaKey,
+    lane,
     target: pointerTarget,
   })
 }
+// Esc cancels a drag before the editor's shortcuts see it
+useEventListener(
+  window,
+  'keydown',
+  (e: KeyboardEvent) => {
+    if (e.key !== 'Escape' || !props.ctl.cancelDrag()) return
+    pointerTarget = null
+    e.stopImmediatePropagation()
+    e.preventDefault()
+  },
+  { capture: true },
+)
 function onDown(e: PointerEvent) {
   if (e.pointerType === 'mouse' && e.button !== 0) return
   pointerTarget = targetOf(e.target)
@@ -122,6 +140,8 @@ function onDblclick() {
 
 // ---------- keyboard on blocks ----------
 function onSectionKey(horseId: string, k: number, e: KeyboardEvent) {
+  // while pasting, Enter confirms the paste (editor shortcut), also on a focused block
+  if (e.key === 'Enter' && editor.paste.open) return
   if (e.key === 'Enter') {
     editor.activeHorseId = horseId
     editor.selectOnly(selKey(horseId, k))
@@ -150,6 +170,7 @@ function goToPart(id: string) {
       v-model:zoom="zoom"
       v-model:snap-beat="editor.snapBeat"
       v-model:magnet="editor.magnet"
+      v-model:gap-fill="editor.gapFill"
       :rate="playback.rate.value"
       :timing="ctl.timing.value"
       :time="editor.time"

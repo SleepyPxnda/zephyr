@@ -1,5 +1,6 @@
-# Local development services: PostgreSQL 16 and Garage (S3-compatible object storage).
-# Usage: docker compose -f docker/compose.dev.yml up -d
+# Local development services: PostgreSQL 16 and, optionally, Garage (S3-compatible object storage).
+# Usage with an external S3 (e.g. Hetzner, see .env.example): docker compose -f docker/compose.dev.yml up -d
+# Usage with local Garage: docker compose -f docker/compose.dev.yml --profile garage up -d
 # Works without configuration; to override, add `--env-file .env` (see .env.example).
 name: zephyr-dev
 
@@ -21,9 +22,10 @@ services:
       retries: 20
 
   # Single node without replication; creates the access key and the private
-  # bucket from the GARAGE_DEFAULT_* variables on first start.
+  # bucket from the GARAGE_DEFAULT_* variables on first start. Only with `--profile garage`.
   garage:
     image: dxflrs/garage:v2.4.1
+    profiles: ['garage']
     command: ['/garage', 'server', '--single-node', '--default-bucket']
     environment:
       GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:-4f1c2a9e8b7d6c5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e}

@@ -7,13 +7,19 @@ import {
 } from '@aws-sdk/client-s3'
 import type { ServerEnv } from './env'
 
-/** S3 client for the self-hosted Garage (path-style addressing). */
+/**
+ * S3 client for any S3-compatible store (local Garage, Hetzner Object Storage, ...). Checksums only
+ * where the API requires them: the SDK's newer default (CRC32 on every request) is not understood by
+ * every non-AWS provider.
+ */
 export function createS3(env: ServerEnv): S3Client {
   return new S3Client({
     endpoint: env.S3_ENDPOINT,
     region: env.S3_REGION,
     forcePathStyle: env.S3_FORCE_PATH_STYLE,
     credentials: { accessKeyId: env.S3_ACCESS_KEY, secretAccessKey: env.S3_SECRET_KEY },
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
   })
 }
 

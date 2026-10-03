@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { ArrowLeft } from '@lucide/vue'
+import { ArrowLeft, Play, Share2 } from '@lucide/vue'
 import type { PlanRole, SaveStatus } from '~/stores/plan'
 
 const props = defineProps<{
+  planId: string
   title: string
   status: SaveStatus
   role: PlanRole | null
   editable: boolean
 }>()
 const emit = defineEmits<{ rename: [title: string] }>()
+const shareOpen = shallowRef(false)
 
 const statusVariant = computed(() =>
   props.status === 'conflict' || props.status === 'error'
@@ -41,5 +43,24 @@ function onTitle(v: string | number) {
     <Badge :variant="statusVariant" role="status" aria-live="polite" data-testid="save-status">
       {{ $t(`editor.status.${status}`) }}
     </Badge>
+    <div class="ml-auto flex items-center gap-2">
+      <Button variant="ghost" size="sm" as-child>
+        <NuxtLink :to="`/plans/${planId}/play`" data-testid="open-play">
+          <Play />
+          {{ $t('play.open') }}
+        </NuxtLink>
+      </Button>
+      <Button
+        v-if="role === 'owner'"
+        variant="outline"
+        size="sm"
+        data-testid="share"
+        @click="shareOpen = true"
+      >
+        <Share2 />
+        {{ $t('share.open') }}
+      </Button>
+    </div>
+    <ShareDialog v-if="role === 'owner'" v-model:open="shareOpen" :plan-id="planId" />
   </header>
 </template>

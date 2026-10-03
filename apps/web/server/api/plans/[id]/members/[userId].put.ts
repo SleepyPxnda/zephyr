@@ -1,6 +1,7 @@
 import { memberUpdateSchema } from '@zephyr/core'
 import { and, eq } from 'drizzle-orm'
 import { planMembers } from '../../../../db/schema'
+import { refresh as refreshLive } from '../../../../lib/live'
 
 /** Changes the role of an existing share. */
 export default defineEventHandler(async (event) => {
@@ -16,5 +17,6 @@ export default defineEventHandler(async (event) => {
         .returning({ userId: planMembers.userId })
     : []
   if (!rows.length) throw problem(404, 'not_found', 'Freigabe nicht gefunden.')
+  await refreshLive(id)
   return { userId, role }
 })

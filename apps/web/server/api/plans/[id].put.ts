@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { plans } from '../../db/schema'
+import { refresh as refreshLive } from '../../lib/live'
 import { checkContent, loadPlan, writeContent } from '../../lib/plans'
 
 /**
@@ -46,6 +47,7 @@ export default defineEventHandler(async (event) => {
     const current = await loadPlan(db, id)
     throw problem(412, 'revision_conflict', 'Der Plan wurde inzwischen geändert.', { current })
   }
+  await refreshLive(id)
   const plan = await loadPlan(db, id)
   setResponseHeader(event, 'ETag', `"${result.revision}"`)
   return plan

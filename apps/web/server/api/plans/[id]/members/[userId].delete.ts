@@ -1,5 +1,6 @@
 import { and, eq } from 'drizzle-orm'
 import { planMembers } from '../../../../db/schema'
+import { refresh as refreshLive } from '../../../../lib/live'
 
 /** Ends a share; deleting one that does not exist is fine. */
 export default defineEventHandler(async (event) => {
@@ -10,6 +11,7 @@ export default defineEventHandler(async (event) => {
     await useDb()
       .delete(planMembers)
       .where(and(eq(planMembers.planId, id), eq(planMembers.userId, userId)))
+  await refreshLive(id)
   setResponseStatus(event, 204)
   return null
 })

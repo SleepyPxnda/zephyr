@@ -1,6 +1,7 @@
 import { patchPlanSchema } from '@zephyr/core'
 import { eq, sql } from 'drizzle-orm'
 import { plans } from '../../db/schema'
+import { refresh as refreshLive } from '../../lib/live'
 import { checkContent, loadPlan } from '../../lib/plans'
 
 /** Title, timing, music, settings; checked like a full save and counted as a new revision. */
@@ -34,6 +35,7 @@ export default defineEventHandler(async (event) => {
     })
     .where(eq(plans.id, id))
     .returning({ revision: plans.revision })
+  await refreshLive(id)
   setResponseHeader(event, 'ETag', `"${row?.revision}"`)
   return { revision: row?.revision }
 })

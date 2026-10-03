@@ -2,6 +2,7 @@ import { adminUserPatchSchema } from '@zephyr/core'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 import { users } from '../../../db/schema'
+import { dropUser } from '../../../lib/live'
 import { adminUserView } from '../../../lib/users'
 
 /** Approves, rejects or blocks an account. The admin's own account cannot be changed here. */
@@ -22,5 +23,6 @@ export default defineEventHandler(async (event) => {
     .where(eq(users.id, target.id))
     .returning()
   if (!updated) throw problem(404, 'not_found', 'Nutzer nicht gefunden.')
+  if (status === 'rejected') dropUser(updated.id)
   return adminUserView(updated)
 })

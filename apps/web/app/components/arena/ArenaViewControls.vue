@@ -4,9 +4,13 @@ import type { DisplayOptions } from '~/composables/useDisplayOptions'
 import { injectArenaView } from '~/composables/arenaViewContext'
 
 const options = defineModel<DisplayOptions>('options', { required: true })
-const roundCorners = defineModel<boolean>('roundCorners', { required: true })
-/** one line about the current tool; the full text is in the tooltip */
-defineProps<{ hint: string }>()
+const roundCorners = defineModel<boolean>('roundCorners')
+defineProps<{
+  /** one line about the current tool; the full text is in the tooltip */
+  hint: string
+  /** read-only view: no drawing option (round corners) */
+  readOnly?: boolean
+}>()
 
 const view = injectArenaView()
 const { t } = useI18n()
@@ -55,7 +59,7 @@ const setOption = (key: keyof DisplayOptions, value: boolean | 'indeterminate') 
       />
       <Label :for="o.id">{{ o.label }}</Label>
     </div>
-    <div class="flex items-center gap-2">
+    <div v-if="!readOnly" class="flex items-center gap-2">
       <Checkbox
         id="opt-round"
         :model-value="roundCorners"

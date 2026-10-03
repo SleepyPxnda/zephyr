@@ -308,6 +308,33 @@
       "removeText": "Der Part wird entfernt; die Wege bleiben unverändert."
     }
   },
+  "share": {
+    "open": "Teilen",
+    "title": "Plan teilen",
+    "description": "Personen mit Konto einladen oder einen Lese-Link erzeugen, der ohne Konto funktioniert.",
+    "people": "Personen",
+    "role": "Rolle",
+    "roleOf": "Rolle von {name}",
+    "invite": "Einladen",
+    "noPeople": "Noch mit niemandem geteilt.",
+    "noAccount": "Mit dieser E-Mail-Adresse gibt es kein Konto. Die Person muss sich zuerst registrieren.",
+    "invalidEmail": "Bitte eine gültige E-Mail-Adresse eines anderen Kontos eingeben.",
+    "removeMember": "Freigabe für {name} entfernen",
+    "links": "Lese-Links",
+    "linksHint": "Wer den Link hat, kann den Plan ansehen und abspielen, aber nicht ändern. Er gilt, bis du ihn widerrufst.",
+    "createLink": "Link erzeugen",
+    "linkCreated": "Lese-Link vom {date}",
+    "copy": "Link kopieren",
+    "copied": "Kopiert",
+    "revoke": "Link widerrufen"
+  },
+  "play": {
+    "open": "Ansehen",
+    "transport": "Wiedergabe",
+    "position": "Abspielposition",
+    "invalid": "Dieser Link ist ungültig oder wurde widerrufen.",
+    "musicFailed": "Die Musik ließ sich nicht laden. Die Wege lassen sich trotzdem abspielen."
+  },
   "music": {
     "upload": "Laden",
     "uploading": "Lädt …",

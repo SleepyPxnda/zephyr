@@ -1,7 +1,7 @@
 import { and, eq, isNull } from 'drizzle-orm'
 import { arena, files, plans } from '../../db/schema'
 import { hasRole, planRoleOf } from '../../lib/access'
-import { PEAK_STEP_S } from '../../lib/audio'
+import { fileInfo } from '../../lib/info'
 
 /**
  * Metadata, a signed address (5 min) and the waveform. Allowed for the owner, for the hall
@@ -28,14 +28,5 @@ export default defineEventHandler(async (event) => {
   }
   if (!allowed) throw problem(404, 'not_found', 'Datei nicht gefunden.')
 
-  return {
-    id: file.id,
-    kind: file.kind,
-    mime: file.mime,
-    bytes: file.bytes,
-    originalName: file.originalName,
-    durationS: file.durationS,
-    url: await signedUrl(file.storageKey),
-    peaks: file.peaks ? { stepS: PEAK_STEP_S, data: file.peaks.toString('base64') } : null,
-  }
+  return fileInfo(file)
 })

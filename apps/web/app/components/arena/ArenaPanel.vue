@@ -24,10 +24,11 @@ const props = defineProps<{
   pastePreview: readonly PastePreview[]
   cursor: string
   hint: string
+  readOnly?: boolean
 }>()
 const emit = defineEmits<{ pointer: [e: ArenaPointer] }>()
 const options = defineModel<DisplayOptions>('options', { required: true })
-const roundCorners = defineModel<boolean>('roundCorners', { required: true })
+const roundCorners = defineModel<boolean>('roundCorners')
 
 // canvas height: arena aspect, at most 72 % of the window height (SPEC "Frontend")
 const wrap = useTemplateRef<HTMLElement>('wrap')
@@ -91,6 +92,7 @@ const timelines = useTimelines(
       v-model:options="options"
       v-model:round-corners="roundCorners"
       :hint="hint"
+      :read-only="readOnly"
     />
   </section>
 </template>

@@ -113,6 +113,7 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · zephyr` : 'zephyr')
 <template>
   <div class="flex min-h-dvh flex-col">
     <EditorHeader
+      :plan-id="planId"
       :title="plan?.title ?? ''"
       :status="planStore.status"
       :role="planStore.role"

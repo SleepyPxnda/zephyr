@@ -32,6 +32,13 @@ function fromBase64(s: string): Uint8Array {
   return out
 }
 
+/** Downloads and decodes audio without starting an audio context (Safari: only after a gesture). */
+export async function decodeAudio(url: string): Promise<AudioBuffer> {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`music download failed: ${res.status}`)
+  return new OfflineAudioContext(1, 1, 44100).decodeAudioData(await res.arrayBuffer())
+}
+
 /**
  * The plan's music (SPEC "Dateien"): metadata and waveform from the API, the file itself from a
  * signed address, decoded for Web Audio. Decoding uses an `OfflineAudioContext`, so no audio
@@ -62,10 +69,7 @@ export function useMusic(): Music {
       name.value = f.originalName
       peaks.value = f.peaks ? { stepS: f.peaks.stepS, data: fromBase64(f.peaks.data) } : null
       editor.musicDuration = Number(f.durationS) || 0
-      const res = await fetch(f.url)
-      if (!res.ok) throw new Error(`music download failed: ${res.status}`)
-      const data = await res.arrayBuffer()
-      const decoded = await new OfflineAudioContext(1, 1, 44100).decodeAudioData(data)
+      const decoded = await decodeAudio(f.url)
       if (token !== seq) return
       buffer.value = decoded
       editor.musicDuration = decoded.duration

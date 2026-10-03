@@ -51,6 +51,17 @@ export function moveSectionTime(
 }
 
 /**
+ * Playback clock (prototype `tick`): position after `elapsed` seconds of real time from `from`
+ * at `rate`, never past `end`.
+ */
+export function playbackTime(from: number, elapsed: number, rate: number, end: number): number {
+  return Math.min(end, from + Math.max(0, elapsed) * rate)
+}
+
+/** Playback tempo choices (prototype: 0.5–2×; the pitch changes with it). */
+export const PLAYBACK_RATES = [0.5, 0.75, 1, 1.5, 2] as const
+
+/**
  * Tap tempo (prototype `tap`): BPM from the last taps (ms), rounded to 0.5; null below three
  * taps. Callers drop taps older than 2 s before the latest and keep at most 12.
  */

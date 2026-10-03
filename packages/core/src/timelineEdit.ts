@@ -25,6 +25,29 @@ export function playEnd(planEnd: number, musicEnd: number, parts: readonly Part[
   )
 }
 
+/**
+ * Waveform columns (prototype `drawWave`): the loudest peak (0–255, one per `stepS`) under each
+ * pixel column, scaled to 0–1; `columns` pixels at `pps` pixels per second.
+ */
+export function waveColumns(
+  peaks: Uint8Array,
+  stepS: number,
+  pps: number,
+  columns: number,
+): Float32Array {
+  const out = new Float32Array(
+    Math.max(0, Math.min(columns, Math.ceil(peaks.length * stepS * pps))),
+  )
+  for (let x = 0; x < out.length; x++) {
+    const i0 = Math.floor(x / pps / stepS)
+    const i1 = Math.max(i0 + 1, Math.floor((x + 1) / pps / stepS))
+    let m = 0
+    for (let i = i0; i < i1 && i < peaks.length; i++) m = Math.max(m, peaks[i] ?? 0)
+    out[x] = m / 255
+  }
+  return out
+}
+
 export interface RulerTick {
   /** time (s) */
   t: number

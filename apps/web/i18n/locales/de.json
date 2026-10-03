@@ -8,7 +8,6 @@
     "greeting": "Hallo {name}"
   },
   "auth": {
-    "email": "E-Mail-Adresse",
     "login": {
       "title": "Anmelden",
       "description": "Melde dich mit Discord an. Beim ersten Mal entsteht eine Zugangsanfrage, die ein Admin freigibt.",
@@ -300,14 +299,16 @@
   "share": {
     "open": "Teilen",
     "title": "Plan teilen",
-    "description": "Personen mit Konto einladen oder einen Lese-Link erzeugen, der ohne Konto funktioniert.",
+    "description": "Personen mit freigegebenem Konto per Discord-Name einladen oder einen Lese-Link erzeugen, der ohne Konto funktioniert.",
     "people": "Personen",
     "role": "Rolle",
     "roleOf": "Rolle von {name}",
     "invite": "Einladen",
     "noPeople": "Noch mit niemandem geteilt.",
-    "noAccount": "Mit dieser E-Mail-Adresse gibt es kein Konto. Die Person muss sich zuerst registrieren.",
-    "invalidEmail": "Bitte eine gültige E-Mail-Adresse eines anderen Kontos eingeben.",
+    "username": "Discord-Name",
+    "usernamePlaceholder": "z. B. anna_reitet",
+    "noAccount": "Kein freigegebenes Konto mit diesem Discord-Namen. Die Person muss sich zuerst anmelden und freigegeben werden.",
+    "invalidUsername": "Bitte den Discord-Namen eines anderen freigegebenen Kontos eingeben.",
     "removeMember": "Freigabe für {name} entfernen",
     "links": "Lese-Links",
     "linksHint": "Wer den Link hat, kann den Plan ansehen und abspielen, aber nicht ändern. Er gilt, bis du ihn widerrufst.",

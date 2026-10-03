@@ -3,14 +3,15 @@ import type { MemberRole } from '@zephyr/core'
 import { Check, Copy, Link2, Trash2, X } from '@lucide/vue'
 import { problemCode } from '~/composables/useProblem'
 
-/** Sharing (owner only): people by e-mail as viewer or editor, read links without an account. */
+/** Sharing (owner only): people by Discord user name as viewer or editor, read links without an account. */
 const props = defineProps<{ planId: string }>()
 const open = defineModel<boolean>('open', { required: true })
 
 interface Member {
   userId: string
-  email: string
+  username: string
   name: string
+  avatarUrl: string
   role: MemberRole
 }
 interface ShareLink {
@@ -22,7 +23,7 @@ interface ShareLink {
 const { t, d } = useI18n()
 const members = ref<Member[]>([])
 const links = ref<ShareLink[]>([])
-const email = shallowRef('')
+const username = shallowRef('')
 const role = shallowRef<MemberRole>('viewer')
 const error = shallowRef('')
 const busy = shallowRef(false)
@@ -43,7 +44,7 @@ async function load() {
 }
 watch(open, (o) => {
   if (!o) return
-  email.value = ''
+  username.value = ''
   role.value = 'viewer'
   copied.value = null
   void load()
@@ -71,18 +72,18 @@ const invite = () =>
     async () => {
       const m = await $fetch<Member>(`${base.value}/members`, {
         method: 'POST',
-        body: { email: email.value.trim(), role: role.value },
+        body: { username: username.value.trim(), role: role.value },
       })
       members.value = [...members.value.filter((x) => x.userId !== m.userId), m].sort((a, b) =>
-        a.email.localeCompare(b.email),
+        a.username.localeCompare(b.username),
       )
-      email.value = ''
+      username.value = ''
     },
     (e) =>
       problemCode(e) === 'no_account'
         ? t('share.noAccount')
         : problemCode(e) === 'validation'
-          ? t('share.invalidEmail')
+          ? t('share.invalidUsername')
           : t('errors.unknown'),
   )
 
@@ -139,14 +140,17 @@ async function copy(l: ShareLink) {
         <h3 class="text-sm font-semibold">{{ $t('share.people') }}</h3>
         <form class="flex flex-wrap items-end gap-2" @submit.prevent="invite">
           <div class="flex min-w-48 flex-1 flex-col gap-1.5">
-            <Label for="share-email">{{ $t('auth.email') }}</Label>
+            <Label for="share-username">{{ $t('share.username') }}</Label>
             <Input
-              id="share-email"
-              v-model="email"
-              type="email"
+              id="share-username"
+              v-model="username"
+              type="text"
               autocomplete="off"
-              maxlength="254"
-              data-testid="share-email"
+              autocapitalize="off"
+              spellcheck="false"
+              maxlength="33"
+              :placeholder="$t('share.usernamePlaceholder')"
+              data-testid="share-username"
             />
           </div>
           <Select v-model="role">
@@ -158,7 +162,7 @@ async function copy(l: ShareLink) {
               <SelectItem value="editor">{{ $t('roles.editor') }}</SelectItem>
             </SelectContent>
           </Select>
-          <Button type="submit" :disabled="busy || !email.trim()" data-testid="share-invite">
+          <Button type="submit" :disabled="busy || !username.trim()" data-testid="share-invite">
             {{ $t('share.invite') }}
           </Button>
         </form>
@@ -167,15 +171,22 @@ async function copy(l: ShareLink) {
         </p>
         <ul v-else class="flex flex-col divide-y rounded-md border" data-testid="share-members">
           <li v-for="m in members" :key="m.userId" class="flex items-center gap-2 px-3 py-2">
+            <img
+              :src="m.avatarUrl"
+              alt=""
+              class="size-8 shrink-0 rounded-full bg-muted"
+              loading="lazy"
+              referrerpolicy="no-referrer"
+            />
             <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-medium">{{ m.name || m.email }}</p>
-              <p v-if="m.name" class="truncate text-xs text-muted-foreground">{{ m.email }}</p>
+              <p class="truncate text-sm font-medium">{{ m.name || m.username }}</p>
+              <p class="truncate text-xs text-muted-foreground">@{{ m.username }}</p>
             </div>
             <Select :model-value="m.role" :disabled="busy" @update:model-value="setRole(m, $event)">
               <SelectTrigger
                 class="w-36"
                 size="sm"
-                :aria-label="$t('share.roleOf', { name: m.name || m.email })"
+                :aria-label="$t('share.roleOf', { name: m.name || m.username })"
                 ><SelectValue
               /></SelectTrigger>
               <SelectContent>
@@ -187,7 +198,7 @@ async function copy(l: ShareLink) {
               variant="ghost"
               size="icon-sm"
               :disabled="busy"
-              :aria-label="$t('share.removeMember', { name: m.name || m.email })"
+              :aria-label="$t('share.removeMember', { name: m.name || m.username })"
               @click="removeMember(m)"
             >
               <X />

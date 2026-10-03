@@ -197,6 +197,8 @@
     "remove": "Löschen",
     "removeTitle": "Abschnitt löschen? | Abschnitt löschen? | {count} Abschnitte löschen?",
     "removeText": "Folgende Abschnitte behalten ihre Zeit; an der Stelle entsteht eine Pause. Rückgängig mit Strg+Z.",
+    "details": "Details",
+    "empty": "Abschnitt auf dem Platz oder in der Zeitleiste auswählen, um ihn zu bearbeiten.",
     "multiSelect": "Mehrfachauswahl",
     "fineRotate": "Drehen in 15°-Schritten"
   },

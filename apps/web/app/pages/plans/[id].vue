@@ -119,8 +119,8 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · zephyr` : 'zephyr')
       :editable="planStore.canEdit"
       @rename="planStore.rename"
     />
-    <main v-if="plan && arena" class="flex w-full flex-col gap-4 p-4">
-      <!-- zones 1 and 2 form one surface: tool bar, arena, view bar, selection panel (SPEC) -->
+    <main v-if="plan && arena" class="flex w-full flex-col gap-4 p-4 pb-12">
+      <!-- zones 1 and 2 form one surface: tool bar, then arena with the details sidebar (SPEC) -->
       <div class="overflow-hidden rounded-lg border bg-card">
         <ToolPanel
           v-model:tool="editor.tool"
@@ -151,46 +151,64 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · zephyr` : 'zephyr')
             />
           </template>
         </ToolPanel>
-        <ArenaPanel
-          v-model:options="options"
-          v-model:round-corners="roundCorners"
-          :arena="arena"
-          :horses="sceneHorses"
-          :gaits="gaitList"
-          :parts="timeline.parts.value"
-          :active-id="editor.activeHorseId"
-          :time="editor.time"
-          :ghost="tools.ghost.value"
-          :split-hover="tools.splitHover.value"
-          :selection="editor.selection"
-          :handles="select.handles.value"
-          :overlay="select.overlay.value"
-          :paste-preview="clip.preview.value"
-          :cursor="cursor"
-          :hint="hint"
-          @pointer="onPointer"
-        />
-        <SelectionPanel
-          v-if="sel.summary.value && !editor.paste.open"
-          v-model:follow="editor.follow"
-          v-model:multi-select="editor.multiSelect"
-          v-model:fine-rotate="editor.fineRotate"
-          :summary="sel.summary.value"
-          :title="sel.title.value"
-          :gaits="gaitList"
-          :editable="planStore.canEdit"
-          :can-merge="sel.canMerge.value"
-          @gait="sel.setGait"
-          @tack="sel.setTack"
-          @gap="sel.setGap"
-          @gap-type="sel.setGapType"
-          @rotate="sel.rotate"
-          @mirror="sel.mirror"
-          @whole="sel.whole"
-          @merge="sel.merge"
-          @remove="sel.remove"
-          @clear="editor.clearSelection()"
-        />
+        <div class="flex flex-col border-t lg:flex-row">
+          <ArenaPanel
+            class="min-w-0 flex-1"
+            v-model:options="options"
+            v-model:round-corners="roundCorners"
+            :arena="arena"
+            :horses="sceneHorses"
+            :gaits="gaitList"
+            :parts="timeline.parts.value"
+            :active-id="editor.activeHorseId"
+            :time="editor.time"
+            :ghost="tools.ghost.value"
+            :split-hover="tools.splitHover.value"
+            :selection="editor.selection"
+            :handles="select.handles.value"
+            :overlay="select.overlay.value"
+            :paste-preview="clip.preview.value"
+            :cursor="cursor"
+            :hint="hint"
+            @pointer="onPointer"
+          />
+          <!-- details sidebar: always there, so the timeline below never moves -->
+          <aside
+            class="relative h-80 shrink-0 border-t lg:h-auto lg:w-80 lg:border-t-0 lg:border-l"
+            :aria-label="$t('selection.details')"
+            data-testid="details-sidebar"
+          >
+            <div class="absolute inset-0 flex flex-col overflow-y-auto p-4">
+              <SelectionPanel
+                v-if="sel.summary.value && !editor.paste.open"
+                v-model:follow="editor.follow"
+                v-model:multi-select="editor.multiSelect"
+                v-model:fine-rotate="editor.fineRotate"
+                :summary="sel.summary.value"
+                :title="sel.title.value"
+                :gaits="gaitList"
+                :editable="planStore.canEdit"
+                :can-merge="sel.canMerge.value"
+                @gait="sel.setGait"
+                @tack="sel.setTack"
+                @gap="sel.setGap"
+                @gap-type="sel.setGapType"
+                @rotate="sel.rotate"
+                @mirror="sel.mirror"
+                @whole="sel.whole"
+                @merge="sel.merge"
+                @remove="sel.remove"
+                @clear="editor.clearSelection()"
+              />
+              <template v-else>
+                <h2 class="font-semibold">{{ $t('selection.details') }}</h2>
+                <p class="mt-1 text-sm text-muted-foreground" data-testid="details-empty">
+                  {{ editor.paste.open ? $t('paste.hint') : $t('selection.empty') }}
+                </p>
+              </template>
+            </div>
+          </aside>
+        </div>
       </div>
       <!-- zone 3: timeline -->
       <TimelinePanel

@@ -19,11 +19,14 @@ export interface ShortcutActions {
   pasteOpen: () => boolean
   confirmPaste: () => void
   cancelPaste: () => void
+  togglePlay: () => void
+  toStart: () => void
 }
 
 /**
  * Editor keyboard shortcuts: tools (V F G B Z T), Strg/Cmd+Z, +A, +C, +V, Enter, Esc,
- * Entf/Rücktaste. Zoom (+ − 0) and W live with the arena; playback keys follow with M9.
+ * Entf/Rücktaste, Leertaste (play/pause; also on a focused button, as in the prototype), Pos1
+ * (to the start). Zoom (+ − 0) and W live with the arena.
  */
 export function useEditorShortcuts(a: ShortcutActions) {
   const editor = useEditorStore()
@@ -48,7 +51,9 @@ export function useEditorShortcuts(a: ShortcutActions) {
       else if (editor.partId) editor.partId = null
       else if (editor.tool !== 'select') editor.tool = 'select'
       else a.clearSelection()
-    } else if (e.key === 'Enter' && a.pasteOpen()) a.confirmPaste()
+    } else if (e.key === ' ' && !e.shiftKey) a.togglePlay()
+    else if (e.key === 'Home') a.toStart()
+    else if (e.key === 'Enter' && a.pasteOpen()) a.confirmPaste()
     else if ((e.key === 'Delete' || e.key === 'Backspace') && a.canEdit()) a.removeSelection()
     else if (TOOL_KEYS[key] && a.canEdit() && !e.shiftKey) editor.tool = TOOL_KEYS[key]
     else return

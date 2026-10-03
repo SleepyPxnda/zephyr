@@ -49,6 +49,13 @@ const select = useSelectTool(gaitList)
 const sel = useSelectionActions(gaitList, arenaSize)
 const clip = useClipboardTools(gaitList)
 const timeline = useTimelineEdit(gaitList)
+// ---------- music and playback (M9) ----------
+const music = useMusic()
+const playback = usePlayback(timeline.end, music.buffer)
+/** music name of a freshly imported prototype plan (SPEC "Übernahme aus dem PoC") */
+const importedMusic = computed(() =>
+  typeof route.query.music === 'string' && route.query.music ? route.query.music : null,
+)
 useEditorShortcuts({
   canEdit: () => planStore.canEdit,
   undo: () => planStore.undo(),
@@ -60,6 +67,8 @@ useEditorShortcuts({
   pasteOpen: () => editor.paste.open,
   confirmPaste: clip.confirm,
   cancelPaste: clip.close,
+  togglePlay: playback.toggle,
+  toStart: () => timeline.seek(0),
 })
 /** a stroke being drawn or a drag (arena or timeline) being previewed replaces the stored horses until released */
 const sceneHorses = computed(() => {
@@ -186,6 +195,9 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · zephyr` : 'zephyr')
       <!-- zone 3: timeline -->
       <TimelinePanel
         :ctl="timeline"
+        :playback="playback"
+        :music="music"
+        :imported-music="importedMusic"
         :gaits="gaitList"
         :editable="planStore.canEdit"
         @add-horse="addHorse"

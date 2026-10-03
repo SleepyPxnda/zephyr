@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /** Import of a prototype plan (JSON text or .json file), with mapping of unknown gaits. */
 const open = defineModel<boolean>('open', { required: true })
-const emit = defineEmits<{ imported: [id: string] }>()
+const emit = defineEmits<{ imported: [id: string, musicName: string] }>()
 
 const { t } = useI18n()
 const { importPoc } = usePlans()
@@ -54,7 +54,7 @@ async function submit() {
     })
     if (res.ok) {
       open.value = false
-      emit('imported', res.id)
+      emit('imported', res.id, res.musicName)
     } else unknown.value = { names: res.unknownGaits, canCreate: res.canCreate }
   } catch {
     error.value = t('import.failed')

@@ -254,6 +254,13 @@
     "barUnit": "Takt",
     "music": "Musik",
     "musicPlaceholder": "Musik laden, um Wellenform und Takt zu sehen.",
+    "play": "Abspielen",
+    "pause": "Pause",
+    "playHint": "Abspielen (Leertaste)",
+    "pauseHint": "Anhalten (Leertaste)",
+    "home": "An den Anfang",
+    "homeHint": "An den Anfang (Pos1)",
+    "rate": "Tempo",
     "bars": "{n} Takte",
     "wait": "Wartet {d}",
     "noPath": "Noch kein Weg. Pferd auswählen und auf dem Platz zeichnen.",
@@ -292,6 +299,17 @@
       "removeTitle": "Part „{name}“ löschen?",
       "removeText": "Der Part wird entfernt; die Wege bleiben unverändert."
     }
+  },
+  "music": {
+    "upload": "Laden",
+    "uploading": "Lädt …",
+    "uploadHint": "Musik hochladen (MP3, WAV, OGG, FLAC, AAC/M4A; höchstens 50 MB)",
+    "loading": "Musik wird geladen …",
+    "loadFailed": "Die Musik ließ sich nicht laden. Bitte Seite neu laden oder die Datei erneut hochladen.",
+    "reupload": "Im Prototyp war „{name}“ geladen. Bitte die Datei hier erneut hochladen.",
+    "tooLarge": "Die Datei ist zu groß (höchstens 50 MB).",
+    "unreadable": "Die Datei lässt sich nicht als Musik lesen. Bitte MP3, WAV, OGG, FLAC oder M4A wählen.",
+    "uploadFailed": "Hochladen fehlgeschlagen. Bitte erneut versuchen."
   },
   "units": {
     "seconds": "{n} s"

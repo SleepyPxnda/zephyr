@@ -5,6 +5,8 @@ import {
   type TimelineEdit,
   type TimelineTarget,
 } from '~/composables/useTimelineEdit'
+import type { Music } from '~/composables/useMusic'
+import type { Playback } from '~/composables/usePlayback'
 
 /**
  * Zone 3, the timeline (SPEC "Zeitleiste und Wiedergabe"): toolbar, ruler, parts, music and one
@@ -13,8 +15,12 @@ import {
  */
 const props = defineProps<{
   ctl: TimelineEdit
+  playback: Playback
+  music: Music
   gaits: readonly Gait[]
   editable: boolean
+  /** music name of an imported prototype plan (hint until music is uploaded) */
+  importedMusic: string | null
 }>()
 const emit = defineEmits<{
   addHorse: []
@@ -48,6 +54,18 @@ watch(
     if (el && before) el.scrollLeft = (el.scrollLeft / before) * now
   },
   { flush: 'post' },
+)
+// while playing, the playhead stays in view (prototype `updatePlayhead(true)`)
+watch(
+  () => editor.time,
+  (t) => {
+    const el = scroller.value
+    if (!el || !props.playback.playing.value) return
+    const left = t * props.ctl.pps.value
+    const visible = el.clientWidth - LANE_HEADER_PX
+    if (left > el.scrollLeft + visible - 40 || left < el.scrollLeft)
+      el.scrollLeft = Math.max(0, left - 60)
+  },
 )
 
 // ---------- pointer: read the target from the DOM, hand it on ----------
@@ -132,10 +150,15 @@ function goToPart(id: string) {
       v-model:zoom="zoom"
       v-model:snap-beat="editor.snapBeat"
       v-model:magnet="editor.magnet"
+      :rate="playback.rate.value"
       :timing="ctl.timing.value"
       :time="editor.time"
       :end="ctl.end.value"
       :editable="editable"
+      :playing="playback.playing.value"
+      @update:rate="playback.setRate"
+      @toggle="playback.toggle"
+      @home="ctl.seek(0)"
       @timing="planStore.setTiming"
       @add-part="ctl.addPartAtPlayhead"
       @add-horse="emit('addHorse')"
@@ -198,7 +221,13 @@ function goToPart(id: string) {
           @remove="ctl.removePart"
           @key="onPartKey"
         />
-        <MusicLane :width="width" />
+        <MusicLane
+          :music="music"
+          :pps="ctl.pps.value"
+          :width="width"
+          :editable="editable"
+          :imported-name="importedMusic"
+        />
         <HorseLane
           v-for="h in ctl.horses.value"
           :key="h.id"

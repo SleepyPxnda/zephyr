@@ -1,21 +1,34 @@
 <script setup lang="ts">
-import { bpmFromTaps, type Timing } from '@zephyr/core'
-import { Plus } from '@lucide/vue'
+import { bpmFromTaps, PLAYBACK_RATES, type Timing } from '@zephyr/core'
+import { Pause, Play, Plus, SkipBack } from '@lucide/vue'
 
 /**
- * Bar above the timeline (SPEC "TimelineToolbar"): zoom, beat (BPM, tap, meter, first beat),
- * snapping options, clock, "+ Part" and "+ Pferd". Playback controls follow with M9.
+ * Bar above the timeline (SPEC "TimelineToolbar"): play/pause, to the start, tempo, zoom, beat
+ * (BPM, tap, meter, first beat), snapping options, clock, "+ Part" and "+ Pferd".
  */
 const props = defineProps<{
   timing: Timing
   time: number
   end: number
   editable: boolean
+  playing: boolean
 }>()
+const rate = defineModel<number>('rate', { required: true })
 const zoom = defineModel<number>('zoom', { required: true })
 const snapBeat = defineModel<boolean>('snapBeat', { required: true })
 const magnet = defineModel<boolean>('magnet', { required: true })
-const emit = defineEmits<{ timing: [patch: Partial<Timing>]; addPart: []; addHorse: [] }>()
+const emit = defineEmits<{
+  timing: [patch: Partial<Timing>]
+  addPart: []
+  addHorse: []
+  toggle: []
+  home: []
+}>()
+
+function onRate(v: unknown) {
+  const r = Number(v)
+  if (PLAYBACK_RATES.some((x) => x === r)) rate.value = r
+}
 
 const { clock: fmtClock } = useFormat()
 const clock = computed(() => `${fmtClock(props.time)} / ${fmtClock(props.end)}`)
@@ -67,6 +80,38 @@ const onZoom = (v: number[] | undefined) => {
     role="toolbar"
     :aria-label="$t('timeline.toolbar')"
   >
+    <div class="flex items-center gap-1">
+      <Button
+        size="icon-sm"
+        :disabled="end <= 0"
+        :aria-label="playing ? $t('timeline.pause') : $t('timeline.play')"
+        :title="playing ? $t('timeline.pauseHint') : $t('timeline.playHint')"
+        data-testid="play"
+        @click="emit('toggle')"
+      >
+        <Pause v-if="playing" />
+        <Play v-else />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        :aria-label="$t('timeline.home')"
+        :title="$t('timeline.homeHint')"
+        @click="emit('home')"
+      >
+        <SkipBack />
+      </Button>
+      <Select :model-value="String(rate)" @update:model-value="onRate">
+        <SelectTrigger class="w-20" size="sm" :aria-label="$t('timeline.rate')" data-testid="rate"
+          ><SelectValue
+        /></SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="r in PLAYBACK_RATES" :key="r" :value="String(r)"
+            >{{ $n(r) }}×</SelectItem
+          >
+        </SelectContent>
+      </Select>
+    </div>
     <label class="flex items-center gap-2">
       <span class="text-muted-foreground">{{ $t('timeline.zoom') }}</span>
       <Slider

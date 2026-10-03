@@ -22,6 +22,10 @@ async function newPlan() {
   }
 }
 
+/** the prototype's music is not in the file; the editor names it so it can be uploaded again */
+const onImported = (id: string, musicName: string) =>
+  navigateTo({ path: `/plans/${id}`, query: musicName ? { music: musicName } : {} })
+
 async function logout() {
   await $fetch('/api/auth/logout', { method: 'POST' })
   await refreshSession()
@@ -61,6 +65,6 @@ async function logout() {
       </li>
     </ul>
 
-    <ImportDialog v-model:open="importOpen" @imported="navigateTo(`/plans/${$event}`)" />
+    <ImportDialog v-model:open="importOpen" @imported="onImported" />
   </main>
 </template>

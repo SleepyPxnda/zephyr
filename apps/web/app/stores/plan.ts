@@ -28,14 +28,24 @@ export type SaveStatus = 'saved' | 'saving' | 'offline'
 /** Changes made within this window travel as one message. */
 const FLUSH_MS = 120
 const FLUSH_MAX_MS = 500
-/** Most parts in one `batch` (the server accepts 100). */
+/** Most parts in one `batch` (the server accepts 100) and most characters (it closes at 5 M). */
 const BATCH_MAX = 100
+const BATCH_CHARS = 1_000_000
+/**
+ * Close codes after which reconnecting is pointless: 1003 bad message, 1008 access gone (deleted
+ * plan, sharing ended, blocked account) or rate limit, 1009 message too big. A retry would send
+ * the same unconfirmed operations again.
+ */
+const STOP_CODES = [1003, 1008, 1009]
 /** Undo steps kept (SPEC "Zustand"). */
 const HISTORY_MAX = 150
 
 type Hello = Extract<ServerMessage, { type: 'hello' }>
 type Ack = Extract<ServerMessage, { type: 'ack' }>
+type Reject = Extract<ServerMessage, { type: 'reject' }>
 type RemoteOp = Extract<ServerMessage, { type: 'op' }>
+
+const writable = (r: PlanRole | null) => r === 'editor' || r === 'owner'
 
 /**
  * The open plan document, edited live (SPEC "Speichern und Konflikte"). `confirmed` is the
@@ -54,16 +64,15 @@ export const usePlanStore = defineStore('plan', () => {
 
   let planId = ''
   let seq = 0
-  let hasHello = false
+  /** the connection was lost or reset since the last `hello`: unconfirmed operations are resent */
+  let needsResend = false
   /** sent, not yet confirmed */
   let inflight: { seq: number; op: PlanOp }[] = []
   /** produced, not yet sent (collected for FLUSH_MS) */
   let outbox: SingleOp[] = []
   let socket: ReturnType<typeof useWebSocket> | null = null
 
-  const canEdit = computed(
-    () => connected.value && (role.value === 'editor' || role.value === 'owner'),
-  )
+  const canEdit = computed(() => connected.value && writable(role.value))
   const dirty = computed(() => unconfirmed.value > 0)
   const status = computed<SaveStatus>(() =>
     !connected.value ? 'offline' : unconfirmed.value > 0 ? 'saving' : 'saved',
@@ -94,6 +103,9 @@ export const usePlanStore = defineStore('plan', () => {
   function connect() {
     const scheme = location.protocol === 'https:' ? 'wss' : 'ws'
     socket = useWebSocket(`${scheme}://${location.host}/ws/plans/${planId}`, {
+      // the page closes the socket itself (`close()` on unmount); VueUse's default would also
+      // close it on `beforeunload`, even when the person chooses to stay
+      autoClose: false,
       autoReconnect: { retries: () => true, delay: 1500 },
       // keeps the connection open behind proxies and notices a dead one
       heartbeat: {
@@ -101,11 +113,12 @@ export const usePlanStore = defineStore('plan', () => {
         scheduler: (cb) => useIntervalFn(cb, 25_000),
         pongTimeout: 10_000,
       },
-      onDisconnected: (_ws, e) => {
+      onDisconnected: (ws, e) => {
+        // a late close of a replaced socket must not mark the new one offline
+        if (ws !== socket?.ws.value) return
         connected.value = false
-        // the server closes with 1008 when access is gone (deleted plan, sharing ended, blocked
-        // account): reconnecting would only collect 404s
-        if (e.code === 1008) close()
+        needsResend = true
+        if (STOP_CODES.includes(e.code)) close()
       },
       onMessage: (_ws, e) => onMessage(e.data),
     })
@@ -115,12 +128,13 @@ export const usePlanStore = defineStore('plan', () => {
     socket?.close()
     socket = null
     connected.value = false
-    hasHello = false
+    needsResend = false
   }
 
-  /** Reconnects to get a fresh document (after a gap in the revisions or a rejected operation). */
+  /** Reconnects to get a fresh document (after a gap in the revisions). */
   function resync() {
     connected.value = false
+    needsResend = true
     socket?.open()
   }
 
@@ -141,7 +155,7 @@ export const usePlanStore = defineStore('plan', () => {
       case 'ack':
         return onAck(m)
       case 'reject':
-        return resync()
+        return onReject(m)
       case 'op':
         return onRemoteOp(m)
       case 'presence':
@@ -156,18 +170,35 @@ export const usePlanStore = defineStore('plan', () => {
   }
 
   function onHello(m: Hello) {
+    // `hello` also comes on a live socket after a change outside it (PUT, sharing): operations
+    // still in flight are not lost then, so they are resent only after a real reconnect
+    const reconnected = needsResend
+    needsResend = false
     // after a reconnect the undo steps may refer to horses somebody else changed meanwhile
-    if (hasHello) history.value = []
-    hasHello = true
+    if (reconnected) history.value = []
     confirmed.value = m.plan
     role.value = m.role
     peers.value = m.peers
     connected.value = true
+    // the role dropped to viewer: what is still open can never be accepted
+    if (!writable(m.role)) {
+      inflight = []
+      outbox = []
+      countUnconfirmed()
+    }
     rebuild()
-    // our operations the server may not have seen: all operations are idempotent
-    for (const i of inflight) send({ type: 'op', seq: i.seq, op: i.op })
+    if (reconnected) for (const i of inflight) send({ type: 'op', seq: i.seq, op: i.op })
     flush()
     sendPresence()
+  }
+
+  /** The server refused this change (invalid or forbidden): show the server's version again. */
+  function onReject(m: Reject) {
+    const at = inflight.findIndex((i) => i.seq === m.seq)
+    if (at < 0) return
+    inflight.splice(at, 1)
+    countUnconfirmed()
+    rebuild()
   }
 
   function onAck(m: Ack) {
@@ -213,17 +244,27 @@ export const usePlanStore = defineStore('plan', () => {
   // ---------- sending changes ----------
 
   function flush() {
-    if (!connected.value || !outbox.length) return
+    if (!connected.value || !writable(role.value) || !outbox.length) return
     const ops = coalesceOps(outbox)
     outbox = []
-    for (let i = 0; i < ops.length; i += BATCH_MAX) {
-      const chunk = ops.slice(i, i + BATCH_MAX)
+    let chunk: SingleOp[] = []
+    let chars = 0
+    const sendChunk = () => {
       const [only] = chunk
       const op: PlanOp = chunk.length === 1 && only ? only : { t: 'batch', ops: chunk }
       const entry = { seq: seq++, op }
       inflight.push(entry)
       send({ type: 'op', seq: entry.seq, op })
+      chunk = []
+      chars = 0
     }
+    for (const o of ops) {
+      const size = JSON.stringify(o).length
+      if (chunk.length && (chunk.length >= BATCH_MAX || chars + size > BATCH_CHARS)) sendChunk()
+      chunk.push(o)
+      chars += size
+    }
+    if (chunk.length) sendChunk()
     countUnconfirmed()
   }
   const scheduleFlush = useDebounceFn(flush, FLUSH_MS, { maxWait: FLUSH_MAX_MS })

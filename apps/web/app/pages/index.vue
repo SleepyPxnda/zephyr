@@ -50,6 +50,9 @@ async function logout() {
             </Badge>
           </NuxtLink>
         </Button>
+        <Button variant="outline" as-child data-testid="settings-link">
+          <NuxtLink to="/settings">{{ t('settings.link') }}</NuxtLink>
+        </Button>
         <span v-if="user" class="text-sm" data-testid="greeting">{{
           t('home.greeting', { name: user.name })
         }}</span>

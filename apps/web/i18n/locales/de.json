@@ -40,6 +40,50 @@
       "rejected": "Abgelehnt"
     }
   },
+  "settings": {
+    "link": "Einstellungen",
+    "title": "Einstellungen",
+    "account": "Konto",
+    "fromDiscord": "Name und Bild kommen von Discord und werden bei jeder Anmeldung aktualisiert.",
+    "adminCannotDelete": "Das Konto des Administrators lässt sich nicht löschen.",
+    "deleteAccount": "Konto löschen",
+    "deleteTitle": "Konto endgültig löschen?",
+    "deleteText": "Alle deine Pläne, hochgeladenen Dateien und Freigaben werden gelöscht. Pläne anderer, die deine Musik nutzen, verlieren sie. Das lässt sich nicht rückgängig machen.",
+    "deleteConfirm": "Endgültig löschen",
+    "save": "Speichern",
+    "discard": "Verwerfen",
+    "saved": "Gespeichert."
+  },
+  "gaits": {
+    "title": "Gangarten",
+    "hint": "Gelten für alle Pläne. Entfernte Gangarten, die noch verwendet werden, werden archiviert.",
+    "color": "Farbe",
+    "colorOf": "Farbe von {name}",
+    "name": "Name",
+    "speedTack": "Tempo mit Sattel (m/s)",
+    "speedBare": "Tempo ohne Sattel (m/s)",
+    "turnDiameter": "Wendekreis Ø (m)",
+    "kmh": "{n} km/h",
+    "archived": "Archiviert",
+    "archiveOf": "{name} archivieren",
+    "remove": "Entfernen",
+    "removeOf": "{name} entfernen",
+    "add": "Gangart hinzufügen",
+    "newName": "Neue Gangart",
+    "invalid": "Bitte alle Felder prüfen: Name, Tempo über 0 bis 20 m/s, Wendekreis 0 bis 100 m, mindestens eine aktive Gangart."
+  },
+  "arenaSettings": {
+    "title": "Halle",
+    "hint": "Die eine Halle für alle Pläne. Wege sind in Metern gespeichert und bleiben bei neuen Maßen erhalten.",
+    "placeholder": "Die Maße sind noch ein Platzhalter.",
+    "chooseImage": "Hallenbild hochladen",
+    "imageHint": "PNG, JPEG oder WebP, höchstens 15 MB",
+    "imageAlt": "Hallenbild",
+    "uploadFailed": "Das Bild ließ sich nicht hochladen.",
+    "length": "Länge (m)",
+    "width": "Breite (m)",
+    "invalid": "Länge und Breite müssen über 0 und höchstens 500 m sein."
+  },
   "errors": {
     "unknown": "Das hat nicht geklappt. Bitte später noch einmal versuchen."
   },

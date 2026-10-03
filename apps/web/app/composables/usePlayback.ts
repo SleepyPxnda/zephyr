@@ -1,4 +1,4 @@
-import { playbackTime } from '@zephyr/core'
+import { playbackTime, type TimeRange } from '@zephyr/core'
 
 export interface Playback {
   playing: Readonly<Ref<boolean>>
@@ -19,6 +19,10 @@ export interface Playback {
 export function usePlayback(
   end: Readonly<Ref<number>>,
   buffer: Readonly<Ref<AudioBuffer | null>>,
+  /** focused part: playback starts and stops inside it */
+  focus?: Readonly<Ref<TimeRange | null>>,
+  /** repeat the focused part instead of pausing at its end */
+  loop?: Readonly<Ref<boolean>>,
 ): Playback {
   const editor = useEditorStore()
   const playing = shallowRef(false)
@@ -71,20 +75,29 @@ export function usePlayback(
     const dt = (now - lastFrame) / 1000
     lastFrame = now
     if (editor.time !== written) startAudio(editor.time)
-    const e = end.value
+    const range = focus?.value ?? null
+    const e = range ? range.end : end.value
     const t =
       src && ctx
         ? playbackTime(from, ctx.currentTime - ctxStart - latency(), rate.value, e)
         : playbackTime(editor.time, dt, rate.value, e)
     editor.time = written = t
-    if (t >= e) return pause()
+    if (t >= e) {
+      if (!range || !loop?.value) return pause()
+      // loop: jump back; the music restarts like after a seek
+      editor.time = written = range.start
+      startAudio(range.start)
+    }
     frame = requestAnimationFrame(tick)
   }
 
   function play() {
-    const e = end.value
+    const range = focus?.value ?? null
+    const e = range ? range.end : end.value
     if (playing.value || e <= 0) return
-    if (editor.time >= e - 0.01) editor.time = 0
+    if (range) {
+      if (editor.time < range.start || editor.time >= range.end - 0.01) editor.time = range.start
+    } else if (editor.time >= e - 0.01) editor.time = 0
     if (buffer.value) {
       ctx ??= new AudioContext()
       void ctx.resume()

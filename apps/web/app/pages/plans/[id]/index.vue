@@ -51,7 +51,7 @@ const clip = useClipboardTools(gaitList)
 const timeline = useTimelineEdit(gaitList)
 // ---------- music and playback (M9) ----------
 const music = useMusic()
-const playback = usePlayback(timeline.end, music.buffer)
+const playback = usePlayback(timeline.end, music.buffer, timeline.focus, toRef(editor, 'loop'))
 /** music name of a freshly imported prototype plan (SPEC "Übernahme aus dem PoC") */
 const importedMusic = computed(() =>
   typeof route.query.music === 'string' && route.query.music ? route.query.music : null,

@@ -101,8 +101,11 @@ export const usePlanStore = defineStore('plan', () => {
         scheduler: (cb) => useIntervalFn(cb, 25_000),
         pongTimeout: 10_000,
       },
-      onDisconnected: () => {
+      onDisconnected: (_ws, e) => {
         connected.value = false
+        // the server closes with 1008 when access is gone (deleted plan, sharing ended, blocked
+        // account): reconnecting would only collect 404s
+        if (e.code === 1008) close()
       },
       onMessage: (_ws, e) => onMessage(e.data),
     })

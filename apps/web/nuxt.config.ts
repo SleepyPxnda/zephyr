@@ -37,6 +37,12 @@ export default defineNuxtConfig({
   css: ['~/assets/css/tailwind.css'],
   vite: {
     plugins: [tailwindcss()],
+    // dev server only: extra host names (comma separated), e.g. a tunnel for the Discord login
+    server: {
+      allowedHosts: process.env.DEV_ALLOWED_HOSTS?.split(',')
+        .map((h) => h.trim())
+        .filter(Boolean),
+    },
   },
   typescript: {
     strict: true,

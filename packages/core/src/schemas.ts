@@ -196,11 +196,20 @@ export const gaitsInputSchema = z
 /** PUT /api/arena */
 export const arenaInputSchema = arenaSchema
 
+export const memberRoleSchema = z.enum(['viewer', 'editor'])
+/** POST /api/plans/:id/members: share with an existing account */
+export const memberInviteSchema = z.object({ email: emailSchema, role: memberRoleSchema })
+/** PUT /api/plans/:id/members/:userId */
+export const memberUpdateSchema = z.object({ role: memberRoleSchema })
+/** read link token: 32 random bytes, base64url */
+export const shareTokenSchema = z.string().regex(/^[\w-]{43}$/)
+
 export type CreatePlanInput = z.infer<typeof createPlanSchema>
 export type PatchPlanInput = z.infer<typeof patchPlanSchema>
 export type GaitInput = z.infer<typeof gaitInputSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
 export type LoginInput = z.infer<typeof loginSchema>
+export type MemberRole = z.infer<typeof memberRoleSchema>
 export type Point = z.infer<typeof pointSchema>
 export type GeoKind = z.infer<typeof geoKindSchema>
 export type Hand = z.infer<typeof handSchema>

@@ -2,6 +2,7 @@
 const { t } = useI18n()
 const { user, fetch: refreshSession } = useUserSession()
 const { list, create, duplicate, remove } = usePlans()
+const { isAdmin, pendingCount } = useAdminUsers()
 
 const search = shallowRef('')
 const importOpen = shallowRef(false)
@@ -41,6 +42,14 @@ async function logout() {
         <p class="text-muted-foreground">{{ t('app.tagline') }}</p>
       </div>
       <div class="flex items-center gap-3">
+        <Button v-if="isAdmin" variant="outline" as-child data-testid="admin-link">
+          <NuxtLink to="/admin/users">
+            {{ t('admin.link') }}
+            <Badge v-if="pendingCount" variant="destructive" class="ml-1">
+              {{ t('admin.pendingBadge', { n: pendingCount }) }}
+            </Badge>
+          </NuxtLink>
+        </Button>
         <span v-if="user" class="text-sm" data-testid="greeting">{{
           t('home.greeting', { name: user.name })
         }}</span>

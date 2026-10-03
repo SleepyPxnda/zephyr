@@ -21,6 +21,28 @@
     "logout": "Abmelden",
     "busy": "Bitte warten …"
   },
+  "admin": {
+    "link": "Nutzer",
+    "pendingBadge": "{n} offen",
+    "title": "Nutzer verwalten",
+    "back": "Zur Planübersicht",
+    "pending": "Offene Anfragen",
+    "noPending": "Keine offenen Anfragen.",
+    "users": "Nutzer",
+    "requestedAt": "angefragt am {date}",
+    "approve": "Bestätigen",
+    "reject": "Ablehnen",
+    "block": "Sperren",
+    "unblock": "Freigeben",
+    "adminRole": "Admin",
+    "superAdmin": "Super-Admin",
+    "you": "Du",
+    "status": {
+      "pending": "Offen",
+      "active": "Aktiv",
+      "rejected": "Abgelehnt"
+    }
+  },
   "errors": {
     "unknown": "Das hat nicht geklappt. Bitte später noch einmal versuchen."
   },

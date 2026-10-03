@@ -1,4 +1,9 @@
-import { HeadBucketCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import {
+  HeadBucketCommand,
+  PutBucketCorsCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3'
 import type { ServerEnv } from './env'
 
 /** S3 client for the self-hosted Garage (path-style addressing). */
@@ -20,6 +25,28 @@ export async function putObject(
 ): Promise<void> {
   await s3.send(
     new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType }),
+  )
+}
+
+/**
+ * Lets the browser read objects through signed addresses (music is decoded with Web Audio, which
+ * needs CORS). Only GET/HEAD; the signature in the address stays the access check.
+ */
+export async function allowBrowserReads(s3: S3Client, bucket: string): Promise<void> {
+  await s3.send(
+    new PutBucketCorsCommand({
+      Bucket: bucket,
+      CORSConfiguration: {
+        CORSRules: [
+          {
+            AllowedMethods: ['GET', 'HEAD'],
+            AllowedOrigins: ['*'],
+            AllowedHeaders: ['*'],
+            MaxAgeSeconds: 3600,
+          },
+        ],
+      },
+    }),
   )
 }
 

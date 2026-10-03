@@ -10,6 +10,7 @@ import { eq } from 'drizzle-orm'
 import type { Peer } from 'crossws'
 import { plans } from '../db/schema'
 import { hasRole, planRoleOf, type PlanRole } from './access'
+import { log } from './log'
 import { checkContent, loadGaits, loadPlan, writeContent } from './plans'
 
 /** Set by the upgrade handler (`server/routes/ws/plans/[id].ts`) on `peer.context`. */
@@ -152,7 +153,7 @@ export function handle(peer: Peer, text: string): void {
   }
   room.queue = room.queue
     .then(() => processOp(room, member, m.seq, m.op))
-    .catch((e) => console.error('[live] operation failed', e))
+    .catch((e) => log.error('live operation failed', { err: e }))
 }
 
 type Outcome = { ok: true; revision: number; op: PlanOp } | { ok: false; reason: string }
@@ -181,7 +182,7 @@ async function processOp(room: Room, member: Member, seq: number, op: PlanOp): P
       return { ok: true, revision: row.revision + 1, op: normalized }
     })
   } catch (e) {
-    console.error('[live] transaction failed', e)
+    log.error('live transaction failed', { err: e })
     outcome = { ok: false, reason: 'error' }
   }
   if (!outcome.ok) {
@@ -225,7 +226,7 @@ export function refresh(planId: string): Promise<void> {
         })
       }
     })
-    .catch((e) => console.error('[live] refresh failed', e))
+    .catch((e) => log.error('live refresh failed', { err: e }))
   return room.queue
 }
 

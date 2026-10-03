@@ -1,4 +1,5 @@
 import { authEnv } from './env'
+import { log } from './log'
 
 /**
  * Announces a new access request in Discord, if a webhook is configured. Never blocks or fails
@@ -17,5 +18,5 @@ export function notifyAccessRequest(
       // names come from Discord users: never ping anyone
       allowed_mentions: { parse: [] },
     },
-  }).catch((e: unknown) => console.error('access request webhook failed', e))
+  }).catch((e: unknown) => log.error('access request webhook failed', { err: e }))
 }

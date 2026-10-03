@@ -1,6 +1,7 @@
 import { discordProfileSchema } from '@zephyr/core'
 import { signInDiscordUser } from '../../lib/discord'
 import { authEnv } from '../../lib/env'
+import { log } from '../../lib/log'
 import { notifyAccessRequest } from '../../lib/webhook'
 
 /** Discord OAuth: start (no `code`) and callback. Only approved accounts get a session. */
@@ -26,7 +27,7 @@ export default defineOAuthDiscordEventHandler({
     return sendRedirect(event, '/')
   },
   onError(event, error) {
-    console.error('discord sign-in failed', error)
+    log.error('discord sign-in failed', { err: error })
     return sendRedirect(event, '/login?status=error')
   },
 })

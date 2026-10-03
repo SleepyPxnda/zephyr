@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { files, plans, users } from '../../db/schema'
 import { dropUser, refresh as refreshLive } from '../../lib/live'
+import { log } from '../../lib/log'
 import { deleteObjects } from '../../lib/storage'
 
 /**
@@ -31,7 +32,7 @@ export default defineEventHandler(async (event) => {
     await deleteObjects(s3, bucket, keys)
   } catch (e) {
     // the rows are gone; orphaned objects are unreachable and only cost space
-    console.error('[account] deleting stored files failed', e)
+    log.error('deleting stored files of a deleted account failed', { err: e })
   }
   setResponseStatus(event, 204)
   return null

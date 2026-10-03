@@ -1,5 +1,6 @@
 import { getRequestURL, send, setResponseHeader, setResponseStatus, type H3Error } from 'h3'
 import type { NitroErrorHandler } from 'nitropack'
+import { log } from './lib/log'
 
 /**
  * API errors as RFC 9457 problem documents. Other paths fall through to Nuxt's error page.
@@ -11,7 +12,8 @@ const handler: NitroErrorHandler = async (error, event) => {
   const e = error as Partial<H3Error>
   const status = e.statusCode ?? 500
   const expected = status < 500 && !!e.statusCode
-  if (!expected) console.error(error)
+  if (!expected)
+    log.error('request failed', { method: event.method, path: url.pathname, status, err: error })
   const data =
     expected && e.data && typeof e.data === 'object' ? (e.data as Record<string, unknown>) : {}
   const body = {

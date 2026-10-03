@@ -1,5 +1,6 @@
 import { planRoleOf } from '../../../lib/access'
 import { handle, join, leave, type LiveContext } from '../../../lib/live'
+import { log } from '../../../lib/log'
 import { findActiveUser, sessionUser } from '../../../utils/auth'
 
 const reject = (status: number, text: string) => new Response(text, { status })
@@ -36,5 +37,5 @@ export default defineWebSocketHandler({
   open: (peer) => join(peer),
   message: (peer, message) => handle(peer, message.text()),
   close: (peer) => leave(peer),
-  error: (peer, error) => console.error('[live] socket error', peer.id, error),
+  error: (peer, error) => log.error('live socket error', { peer: peer.id, err: error }),
 })

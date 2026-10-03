@@ -7,6 +7,12 @@ import { authEnv } from '../lib/env'
 
 export type AppUser = typeof users.$inferSelect
 
+/** The account with this id when it exists and is active, otherwise null. */
+export async function findActiveUser(id: string): Promise<AppUser | null> {
+  const [user] = await useDb().select().from(users).where(eq(users.id, id))
+  return user && user.status === 'active' ? user : null
+}
+
 /**
  * Session user, re-read from the database (deleted or blocked accounts count at once).
  */
@@ -14,9 +20,9 @@ export async function requireUser(event: H3Event): Promise<AppUser> {
   const session = await getUserSession(event)
   const id = session.user?.id
   if (!id) throw problem(401, 'unauthenticated', 'Bitte anmelden.')
-  const [user] = await useDb().select().from(users).where(eq(users.id, id))
+  const user = await findActiveUser(id)
   // blocked or not (yet) approved accounts lose their session at once
-  if (!user || user.status !== 'active') {
+  if (!user) {
     await clearUserSession(event)
     throw problem(401, 'unauthenticated', 'Bitte anmelden.')
   }

@@ -360,7 +360,7 @@ export function drawScene(
       const { s: st, e } = sectionRange(ap.path, k)
       const from = Math.max(0, st - 1)
       if (e <= from) return
-      if (!apVis || e <= apVis.from || st - 1 > apVis.to) return
+      if (!apVis || e <= apVis.from || st > apVis.to) return
       const [mx, my] = px(t, ap.path.pts[Math.round((from + e) / 2)] as PathPoint)
       label(ctx, `${k + 1} · ${gaitName(s.gaits, sec.gaitId)}`, mx, my - 14)
     })

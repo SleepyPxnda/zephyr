@@ -125,9 +125,15 @@ export function useTimelineEdit(gaits: Ref<readonly Gait[]>) {
   const timelines = useTimelines(horses, gaits)
   const timing = computed(() => planStore.plan?.timing ?? NO_TIMING)
   const focus = useFocusRange()
-  /** pixels per second: the local focus zoom while focused, otherwise the plan setting */
-  const pps = computed(
-    () => (focus.value && editor.focusZoom) || (planStore.plan?.settings.timelineZoom ?? 24),
+  /**
+   * pixels per second: the local focus zoom while focused, otherwise the plan setting. While
+   * focused the whole axis must stay within the 30000 px of the ruler and waveform canvases,
+   * because the window sits at `start * pps`.
+   */
+  const pps = computed(() =>
+    focus.value && editor.focusZoom
+      ? Math.min(editor.focusZoom, 30000 / span.value)
+      : (planStore.plan?.settings.timelineZoom ?? 24),
   )
   const planEnd = computed(() => {
     let m = 0
@@ -298,7 +304,7 @@ export function useTimelineEdit(gaits: Ref<readonly Gait[]>) {
         fromId: d.horseId,
         ks: d.ks,
         toId,
-        t: clampSpanStart(start, d.len, focus.value),
+        t: clampSpanStart(start, d.len, focus.value, d.start0),
         copy: e.ctrl,
         keepHole: e.shift,
         fill: editor.gapFill,
@@ -410,7 +416,7 @@ export function useTimelineEdit(gaits: Ref<readonly Gait[]>) {
         h.path,
         k,
         a,
-        clampSpanStart(Math.max(0, target), b - a, focus.value),
+        clampSpanStart(Math.max(0, target), b - a, focus.value, a),
         shift,
       )
       planStore.editHorses((hs) => hs.map((q) => (q.id === horseId ? { ...q, path } : q)))

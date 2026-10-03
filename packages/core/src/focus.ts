@@ -17,10 +17,22 @@ export function clampToRange(t: number, range: TimeRange | null): number {
   return range ? Math.min(range.end, Math.max(range.start, t)) : t
 }
 
-/** Start of a span of `len` seconds moved into the range; a span longer than the range starts at its start. */
-export function clampSpanStart(start: number, len: number, range: TimeRange | null): number {
+/**
+ * Start of a span of `len` seconds moved into the range; a span longer than the range starts at
+ * its start. `from` is where the span is now: a span that crosses the window edge is never pushed
+ * against the direction of the move.
+ */
+export function clampSpanStart(
+  start: number,
+  len: number,
+  range: TimeRange | null,
+  from: number,
+): number {
   if (!range) return start
-  return Math.max(range.start, Math.min(start, range.end - len))
+  const clamped = Math.max(range.start, Math.min(start, range.end - len))
+  if (start > from) return Math.max(from, clamped)
+  if (start < from) return Math.min(from, clamped)
+  return from
 }
 
 /** Pixels per second that fit the range into `widthPx`, within the zoom limits. */

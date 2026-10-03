@@ -73,7 +73,7 @@ const ink = computed(() =>
         aria-hidden="true"
       />
       <b class="relative block truncate font-semibold"
-        ><span v-if="tight" class="text-destructive" aria-hidden="true">! </span>{{ gaitName }}</b
+        ><span v-if="tight" aria-hidden="true">! </span>{{ gaitName }}</b
       >
       <span class="relative tabular-nums opacity-75">{{ duration }}</span>
     </template>

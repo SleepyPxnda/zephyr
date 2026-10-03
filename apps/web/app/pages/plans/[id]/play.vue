@@ -126,7 +126,7 @@ useHead({
       <p v-if="musicStatus === 'loading'" class="text-sm text-muted-foreground" role="status">
         {{ $t('music.loading') }}
       </p>
-      <p v-else-if="musicStatus === 'error'" class="text-sm text-destructive" role="alert">
+      <p v-else-if="musicStatus === 'error'" class="text-sm" role="alert">
         {{ $t('play.musicFailed') }}
       </p>
     </main>

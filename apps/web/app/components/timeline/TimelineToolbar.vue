@@ -106,7 +106,7 @@ function tap() {
   if (bpm) emit('timing', { bpm })
 }
 /** "on" must be clearly visible; aria-pressed, as the tooltip trigger takes over data-state */
-const toggleOn = 'aria-pressed:bg-primary/15 aria-pressed:text-primary'
+const toggleOn = 'aria-pressed:bg-primary aria-pressed:text-primary-foreground'
 const onZoom = (v: number[] | undefined) => {
   if (v?.[0] !== undefined) zoom.value = v[0]
 }

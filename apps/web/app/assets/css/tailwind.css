@@ -24,7 +24,7 @@
   --accent: #cdebdd;
   --accent-foreground: #2e2a3d; /* derived: foreground */
   --muted: #f0eef6;
-  --muted-foreground: #6e6889;
+  --muted-foreground: #655f7d; /* SPEC #6E6889, darkened for 4.5:1 on secondary/accent */
   --destructive: #e8a0a8;
   --destructive-foreground: #2e2a3d; /* derived: dark text on rosé */
   --border: #e3e0ee;
@@ -46,7 +46,7 @@
   --accent: #2f4a40;
   --accent-foreground: #eceaf5;
   --muted: #2a2937;
-  --muted-foreground: #a7a3bd;
+  --muted-foreground: #b4b0c8;
   --destructive: #d98c95;
   --destructive-foreground: #1c1b26;
   --border: #34324a;

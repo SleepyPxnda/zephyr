@@ -110,7 +110,7 @@ const endLabel = computed(() =>
         @remove="emit('remove')"
       />
     </div>
-    <div class="relative min-h-16 shrink-0 touch-none" :style="{ width: `${width}px` }">
+    <div class="relative h-14 shrink-0 touch-none" :style="{ width: `${width}px` }">
       <span
         v-if="!horse.path.pts.length"
         class="absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground"

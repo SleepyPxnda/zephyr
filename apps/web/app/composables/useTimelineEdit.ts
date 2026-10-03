@@ -27,7 +27,7 @@ import {
 } from '@zephyr/core'
 
 /** Width of the lane headers (px); the time axis starts right of them. */
-export const LANE_HEADER_PX = 288
+export const LANE_HEADER_PX = 232
 /** Drag threshold (prototype: 4 px) and magnet range (SPEC: 8 px). */
 const DRAG_PX = 4
 const MAGNET_PX = 8

@@ -160,7 +160,6 @@ function goToPart(id: string) {
       @toggle="playback.toggle"
       @home="ctl.seek(0)"
       @timing="planStore.setTiming"
-      @add-part="ctl.addPartAtPlayhead"
       @add-horse="emit('addHorse')"
     />
     <div ref="scroller" class="relative overflow-x-auto overflow-y-hidden">
@@ -189,12 +188,10 @@ function goToPart(id: string) {
         />
         <div class="flex border-b">
           <div
-            class="sticky left-0 z-10 flex shrink-0 items-center border-r bg-card px-3 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase"
+            class="sticky left-0 z-10 shrink-0 border-r bg-card"
             :style="{ width: `${LANE_HEADER_PX}px` }"
             data-lane-header
-          >
-            {{ $t('timeline.ruler') }}
-          </div>
+          />
           <div
             class="relative h-7 shrink-0 cursor-text touch-none"
             :style="{ width: `${width}px` }"
@@ -214,6 +211,7 @@ function goToPart(id: string) {
           :width="width"
           :selected-id="editor.partId"
           :editable="editable"
+          @add="ctl.addPartAtPlayhead"
           @close="editor.partId = null"
           @update="ctl.updatePart"
           @times="ctl.setPartTimes"

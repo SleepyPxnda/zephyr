@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { waveColumns } from '@zephyr/core'
 import { useDevicePixelRatio } from '@vueuse/core'
-import { Upload } from '@lucide/vue'
+import { Replace, Upload } from '@lucide/vue'
 import { LANE_HEADER_PX } from '~/composables/useTimelineEdit'
 import type { Music } from '~/composables/useMusic'
 
@@ -77,9 +77,7 @@ function onFile(e: Event) {
       :style="{ width: `${LANE_HEADER_PX}px` }"
       data-lane-header
     >
-      <span class="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">{{
-        $t('timeline.music')
-      }}</span>
+      <span class="text-xs font-medium text-muted-foreground">{{ $t('timeline.music') }}</span>
       <template v-if="editable">
         <input
           ref="input"
@@ -91,7 +89,20 @@ function onFile(e: Event) {
           data-testid="music-file"
           @change="onFile"
         />
+        <!-- once music is there, replacing it is rare: an icon is enough -->
         <Button
+          v-if="music.status.value === 'ready' && !music.uploading.value"
+          variant="ghost"
+          size="icon-sm"
+          class="size-7"
+          :aria-label="$t('music.replace')"
+          :title="`${$t('music.replace')} · ${$t('music.uploadHint')}`"
+          @click="input?.click()"
+        >
+          <Replace />
+        </Button>
+        <Button
+          v-else
           variant="ghost"
           size="sm"
           :disabled="music.uploading.value"

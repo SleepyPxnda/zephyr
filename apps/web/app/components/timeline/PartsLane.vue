@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Part, Timing } from '@zephyr/core'
+import { Plus } from '@lucide/vue'
 import { LANE_HEADER_PX } from '~/composables/useTimelineEdit'
 
 /**
@@ -21,6 +22,7 @@ const emit = defineEmits<{
   go: [id: string]
   remove: [id: string]
   key: [id: string, e: KeyboardEvent]
+  add: []
 }>()
 
 const { clock: fmtClock } = useFormat()
@@ -38,11 +40,23 @@ const selected = computed(() => props.parts.find((p) => p.id === props.selectedI
 <template>
   <div class="flex border-b">
     <div
-      class="sticky left-0 z-10 flex shrink-0 items-center border-r bg-card px-3 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase"
+      class="sticky left-0 z-10 flex shrink-0 items-center justify-between border-r bg-card pr-1 pl-3 text-xs font-medium text-muted-foreground"
       :style="{ width: `${LANE_HEADER_PX}px` }"
       data-lane-header
     >
       {{ $t('timeline.parts.label') }}
+      <Button
+        v-if="editable"
+        variant="ghost"
+        size="icon-sm"
+        class="size-7"
+        :aria-label="$t('timeline.parts.addHint')"
+        :title="$t('timeline.parts.addHint')"
+        data-testid="add-part"
+        @click="emit('add')"
+      >
+        <Plus />
+      </Button>
     </div>
     <div
       class="relative h-9 shrink-0 cursor-crosshair touch-none"

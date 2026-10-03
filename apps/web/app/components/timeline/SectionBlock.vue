@@ -31,7 +31,7 @@ const ink = computed(() =>
 
 <template>
   <div
-    class="absolute top-2.5 bottom-2.5 cursor-grab overflow-hidden rounded-[5px] border px-1.5 py-1 text-xs leading-tight whitespace-nowrap select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+    class="absolute top-1.5 bottom-1.5 cursor-grab overflow-hidden rounded-[5px] border px-1.5 py-1 text-xs leading-tight whitespace-nowrap select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
     :class="[
       ink,
       tight ? 'border-2 border-destructive' : 'border-foreground/20',

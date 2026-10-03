@@ -148,6 +148,7 @@ function loadHorse(p: Rec): LegacyHorse {
     gaps: Array.isArray(p.gaps) ? p.gaps.map(plus) : [],
     gt: Array.isArray(p.gapTypes) ? p.gapTypes.map((t) => (t ? String(t) : null)) : [],
     tack: [],
+    link: [],
     pendJump: !!p.pendJump,
     pendGap:
       isRec(p.pendGap) && plus(pendGap.w) > 0

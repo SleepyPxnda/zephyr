@@ -155,6 +155,7 @@ function applyToAffected(
   for (const a of aff) {
     const s = toStrokes(a.horse.path)
     edit(s.pts, a)
+    a.ks.forEach((k) => (s.link[k] = false))
     changed.set(a.horse.id, normalize(fromStrokes(s)))
   }
   return replace(horses, changed)
@@ -283,6 +284,7 @@ export function deleteSection(path: Path, k: number, ctx: TimelineContext): Path
   p.gaps.splice(k, 1)
   p.gt.splice(k, 1)
   p.tack.splice(k, 1)
+  p.link.splice(k, 1)
   for (let j = k; j < p.strokes.length; j++) p.strokes[j] = (p.strokes[j] as number) - n
   if (k < p.strokes.length) {
     const st = p.strokes[k] as number
@@ -447,6 +449,7 @@ export function dragEnd(
 ): Path | null {
   const g = sectionGeom(path, k)
   const p = toStrokes(path)
+  p.link[k] = false
   const oldEnd = { ...(p.pts[g.e] as PathPoint) }
   let endIdx = g.e
   const m = g.geo
@@ -512,6 +515,7 @@ function cumulative(
 export function dragApex(path: Path, k: number, h0: Point, M: Point): Path {
   const g = sectionGeom(path, k)
   const p = toStrokes(path)
+  p.link[k] = false
   if (g.geo) {
     const end = p.pts[g.e] as PathPoint
     const E = { x: end.x, y: end.y }
@@ -546,6 +550,7 @@ export function dragApex(path: Path, k: number, h0: Point, M: Point): Path {
 export function dragStart(path: Path, k: number, dx: number, dy: number): Path {
   const g = sectionGeom(path, k)
   const p = toStrokes(path)
+  p.link[k] = false
   const { total, cum } = cumulative(p.pts, g.s0, g.e)
   for (let i = g.s0; i <= g.e; i++) {
     const w = total > 0 ? 1 - (cum[i - g.s0] as number) / total : 1

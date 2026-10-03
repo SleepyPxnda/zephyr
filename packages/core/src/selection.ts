@@ -21,8 +21,11 @@ export function setSectionProps(
     const sections = h.path.sections.map((s, k) => {
       if (!g.ks.includes(k)) return s
       const { gapType, ...rest } = patch
+      // an edited connecting line becomes a normal section (SPEC "Umsortieren und Verbindungen")
+      const plain = { ...s }
+      delete plain.link
       return {
-        ...s,
+        ...plain,
         ...rest,
         gap: rest.gap === undefined ? s.gap : Math.max(0, rest.gap),
         ...(gapType && k > 0 ? { gapType } : {}),

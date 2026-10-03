@@ -26,6 +26,7 @@ function pushSection(p: Strokes, gaitId: string, pending: Pending | null): void 
   p.strokes.push(p.pts.length)
   p.sg.push(gaitId)
   p.tack.push(null)
+  p.link.push(false)
   p.gaps.push(pending && pending.gap > 0 ? pending.gap : 0)
   p.gt.push(
     pending ? (pending.gap > 0 ? pending.gapType : pending.jump ? 'pause' : 'halt') : 'halt',
@@ -39,6 +40,7 @@ function firstPoint(p: Strokes, pt: Point, gaitId: string): void {
   p.gaps = [0]
   p.gt = [null]
   p.tack = [null]
+  p.link = [false]
 }
 
 /** Start S and heading for the next figure; S is null on an empty path or after "+ Pause". */

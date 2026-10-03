@@ -41,6 +41,8 @@ export const sectionSchema = z.object({
   gapType: gapTypeSchema,
   /** Saddle override: null = horse default. */
   tack: z.boolean().nullable(),
+  /** Automatic connecting line, rebuilt on every reorder (SPEC "Umsortieren und Verbindungen"). */
+  link: z.literal(true).optional(),
 })
 
 export const pathSchema = z

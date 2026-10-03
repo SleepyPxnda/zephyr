@@ -14,6 +14,8 @@ export interface Strokes {
   /** null or anything else than halt/pause only occurs in imported data; normalize decides */
   gt: (GapType | string | null)[]
   tack: (boolean | null)[]
+  /** automatic connecting line (`sections[].link`) */
+  link: boolean[]
 }
 
 const cloneGeo = (g: Geo): Geo => ({ ...g, E: { ...g.E }, ...(g.M ? { M: { ...g.M } } : {}) })
@@ -32,6 +34,7 @@ export function toStrokes(path: Path): Strokes {
     gaps: path.sections.map((s) => s.gap),
     gt: path.sections.map((s) => s.gapType),
     tack: path.sections.map((s) => s.tack),
+    link: path.sections.map((s) => !!s.link),
   }
 }
 
@@ -45,6 +48,7 @@ export function fromStrokes(s: Strokes): Path {
       gap: s.gaps[k] ?? 0,
       gapType: s.gt[k] === 'pause' ? 'pause' : 'halt',
       tack: s.tack[k] ?? null,
+      ...(s.link[k] ? { link: true as const } : {}),
     })),
   }
 }
@@ -67,6 +71,7 @@ export function normalizeStrokes(p: Strokes, opts: NormalizeOptions = {}): void 
     p.gaps = []
     p.gt = []
     p.tack = []
+    p.link = []
     return
   }
   p.pts.forEach((q) => {
@@ -80,19 +85,23 @@ export function normalizeStrokes(p: Strokes, opts: NormalizeOptions = {}): void 
     p.gaps.unshift(0)
     p.gt.unshift(null)
     p.tack.unshift(null)
+    p.link.unshift(false)
   }
   while (p.gaps.length < p.strokes.length) p.gaps.push(0)
   while (p.gt.length < p.strokes.length) p.gt.push(null)
   while (p.tack.length < p.strokes.length) p.tack.push(null)
+  while (p.link.length < p.strokes.length) p.link.push(false)
   p.gaps.length = p.strokes.length
   p.gt.length = p.strokes.length
   p.tack.length = p.strokes.length
+  p.link.length = p.strokes.length
   const removeAt = (k: number) => {
     p.strokes.splice(k, 1)
     p.sg.splice(k, 1)
     p.gaps.splice(k, 1)
     p.gt.splice(k, 1)
     p.tack.splice(k, 1)
+    p.link.splice(k, 1)
   }
   // The prototype runs this pass once, which can leave e.g. [0, 2, 1] behind for corrupt input.
   // Repeating it until nothing changes keeps the prototype's result whenever that one is valid.
@@ -113,6 +122,7 @@ export function normalizeStrokes(p: Strokes, opts: NormalizeOptions = {}): void 
       p.strokes.splice(k + 1, 1)
       p.sg.splice(k, 1)
       p.tack.splice(k, 1)
+      p.link.splice(k, 1)
       const g = p.gaps.splice(k + 1, 1)[0] || 0
       p.gaps[k] = (p.gaps[k] || 0) + g
       const t2 = p.gt.splice(k + 1, 1)[0] ?? null
@@ -202,6 +212,8 @@ export function splitAt(
   p.gaps.splice(k + 1, 0, 0)
   p.gt.splice(k + 1, 0, 'halt')
   p.tack.splice(k + 1, 0, at(p.tack, k))
+  p.link.splice(k + 1, 0, false)
+  p.link[k] = false
   return { path: fromStrokes(p), k: k + 1 }
 }
 
@@ -229,7 +241,9 @@ export function mergeSections(
     p.gaps.splice(j, 1)
     p.gt.splice(j, 1)
     p.tack.splice(j, 1)
+    p.link.splice(j, 1)
   }
+  p.link[first] = false
   delete at(p.pts, at(p.strokes, first)).geo
   normalizeStrokes(p, opts)
   return fromStrokes(p)

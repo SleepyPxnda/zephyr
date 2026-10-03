@@ -32,7 +32,7 @@ function copyPart(horse: Horse, ks: readonly number[], ctx: HorseContext): ClipP
   const path = horse.path
   const src = toStrokes(path)
   const tl = timeline(path, { gaits: ctx.gaits, horseTack: horse.tack })
-  const out: Strokes = { pts: [], strokes: [], sg: [], gaps: [], gt: [], tack: [] }
+  const out: Strokes = { pts: [], strokes: [], sg: [], gaps: [], gt: [], tack: [], link: [] }
   let prevEndT = 0
   const runs: number[][] = []
   ks.forEach((k) => {
@@ -58,6 +58,7 @@ function copyPart(horse: Horse, ks: readonly number[], ctx: HorseContext): ClipP
       out.strokes.push(j === 0 ? (ri === 0 ? 0 : base) : (src.strokes[k] as number) - g0.si + base)
       out.sg.push(src.sg[k] as string)
       out.tack.push(src.tack[k] ?? null)
+      out.link.push(false)
       if (j === 0) {
         out.gaps.push(ri === 0 ? 0 : Math.max(0, (tl.secs[k]?.start ?? 0) - prevEndT))
         out.gt.push(ri === 0 ? null : 'pause')
@@ -204,6 +205,7 @@ export function paste(
         p.strokes.push(Math.max(0, st + shift) + off)
         p.sg.push(part.sg[i] as string)
         p.tack.push(part.tack[i] ?? null)
+        p.link.push(false)
         if (i === 0) {
           p.gaps.push(multi ? Math.max(0, startAt - endT) : pg ? pg.gap : 0)
           p.gt.push(pg ? pg.gapType : asJump ? 'pause' : 'halt')

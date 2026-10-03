@@ -34,6 +34,10 @@ const emit = defineEmits<{
 }>()
 
 const { t, n } = useI18n()
+const planStore = usePlanStore()
+/** colours of the other people who work on this horse or selected one of its sections */
+const horseMarks = computed(() => planStore.marks.horses.get(props.horse.id) ?? [])
+const sectionMarks = (k: number) => planStore.marks.sections.get(selKey(props.horse.id, k)) ?? []
 const { seconds, clock, duration: fmtDuration } = useFormat()
 const duration = (v: number) => fmtDuration(v, props.timing)
 
@@ -108,6 +112,14 @@ const endLabel = computed(() =>
         @clear="emit('clear')"
         @remove="emit('remove')"
       />
+      <span class="pointer-events-none absolute top-1 right-1 flex gap-0.5" aria-hidden="true">
+        <span
+          v-for="c in horseMarks"
+          :key="c"
+          class="size-2 rounded-full"
+          :style="{ backgroundColor: c }"
+        />
+      </span>
     </div>
     <div
       class="relative h-14 shrink-0 touch-none"
@@ -151,6 +163,7 @@ const endLabel = computed(() =>
           :duration="b.dur"
           :link="b.link"
           :label="b.label"
+          :peers="sectionMarks(b.k)"
           @key="emit('key', b.k, $event)"
         />
       </template>

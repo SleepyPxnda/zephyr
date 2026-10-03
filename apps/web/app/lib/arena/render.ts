@@ -141,6 +141,8 @@ export interface Scene {
   splitHover: Point | null
   /** selected sections as horseId:k */
   selection: readonly string[]
+  /** colours of the other people who selected a section (horseId:k) */
+  peerMarks?: ReadonlyMap<string, readonly string[]>
   handles: readonly { kind: string; x: number; y: number; pivot?: Point }[]
   overlay: { text: string; at: Point } | null
   /** parts about to be pasted */
@@ -261,23 +263,30 @@ export function drawScene(
         ctx.restore()
       })
     }
-    // selected sections: light band underneath
+    // selected sections: light band underneath; other people's selections in their colour
     h.path.sections.forEach((_, k) => {
-      if (!s.selection.includes(`${h.id}:${k}`)) return
+      const key = `${h.id}:${k}`
+      const bands: { color: string; width: number }[] = (s.peerMarks?.get(key) ?? []).map(
+        (color, n) => ({ color, width: 16 - n * 3 }),
+      )
+      if (s.selection.includes(key)) bands.push({ color: WHITE, width: 12 })
+      if (!bands.length) return
       const g = sectionGeom(h.path, k)
-      ctx.save()
-      ctx.globalAlpha = 0.5
-      ctx.lineWidth = 12
-      ctx.strokeStyle = WHITE
-      ctx.beginPath()
-      let [hx, hy] = px(t, pts[g.si] as PathPoint)
-      ctx.moveTo(hx, hy)
-      for (let i = g.si + 1; i <= g.e; i++) {
-        ;[hx, hy] = px(t, pts[i] as PathPoint)
-        ctx.lineTo(hx, hy)
+      for (const band of bands) {
+        ctx.save()
+        ctx.globalAlpha = 0.5
+        ctx.lineWidth = band.width
+        ctx.strokeStyle = band.color
+        ctx.beginPath()
+        let [hx, hy] = px(t, pts[g.si] as PathPoint)
+        ctx.moveTo(hx, hy)
+        for (let i = g.si + 1; i <= g.e; i++) {
+          ;[hx, hy] = px(t, pts[i] as PathPoint)
+          ctx.lineTo(hx, hy)
+        }
+        ctx.stroke()
+        ctx.restore()
       }
-      ctx.stroke()
-      ctx.restore()
     })
     // ridden so far, solid
     if (pos && pos.i > 0) strokePath(ctx, t, pts, pos.i - 1, pos.hidden ? null : pos, h.color, 3.5)

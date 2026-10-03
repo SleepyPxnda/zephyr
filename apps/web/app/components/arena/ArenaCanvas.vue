@@ -32,6 +32,7 @@ const props = defineProps<{
   ghost: Ghost | null
   splitHover: Point | null
   selection: readonly string[]
+  peerMarks?: ReadonlyMap<string, readonly string[]>
   handles: readonly HandleView[]
   overlay: OverlayLabel | null
   pastePreview: readonly PastePreview[]
@@ -95,6 +96,7 @@ watch(
     props.ghost,
     props.splitHover,
     props.selection,
+    props.peerMarks,
     props.handles,
     props.overlay,
     props.pastePreview,
@@ -126,6 +128,7 @@ useRafFn(() => {
           ghost: props.ghost,
           splitHover: props.splitHover,
           selection: props.selection,
+          peerMarks: props.peerMarks,
           handles: props.handles,
           overlay: props.overlay,
           pastePreview: props.pastePreview,

@@ -19,6 +19,7 @@ const props = defineProps<{
   ghost: Ghost | null
   splitHover: Point | null
   selection: readonly string[]
+  peerMarks?: ReadonlyMap<string, readonly string[]>
   handles: readonly HandleView[]
   overlay: OverlayLabel | null
   pastePreview: readonly PastePreview[]
@@ -81,6 +82,7 @@ const timelines = useTimelines(
         :ghost="ghost"
         :split-hover="splitHover"
         :selection="selection"
+        :peer-marks="peerMarks"
         :handles="handles"
         :overlay="overlay"
         :paste-preview="pastePreview"

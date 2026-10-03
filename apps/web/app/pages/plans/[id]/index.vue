@@ -165,6 +165,7 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · zephyr` : 'zephyr')
             :ghost="tools.ghost.value"
             :split-hover="tools.splitHover.value"
             :selection="editor.selection"
+            :peer-marks="planStore.marks.sections"
             :handles="select.handles.value"
             :overlay="select.overlay.value"
             :paste-preview="clip.preview.value"

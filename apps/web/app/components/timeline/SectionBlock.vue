@@ -21,6 +21,8 @@ const props = defineProps<{
   /** automatic connecting line: thin and dashed, without text */
   link: boolean
   label: string
+  /** colours of the other people who selected this section */
+  peers?: readonly string[]
 }>()
 const emit = defineEmits<{ key: [e: KeyboardEvent] }>()
 
@@ -75,5 +77,12 @@ const ink = computed(() =>
       >
       <span class="relative tabular-nums opacity-75">{{ duration }}</span>
     </template>
+    <span
+      v-if="peers?.length"
+      class="pointer-events-none absolute inset-x-0 top-0 flex h-1"
+      aria-hidden="true"
+    >
+      <span v-for="c in peers" :key="c" class="flex-1" :style="{ backgroundColor: c }" />
+    </span>
   </div>
 </template>

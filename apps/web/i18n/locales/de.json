@@ -34,9 +34,6 @@
     "reject": "Ablehnen",
     "block": "Sperren",
     "unblock": "Freigeben",
-    "adminRole": "Admin",
-    "superAdmin": "Super-Admin",
-    "you": "Du",
     "status": {
       "pending": "Offen",
       "active": "Aktiv",

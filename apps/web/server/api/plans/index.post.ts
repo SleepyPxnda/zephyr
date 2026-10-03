@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
   try {
     res = importOnce()
     if (!res.ok && input.createGaits) {
-      if (user.role !== 'admin')
+      if (!isAdmin(user))
         throw problem(403, 'forbidden', 'Nur Administratoren können Gangarten anlegen.')
       const values = pocGaitValues(input.poc, res.unknownGaits)
       const start = gaitList.length
@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
   if (!res.ok) {
     throw problem(409, 'unknown_gaits', 'Einige Gangarten sind unbekannt.', {
       unknownGaits: res.unknownGaits,
-      canCreate: user.role === 'admin',
+      canCreate: isAdmin(user),
     })
   }
   const id = await createPlan(db, user.id, res.plan)

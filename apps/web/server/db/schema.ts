@@ -22,7 +22,6 @@ const bytea = customType<{ data: Buffer }>({ dataType: () => 'bytea' })
 const num = (name: string) => numeric(name, { mode: 'number' })
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 
-export const userRole = pgEnum('user_role', ['user', 'admin'])
 export const userStatus = pgEnum('user_status', ['pending', 'active', 'rejected'])
 export const memberRole = pgEnum('member_role', ['viewer', 'editor'])
 export const fileKind = pgEnum('file_kind', ['audio', 'image'])
@@ -38,7 +37,6 @@ export const users = pgTable('users', {
   /** Discord avatar hash; the URL is built with discordAvatarUrl */
   avatar: text('avatar'),
   status: userStatus('status').notNull().default('pending'),
-  role: userRole('role').notNull().default('user'),
   /** last status change by an admin */
   decidedAt: timestamp('decided_at', { withTimezone: true }),
   createdAt: createdAt(),

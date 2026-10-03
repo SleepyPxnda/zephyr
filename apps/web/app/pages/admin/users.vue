@@ -6,15 +6,12 @@ import type { AdminUser } from '~/composables/useAdminUsers'
 definePageMeta({ middleware: 'admin' })
 
 const { t, d } = useI18n()
-const { user: me } = useUserSession()
 const { users, patch } = useAdminUsers()
 
 const pending = computed(() => users.value.filter((u) => u.status === 'pending'))
 const decided = computed(() => users.value.filter((u) => u.status !== 'pending'))
 const busy = shallowRef<string | null>(null)
 const error = shallowRef('')
-
-const locked = (u: AdminUser) => u.isSuperAdmin || u.id === me.value?.id
 
 async function change(u: AdminUser, body: AdminUserPatch) {
   error.value = ''
@@ -87,36 +84,27 @@ async function change(u: AdminUser, body: AdminUserPatch) {
 
     <section class="flex flex-col gap-3" aria-labelledby="users-title">
       <h2 id="users-title" class="text-lg font-semibold">{{ t('admin.users') }}</h2>
-      <ul class="flex flex-col divide-y rounded-md border" data-testid="admin-users">
+      <ul
+        v-if="decided.length"
+        class="flex flex-col divide-y rounded-md border"
+        data-testid="admin-users"
+      >
         <li v-for="u in decided" :key="u.id" class="flex flex-wrap items-center gap-3 px-3 py-2">
           <Avatar class="size-9">
             <AvatarImage :src="u.avatarUrl" alt="" />
             <AvatarFallback>{{ u.name.slice(0, 1) }}</AvatarFallback>
           </Avatar>
           <div class="min-w-0 flex-1">
-            <p class="truncate text-sm font-medium">
-              {{ u.name }}
-              <Badge v-if="u.isSuperAdmin" variant="secondary">{{ t('admin.superAdmin') }}</Badge>
-              <Badge v-else-if="u.id === me?.id" variant="secondary">{{ t('admin.you') }}</Badge>
-            </p>
+            <p class="truncate text-sm font-medium">{{ u.name }}</p>
             <p class="truncate text-xs text-muted-foreground">@{{ u.username }}</p>
           </div>
           <Badge :variant="u.status === 'active' ? 'outline' : 'destructive'">
             {{ t(`admin.status.${u.status}`) }}
           </Badge>
-          <div class="flex items-center gap-2">
-            <Switch
-              :id="`admin-role-${u.id}`"
-              :model-value="u.role === 'admin'"
-              :disabled="locked(u) || busy === u.id"
-              @update:model-value="change(u, { role: $event ? 'admin' : 'user' })"
-            />
-            <Label :for="`admin-role-${u.id}`">{{ t('admin.adminRole') }}</Label>
-          </div>
           <Button
             size="sm"
             variant="outline"
-            :disabled="locked(u) || busy === u.id"
+            :disabled="busy === u.id"
             @click="change(u, { status: u.status === 'active' ? 'rejected' : 'active' })"
           >
             {{ u.status === 'active' ? t('admin.block') : t('admin.unblock') }}

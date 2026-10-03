@@ -3,12 +3,12 @@ import { eq } from 'drizzle-orm'
 import type { H3Event } from 'h3'
 import { users } from '../db/schema'
 import { hasRole, planRoleOf, type PlanRole } from '../lib/access'
+import { authEnv } from '../lib/env'
 
 export type AppUser = typeof users.$inferSelect
 
 /**
- * Session user, re-read from the database (deleted or blocked accounts and role changes count at
- * once).
+ * Session user, re-read from the database (deleted or blocked accounts count at once).
  */
 export async function requireUser(event: H3Event): Promise<AppUser> {
   const session = await getUserSession(event)
@@ -23,9 +23,12 @@ export async function requireUser(event: H3Event): Promise<AppUser> {
   return user
 }
 
+/** The one admin: the account of SUPER_ADMIN_DISCORD_ID. */
+export const isAdmin = (u: AppUser) => u.discordId === authEnv().SUPER_ADMIN_DISCORD_ID
+
 export async function requireAdmin(event: H3Event): Promise<AppUser> {
   const user = await requireUser(event)
-  if (user.role !== 'admin') throw problem(403, 'forbidden', 'Nur für Administratoren.')
+  if (!isAdmin(user)) throw problem(403, 'forbidden', 'Nur für Administratoren.')
   return user
 }
 
@@ -52,5 +55,5 @@ export const sessionUser = (u: AppUser) => ({
   username: u.username,
   name: u.name,
   avatarUrl: discordAvatarUrl(u.discordId, u.avatar),
-  role: u.role,
+  isAdmin: isAdmin(u),
 })

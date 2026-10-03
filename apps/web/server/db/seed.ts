@@ -56,7 +56,6 @@ export async function seed(db: Db, o: SeedOptions): Promise<SeedResult> {
       username: o.superAdminDiscordId,
       name: 'Admin',
       status: 'active',
-      role: 'admin',
       decidedAt: new Date(),
     })
     .onConflictDoNothing()

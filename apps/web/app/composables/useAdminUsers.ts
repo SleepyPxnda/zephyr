@@ -1,4 +1,4 @@
-import type { AdminUserPatch, UserRole, UserStatus } from '@zephyr/core'
+import type { AdminUserPatch, UserStatus } from '@zephyr/core'
 
 export interface AdminUser {
   id: string
@@ -6,16 +6,14 @@ export interface AdminUser {
   name: string
   avatarUrl: string
   status: UserStatus
-  role: UserRole
   createdAt: string
   decidedAt: string | null
-  isSuperAdmin: boolean
 }
 
-/** Accounts for the admin page and the count of open access requests (admins only). */
+/** Accounts for the admin page and the count of open access requests (admin only). */
 export function useAdminUsers() {
   const { user } = useUserSession()
-  const isAdmin = computed(() => user.value?.role === 'admin')
+  const isAdmin = computed(() => !!user.value?.isAdmin)
   const { data, refresh } = useFetch<AdminUser[]>('/api/admin/users', {
     key: 'admin-users',
     default: () => [],

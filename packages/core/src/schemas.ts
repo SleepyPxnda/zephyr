@@ -163,13 +163,9 @@ export const usernameSchema = z
   .pipe(z.string().min(1).max(32))
 
 export const userStatusSchema = z.enum(['pending', 'active', 'rejected'])
-export const userRoleSchema = z.enum(['user', 'admin'])
 
-/** PATCH /api/admin/users/:id */
-export const adminUserPatchSchema = z
-  .object({ status: z.enum(['active', 'rejected']), role: userRoleSchema })
-  .partial()
-  .refine((p) => Object.keys(p).length > 0, { message: 'nothing to change' })
+/** PATCH /api/admin/users/:id: approve or block an account */
+export const adminUserPatchSchema = z.object({ status: z.enum(['active', 'rejected']) })
 
 /** POST /api/plans: a new empty plan, or an import of prototype JSON (`poc`). */
 export const createPlanSchema = z.object({
@@ -236,5 +232,4 @@ export type Plan = z.infer<typeof planSchema>
 export type Arena = z.infer<typeof arenaSchema>
 export type DiscordProfile = z.infer<typeof discordProfileSchema>
 export type UserStatus = z.infer<typeof userStatusSchema>
-export type UserRole = z.infer<typeof userRoleSchema>
 export type AdminUserPatch = z.infer<typeof adminUserPatchSchema>

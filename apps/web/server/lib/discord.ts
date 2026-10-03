@@ -6,7 +6,7 @@ import type { AppUser } from '../utils/auth'
 
 /**
  * Creates or refreshes the account of a Discord user. Unknown users become access requests
- * (`pending`); the super admin is always active and admin.
+ * (`pending`); the super admin is always active.
  */
 export async function signInDiscordUser(
   db: Db,
@@ -19,7 +19,7 @@ export async function signInDiscordUser(
     name: p.global_name || p.username,
     avatar: p.avatar ?? null,
   }
-  const superFields = isSuper ? { status: 'active' as const, role: 'admin' as const } : {}
+  const superFields = isSuper ? { status: 'active' as const } : {}
 
   return db.transaction(async (tx) => {
     // a name given up on Discord may now belong to someone else: the old holder keeps their

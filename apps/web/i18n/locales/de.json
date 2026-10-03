@@ -88,10 +88,9 @@
     "status": {
       "saved": "Gespeichert",
       "saving": "Speichert …",
-      "unsaved": "Nicht gespeichert",
-      "conflict": "Konflikt: Plan wurde woanders geändert",
-      "error": "Nicht gespeichert (Fehler)"
+      "offline": "Getrennt – Plan ist schreibgeschützt"
     },
+    "peers": "Gerade im Plan: {names}",
     "arena": {
       "label": "Platz",
       "canvas": "Platz ohne Pferde | Platz mit einem Pferd | Platz mit {count} Pferden",

@@ -98,14 +98,12 @@ function selectWhole(id: string) {
   editor.selection = wholePathKeys([h])
 }
 
-// save before leaving (SPEC: autosave also when leaving the page)
-onBeforeRouteLeave(async () => {
-  if (planStore.dirty) await planStore.save()
-})
+// send what is still collected when leaving the page (SPEC "Speichern und Konflikte")
+onBeforeRouteLeave(() => planStore.flush())
+onBeforeUnmount(() => planStore.close())
 useEventListener(window, 'beforeunload', (e: BeforeUnloadEvent) => {
-  if (!planStore.dirty) return
-  void planStore.save()
-  e.preventDefault()
+  planStore.flush()
+  if (planStore.dirty) e.preventDefault()
 })
 useHead({ title: () => (plan.value ? `${plan.value.title} · zephyr` : 'zephyr') })
 </script>
@@ -118,6 +116,7 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · zephyr` : 'zephyr')
       :status="planStore.status"
       :role="planStore.role"
       :editable="planStore.canEdit"
+      :peers="planStore.peers"
       @rename="planStore.rename"
     />
     <main v-if="plan && arena" class="flex w-full flex-col gap-4 p-4 pb-12">

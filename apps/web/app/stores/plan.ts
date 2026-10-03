@@ -1,92 +1,259 @@
 import {
+  applyOp,
+  applyOps,
+  coalesceOps,
+  diffOps,
   newHorse,
+  pathTargets,
+  peerMarks,
+  serverMessageSchema,
+  type ClientMessage,
   type Horse,
   type Part,
+  type PeerInfo,
   type Plan,
   type PlanContent,
+  type PlanOp,
   type PlanSettings,
+  type ServerMessage,
+  type SingleOp,
   type Timing,
 } from '@zephyr/core'
-import { useDebounceFn } from '@vueuse/core'
+import { useDebounceFn, useIntervalFn, useThrottleFn, useWebSocket } from '@vueuse/core'
 
 export type PlanRole = 'viewer' | 'editor' | 'owner'
-export type SaveStatus = 'saved' | 'saving' | 'unsaved' | 'conflict' | 'error'
+/** Without a connection the plan is read-only (SPEC "Speichern und Konflikte"). */
+export type SaveStatus = 'saved' | 'saving' | 'offline'
 
-/** Autosave 1.5 s after the last change (SPEC "Speichern und Konflikte"). */
-const AUTOSAVE_MS = 1500
+/** Changes made within this window travel as one message. */
+const FLUSH_MS = 120
+const FLUSH_MAX_MS = 500
+/** Most parts in one `batch` (the server accepts 100). */
+const BATCH_MAX = 100
 /** Undo steps kept (SPEC "Zustand"). */
 const HISTORY_MAX = 150
 
+type Hello = Extract<ServerMessage, { type: 'hello' }>
+type Ack = Extract<ServerMessage, { type: 'ack' }>
+type RemoteOp = Extract<ServerMessage, { type: 'op' }>
+
 /**
- * The open plan document: loading, changes, autosave with `If-Match`. The document is replaced
- * immutably on every change, so derived values (timelines) can be cached per horse object.
+ * The open plan document, edited live (SPEC "Speichern und Konflikte"). `confirmed` is the
+ * document as the server has it; `plan` is what is shown: confirmed plus our own operations the
+ * server has not confirmed yet. Last write wins, so a remote operation is applied to `confirmed`
+ * and our unconfirmed operations are laid over it again.
  */
 export const usePlanStore = defineStore('plan', () => {
+  const editor = useEditorStore()
+  const confirmed = shallowRef<Plan | null>(null)
   const plan = shallowRef<Plan | null>(null)
   const role = shallowRef<PlanRole | null>(null)
-  const status = shallowRef<SaveStatus>('saved')
-  const dirty = shallowRef(false)
-  let saving: Promise<void> | null = null
+  const peers = shallowRef<PeerInfo[]>([])
+  const connected = shallowRef(false)
+  const unconfirmed = shallowRef(0)
 
-  const canEdit = computed(() => role.value === 'editor' || role.value === 'owner')
+  let planId = ''
+  let seq = 0
+  let hasHello = false
+  /** sent, not yet confirmed */
+  let inflight: { seq: number; op: PlanOp }[] = []
+  /** produced, not yet sent (collected for FLUSH_MS) */
+  let outbox: SingleOp[] = []
+  let socket: ReturnType<typeof useWebSocket> | null = null
 
-  async function load(id: string) {
-    const res = await $fetch<Plan & { role: PlanRole }>(`/api/plans/${id}`)
-    const { role: r, ...doc } = res
-    plan.value = doc
-    role.value = r
-    dirty.value = false
-    status.value = 'saved'
-    history.value = []
-  }
+  const canEdit = computed(
+    () => connected.value && (role.value === 'editor' || role.value === 'owner'),
+  )
+  const dirty = computed(() => unconfirmed.value > 0)
+  const status = computed<SaveStatus>(() =>
+    !connected.value ? 'offline' : unconfirmed.value > 0 ? 'saving' : 'saved',
+  )
+  const marks = computed(() => peerMarks(peers.value))
 
   const content = (p: Plan): PlanContent => {
     const { id: _id, revision: _rev, ...c } = p
     return c
   }
+  const withContent = (p: Plan, c: PlanContent): Plan => ({ ...p, ...c })
+  const countUnconfirmed = () => (unconfirmed.value = inflight.length + outbox.length)
 
-  /** Applies a change to the document and schedules saving. */
-  function update(fn: (c: PlanContent) => PlanContent) {
-    const p = plan.value
-    if (!p || !canEdit.value) return
-    plan.value = { ...p, ...fn(content(p)) }
-    dirty.value = true
-    if (status.value !== 'conflict') status.value = 'unsaved'
-    scheduleSave()
+  /** shown plan = confirmed plan + our own operations that are still open */
+  function rebuild() {
+    const c = confirmed.value
+    if (!c) return
+    const open: PlanOp[] = [...inflight.map((i) => i.op), ...outbox]
+    plan.value = withContent(c, applyOps(content(c), open))
   }
 
-  async function saveOnce() {
-    const sent = plan.value
-    if (!sent || !dirty.value || status.value === 'conflict') return
-    status.value = 'saving'
+  // ---------- connection ----------
+
+  function send(msg: ClientMessage): boolean {
+    return socket?.send(JSON.stringify(msg)) ?? false
+  }
+
+  function connect() {
+    const scheme = location.protocol === 'https:' ? 'wss' : 'ws'
+    socket = useWebSocket(`${scheme}://${location.host}/ws/plans/${planId}`, {
+      autoReconnect: { retries: () => true, delay: 1500 },
+      // keeps the connection open behind proxies and notices a dead one
+      heartbeat: {
+        message: JSON.stringify({ type: 'ping' }),
+        scheduler: (cb) => useIntervalFn(cb, 25_000),
+        pongTimeout: 10_000,
+      },
+      onDisconnected: () => {
+        connected.value = false
+      },
+      onMessage: (_ws, e) => onMessage(e.data),
+    })
+  }
+
+  function close() {
+    socket?.close()
+    socket = null
+    connected.value = false
+    hasHello = false
+  }
+
+  /** Reconnects to get a fresh document (after a gap in the revisions or a rejected operation). */
+  function resync() {
+    connected.value = false
+    socket?.open()
+  }
+
+  function onMessage(raw: unknown) {
+    if (typeof raw !== 'string') return
+    let json: unknown
     try {
-      const saved = await $fetch<Plan>(`/api/plans/${sent.id}`, {
-        method: 'PUT',
-        body: content(sent),
-        headers: { 'If-Match': `"${sent.revision}"` },
-      })
-      // keep changes made while saving; otherwise take the server's normalized document
-      if (plan.value === sent) {
-        plan.value = saved
-        dirty.value = false
-        status.value = 'saved'
-      } else if (plan.value) {
-        plan.value = { ...plan.value, revision: saved.revision }
-        status.value = 'unsaved'
-        scheduleSave()
-      }
-    } catch (e) {
-      status.value = (e as { statusCode?: number }).statusCode === 412 ? 'conflict' : 'error'
+      json = JSON.parse(raw)
+    } catch {
+      return
+    }
+    const parsed = serverMessageSchema.safeParse(json)
+    if (!parsed.success) return
+    const m = parsed.data
+    switch (m.type) {
+      case 'hello':
+        return onHello(m)
+      case 'ack':
+        return onAck(m)
+      case 'reject':
+        return resync()
+      case 'op':
+        return onRemoteOp(m)
+      case 'presence':
+        peers.value = [...peers.value.filter((p) => p.peerId !== m.peer.peerId), m.peer]
+        return
+      case 'leave':
+        peers.value = peers.value.filter((p) => p.peerId !== m.peerId)
+        return
+      case 'pong':
+        return
     }
   }
 
-  /** Saves now; waits for a running save first. */
-  async function save() {
-    while (saving) await saving
-    saving = saveOnce().finally(() => (saving = null))
-    await saving
+  function onHello(m: Hello) {
+    // after a reconnect the undo steps may refer to horses somebody else changed meanwhile
+    if (hasHello) history.value = []
+    hasHello = true
+    confirmed.value = m.plan
+    role.value = m.role
+    peers.value = m.peers
+    connected.value = true
+    rebuild()
+    // our operations the server may not have seen: all operations are idempotent
+    for (const i of inflight) send({ type: 'op', seq: i.seq, op: i.op })
+    flush()
+    sendPresence()
   }
-  const scheduleSave = useDebounceFn(save, AUTOSAVE_MS)
+
+  function onAck(m: Ack) {
+    const at = inflight.findIndex((i) => i.seq === m.seq)
+    const c = confirmed.value
+    if (at < 0 || !c) return
+    const [sent] = inflight.splice(at, 1)
+    if (sent && m.revision > c.revision) {
+      if (m.revision !== c.revision + 1) return resync()
+      confirmed.value = { ...c, ...applyOp(content(c), m.op ?? sent.op), revision: m.revision }
+      // the server normalized our operation: show its version
+      if (m.op) rebuild()
+    }
+    countUnconfirmed()
+  }
+
+  function onRemoteOp(m: RemoteOp) {
+    const c = confirmed.value
+    if (!c || m.revision <= c.revision) return
+    if (m.revision !== c.revision + 1) return resync()
+    confirmed.value = { ...c, ...applyOp(content(c), m.op), revision: m.revision }
+    pruneHistory(pathTargets(m.op))
+    rebuild()
+  }
+
+  async function load(id: string) {
+    close()
+    const res = await $fetch<Plan & { role: PlanRole }>(`/api/plans/${id}`)
+    const { role: r, ...doc } = res
+    planId = id
+    confirmed.value = doc
+    plan.value = doc
+    role.value = r
+    peers.value = []
+    history.value = []
+    inflight = []
+    outbox = []
+    seq = 0
+    countUnconfirmed()
+    connect()
+  }
+
+  // ---------- sending changes ----------
+
+  function flush() {
+    if (!connected.value || !outbox.length) return
+    const ops = coalesceOps(outbox)
+    outbox = []
+    for (let i = 0; i < ops.length; i += BATCH_MAX) {
+      const chunk = ops.slice(i, i + BATCH_MAX)
+      const [only] = chunk
+      const op: PlanOp = chunk.length === 1 && only ? only : { t: 'batch', ops: chunk }
+      const entry = { seq: seq++, op }
+      inflight.push(entry)
+      send({ type: 'op', seq: entry.seq, op })
+    }
+    countUnconfirmed()
+  }
+  const scheduleFlush = useDebounceFn(flush, FLUSH_MS, { maxWait: FLUSH_MAX_MS })
+
+  /** Applies a change to the document and sends it as operations. */
+  function update(fn: (c: PlanContent) => PlanContent) {
+    const p = plan.value
+    if (!p || !canEdit.value) return
+    const before = content(p)
+    const after = fn(before)
+    const ops = diffOps(before, after)
+    if (!ops.length) return
+    plan.value = withContent(p, after)
+    outbox.push(...ops)
+    countUnconfirmed()
+    void scheduleFlush()
+  }
+
+  // ---------- presence ----------
+
+  function sendPresence() {
+    if (!connected.value) return
+    send({
+      type: 'presence',
+      activeHorseId: editor.activeHorseId,
+      selection: [...editor.selection],
+    })
+  }
+  const sendPresenceThrottled = useThrottleFn(sendPresence, 100, true, true)
+  watch(
+    () => [editor.activeHorseId, editor.selection] as const,
+    () => void sendPresenceThrottled(),
+  )
 
   // ---------- plan-level changes ----------
 
@@ -112,11 +279,25 @@ export const usePlanStore = defineStore('plan', () => {
   const updateHorse = (id: string, patch: Partial<Pick<Horse, 'name' | 'color' | 'tack'>>) =>
     mapHorse(id, (h) => ({ ...h, ...patch }))
 
-  // ---------- path changes with undo (SPEC "useHistory") ----------
+  // ---------- path changes with undo (SPEC "useHistory"), per person ----------
 
   /** One entry: path and announced gap of every horse an action changed (group = one step). */
   type HistoryEntry = Map<string, Pick<Horse, 'path' | 'pending'>>
   const history = shallowRef<HistoryEntry[]>([])
+
+  /**
+   * Somebody else changed or removed these horses: our undo steps for them are void, so undo
+   * never overwrites foreign work (SPEC "Verlauf je Person").
+   */
+  function pruneHistory(horseIds: readonly string[]) {
+    if (!horseIds.length || !history.value.length) return
+    const next: HistoryEntry[] = []
+    for (const entry of history.value) {
+      const kept: HistoryEntry = new Map([...entry].filter(([id]) => !horseIds.includes(id)))
+      if (kept.size) next.push(kept)
+    }
+    history.value = next
+  }
 
   /** Changes paths of one or more horses as a single undo step. */
   function editHorses(fn: (horses: readonly Horse[]) => readonly Horse[]) {
@@ -163,12 +344,15 @@ export const usePlanStore = defineStore('plan', () => {
     // read-only views; changes only go through the actions below
     plan: computed(() => plan.value),
     role: computed(() => role.value),
-    status: computed(() => status.value),
-    dirty: computed(() => dirty.value),
+    status,
+    dirty,
     canEdit,
+    peers: computed(() => peers.value),
+    marks,
     load,
+    close,
+    flush,
     update,
-    save,
     rename,
     setSettings,
     setTiming,

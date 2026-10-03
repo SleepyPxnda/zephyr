@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ArrowLeft, Play, Share2 } from '@lucide/vue'
+import type { PeerInfo } from '@zephyr/core'
 import type { PlanRole, SaveStatus } from '~/stores/plan'
 
 const props = defineProps<{
@@ -8,16 +9,13 @@ const props = defineProps<{
   status: SaveStatus
   role: PlanRole | null
   editable: boolean
+  peers: readonly PeerInfo[]
 }>()
 const emit = defineEmits<{ rename: [title: string] }>()
 const shareOpen = shallowRef(false)
 
 const statusVariant = computed(() =>
-  props.status === 'conflict' || props.status === 'error'
-    ? 'destructive'
-    : props.status === 'saved'
-      ? 'secondary'
-      : 'outline',
+  props.status === 'offline' ? 'destructive' : props.status === 'saved' ? 'secondary' : 'outline',
 )
 function onTitle(v: string | number) {
   const title = String(v).trim()
@@ -43,6 +41,7 @@ function onTitle(v: string | number) {
     <Badge :variant="statusVariant" role="status" aria-live="polite" data-testid="save-status">
       {{ $t(`editor.status.${status}`) }}
     </Badge>
+    <PeerAvatars :peers="peers" />
     <div class="ml-auto flex items-center gap-2">
       <Button variant="ghost" size="sm" as-child>
         <NuxtLink :to="`/plans/${planId}/play`" data-testid="open-play">

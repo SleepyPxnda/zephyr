@@ -49,3 +49,16 @@ export function moveSectionTime(
   gaps[k] = Math.max(0, gk)
   return { ...path, sections: path.sections.map((s, j) => ({ ...s, gap: gaps[j] ?? s.gap })) }
 }
+
+/**
+ * Tap tempo (prototype `tap`): BPM from the last taps (ms), rounded to 0.5; null below three
+ * taps. Callers drop taps older than 2 s before the latest and keep at most 12.
+ */
+export function bpmFromTaps(taps: readonly number[]): number | null {
+  if (taps.length < 3) return null
+  const first = taps[0] as number
+  const last = taps[taps.length - 1] as number
+  const iv = (last - first) / (taps.length - 1)
+  if (!(iv > 0)) return null
+  return Math.min(260, Math.max(1, Math.round((60000 / iv) * 2) / 2))
+}

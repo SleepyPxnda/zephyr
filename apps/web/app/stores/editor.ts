@@ -58,6 +58,12 @@ export const useEditorStore = defineStore('editor', () => {
   const gapFill = shallowRef<GapType>('halt')
   /** the part shown in the part editor */
   const partId = shallowRef<string | null>(null)
+  /** the focused part: the timeline, playback and arena show only its window (view state, per person) */
+  const focusPartId = shallowRef<string | null>(null)
+  /** timeline zoom while focused (px/s), local; null outside the focus */
+  const focusZoom = shallowRef<number | null>(null)
+  /** repeat the focused part during playback */
+  const loop = shallowRef(true)
   /** length of the loaded music (s); 0 without music (M9) */
   const musicDuration = shallowRef(0)
 
@@ -83,6 +89,9 @@ export const useEditorStore = defineStore('editor', () => {
     magnet,
     gapFill,
     partId,
+    focusPartId,
+    focusZoom,
+    loop,
     musicDuration,
     clipboard,
     paste,

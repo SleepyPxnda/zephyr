@@ -1,9 +1,12 @@
 import {
   addPart,
   beatLength,
+  clampSpanStart,
+  clampToRange,
   defaultPartLength,
   dragPart,
   dragTarget,
+  fitZoom,
   laneBlocks,
   moveClips,
   moveSectionTime,
@@ -121,8 +124,11 @@ export function useTimelineEdit(gaits: Ref<readonly Gait[]>) {
   const parts = computed<readonly Part[]>(() => previewParts.value ?? planStore.plan?.parts ?? [])
   const timelines = useTimelines(horses, gaits)
   const timing = computed(() => planStore.plan?.timing ?? NO_TIMING)
-  /** pixels per second (plan setting) */
-  const pps = computed(() => planStore.plan?.settings.timelineZoom ?? 24)
+  const focus = useFocusRange()
+  /** pixels per second: the local focus zoom while focused, otherwise the plan setting */
+  const pps = computed(
+    () => (focus.value && editor.focusZoom) || (planStore.plan?.settings.timelineZoom ?? 24),
+  )
   const planEnd = computed(() => {
     let m = 0
     for (const tl of timelines.value.values()) m = Math.max(m, tl.total)
@@ -151,7 +157,7 @@ export function useTimelineEdit(gaits: Ref<readonly Gait[]>) {
   }
 
   function seek(time: number) {
-    editor.time = Math.max(0, Math.min(end.value, time))
+    editor.time = clampToRange(Math.max(0, Math.min(end.value, time)), focus.value)
   }
 
   function anchors(exclude: { horseId?: string; partId?: string }): Anchor[] {
@@ -292,7 +298,7 @@ export function useTimelineEdit(gaits: Ref<readonly Gait[]>) {
         fromId: d.horseId,
         ks: d.ks,
         toId,
-        t: start,
+        t: clampSpanStart(start, d.len, focus.value),
         copy: e.ctrl,
         keepHole: e.shift,
         fill: editor.gapFill,
@@ -400,7 +406,13 @@ export function useTimelineEdit(gaits: Ref<readonly Gait[]>) {
       ? nextAnchorStart(a, b - a, anchors({ horseId }), dir)
       : snapTime(a + dir * step(), snapOpts.value)
     if (target !== null) {
-      const path = moveSectionTime(h.path, k, a, Math.max(0, target), shift)
+      const path = moveSectionTime(
+        h.path,
+        k,
+        a,
+        clampSpanStart(Math.max(0, target), b - a, focus.value),
+        shift,
+      )
       planStore.editHorses((hs) => hs.map((q) => (q.id === horseId ? { ...q, path } : q)))
     }
     return true
@@ -444,6 +456,27 @@ export function useTimelineEdit(gaits: Ref<readonly Gait[]>) {
     if (editor.partId === id) editor.partId = null
   }
 
+  // ---------- focus ----------
+  function enterFocus(id: string, widthPx: number) {
+    const part = parts.value.find((p) => p.id === id)
+    if (!part) return
+    editor.focusPartId = id
+    editor.focusZoom = fitZoom(part, widthPx)
+    editor.time = part.start
+  }
+  function leaveFocus() {
+    editor.focusPartId = null
+    editor.focusZoom = null
+  }
+  // the part is gone (deleted, other plan): back to the whole timeline
+  watch(
+    () => editor.focusPartId !== null && focus.value === null,
+    (gone) => {
+      if (gone) leaveFocus()
+    },
+    { immediate: true },
+  )
+
   return {
     horses,
     parts,
@@ -467,6 +500,9 @@ export function useTimelineEdit(gaits: Ref<readonly Gait[]>) {
     updatePart,
     setPartTimes,
     removePart,
+    focus,
+    enterFocus,
+    leaveFocus,
   }
 }
 

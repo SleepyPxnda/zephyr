@@ -1,4 +1,5 @@
 import {
+  clampToRange,
   copySelection,
   dist,
   insertAnchor,
@@ -34,6 +35,7 @@ export function useClipboardTools(gaits: Ref<readonly Gait[]>) {
   const planStore = usePlanStore()
   const editor = useEditorStore()
   const { t } = useI18n()
+  const focus = useFocusRange()
 
   const horses = computed(() => planStore.plan?.horses ?? [])
   const targets = computed(() =>
@@ -84,7 +86,7 @@ export function useClipboardTools(gaits: Ref<readonly Gait[]>) {
       off: { x: 0, y: 0 },
       link: multi ? 'gap' : 'line',
       target: editor.paste.target,
-      t: pasteTime(horses.value, editor.selection, editor.time, ctx()),
+      t: clampToRange(pasteTime(horses.value, editor.selection, editor.time, ctx()), focus.value),
     }
     if (!targets.value.some(Boolean)) {
       editor.paste = { ...editor.paste, open: false }

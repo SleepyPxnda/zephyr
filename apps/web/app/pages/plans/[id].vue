@@ -48,6 +48,7 @@ const tools = useDrawTools(gaitList)
 const select = useSelectTool(gaitList)
 const sel = useSelectionActions(gaitList, arenaSize)
 const clip = useClipboardTools(gaitList)
+const timeline = useTimelineEdit(gaitList)
 useEditorShortcuts({
   canEdit: () => planStore.canEdit,
   undo: () => planStore.undo(),
@@ -60,9 +61,10 @@ useEditorShortcuts({
   confirmPaste: clip.confirm,
   cancelPaste: clip.close,
 })
-/** a stroke being drawn or a drag being previewed replaces the stored horses until released */
+/** a stroke being drawn or a drag (arena or timeline) being previewed replaces the stored horses until released */
 const sceneHorses = computed(() => {
   if (select.preview.value) return select.preview.value
+  if (timeline.preview.value) return timeline.preview.value
   const d = tools.draft.value
   return d ? horses.value.map((h) => (h.id === d.id ? d : h)) : horses.value
 })
@@ -146,7 +148,7 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · zephyr` : 'zephyr')
           :arena="arena"
           :horses="sceneHorses"
           :gaits="gaitList"
-          :parts="plan.parts"
+          :parts="timeline.parts.value"
           :active-id="editor.activeHorseId"
           :time="editor.time"
           :ghost="tools.ghost.value"
@@ -181,14 +183,13 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · zephyr` : 'zephyr')
           @clear="editor.clearSelection()"
         />
       </div>
-      <!-- zone 3: timeline (M8); for now the horse lane headers -->
-      <HorseLanes
-        :horses="horses"
-        :active-id="editor.activeHorseId"
+      <!-- zone 3: timeline -->
+      <TimelinePanel
+        :ctl="timeline"
+        :gaits="gaitList"
         :editable="planStore.canEdit"
-        @select="editor.activeHorseId = $event"
+        @add-horse="addHorse"
         @select-whole="selectWhole"
-        @add="addHorse"
         @update="planStore.updateHorse"
         @clear="planStore.clearPath"
         @remove="planStore.removeHorse"

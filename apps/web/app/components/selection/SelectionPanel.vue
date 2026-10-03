@@ -2,7 +2,6 @@
 import type { Gait, GapType, MirrorMode, SelectionSummary } from '@zephyr/core'
 import { RotateCcw, RotateCw, X } from '@lucide/vue'
 import { buttonVariants } from '~/components/ui/button'
-import { formatClock } from '~/lib/format'
 
 /**
  * The only place to edit (SPEC "SelectionPanel"): acts on the whole selection, across horses.
@@ -33,15 +32,11 @@ const fineRotate = defineModel<boolean>('fineRotate', { required: true })
 
 const { t, n } = useI18n()
 const confirmRemove = shallowRef(false)
-const dec1 = (v: number) => n(v, { maximumFractionDigits: 1, minimumFractionDigits: 1 })
+const { seconds, clock } = useFormat()
 
 const info = computed(() => {
   const s = props.summary
-  const parts = [
-    n(s.dist, 'metres'),
-    `${formatClock(s.from, dec1)} – ${formatClock(s.to, dec1)}`,
-    n(s.to - s.from, 'seconds'),
-  ]
+  const parts = [n(s.dist, 'metres'), `${clock(s.from)} – ${clock(s.to)}`, seconds(s.to - s.from)]
   if (s.minR !== null)
     parts.push(
       s.minR < 0.05

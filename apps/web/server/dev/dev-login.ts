@@ -2,16 +2,11 @@ import { usernameSchema } from '@zephyr/core'
 import { and, eq } from 'drizzle-orm'
 import { users } from '../db/schema'
 
-/** loopback socket addresses; forwarded headers are ignored on purpose */
-const LOOPBACK = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1'])
-
 /**
  * Development only (registered via $development in nuxt.config.ts, absent from production
- * builds): signs in as an active account without Discord, for checks in the browser. Answers
- * only requests from this machine.
+ * builds): signs in as an active account without Discord, for checks in the browser.
  */
 export default defineEventHandler(async (event) => {
-  if (!LOOPBACK.has(event.node.req.socket.remoteAddress ?? '')) throw problem(404, 'not_found')
   const username = usernameSchema.safeParse(getQuery(event).username)
   if (!username.success) throw problem(404, 'not_found')
   const [user] = await useDb()

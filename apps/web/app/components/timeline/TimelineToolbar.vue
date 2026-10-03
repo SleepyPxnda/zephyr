@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { bpmFromTaps, PLAYBACK_RATES, type GapType, type Timing } from '@zephyr/core'
+import {
+  bpmFromTaps,
+  PLAYBACK_RATES,
+  TIMELINE_ZOOM_MAX,
+  TIMELINE_ZOOM_MIN,
+  type GapType,
+  type Timing,
+} from '@zephyr/core'
 import {
   ChevronDown,
   Grid3x3,
@@ -8,7 +15,9 @@ import {
   Pause,
   Play,
   Plus,
+  Repeat,
   SkipBack,
+  X,
   ZoomIn,
 } from '@lucide/vue'
 
@@ -23,8 +32,11 @@ const props = defineProps<{
   end: number
   editable: boolean
   playing: boolean
+  /** name of the focused part, null without focus */
+  focusName: string | null
 }>()
 const rate = defineModel<number>('rate', { required: true })
+const loop = defineModel<boolean>('loop', { required: true })
 const zoom = defineModel<number>('zoom', { required: true })
 const snapBeat = defineModel<boolean>('snapBeat', { required: true })
 const magnet = defineModel<boolean>('magnet', { required: true })
@@ -37,6 +49,7 @@ const emit = defineEmits<{
   addHorse: []
   toggle: []
   home: []
+  exitFocus: []
 }>()
 
 const { t, n } = useI18n()
@@ -146,6 +159,31 @@ const onZoom = (v: number[] | undefined) => {
             >
           </SelectContent>
         </Select>
+      </div>
+
+      <!-- focused part: chip to leave, loop switch -->
+      <div v-if="focusName !== null" class="flex items-center gap-1" data-testid="focus-bar">
+        <Button
+          variant="secondary"
+          size="sm"
+          :title="$t('timeline.focusExitHint')"
+          data-testid="focus-exit"
+          @click="emit('exitFocus')"
+        >
+          {{ $t('timeline.focusOn', { name: focusName }) }}
+          <X />
+          <span class="sr-only">{{ $t('timeline.focusExit') }}</span>
+        </Button>
+        <Toggle
+          v-model="loop"
+          size="sm"
+          :class="toggleOn"
+          :aria-label="$t('timeline.loop')"
+          :title="$t('timeline.loopHint')"
+          data-testid="loop"
+        >
+          <Repeat />
+        </Toggle>
       </div>
 
       <div class="h-6 w-px bg-border" aria-hidden="true" />
@@ -294,8 +332,8 @@ const onZoom = (v: number[] | undefined) => {
         <Slider
           class="w-24"
           :model-value="[zoom]"
-          :min="6"
-          :max="90"
+          :min="TIMELINE_ZOOM_MIN"
+          :max="TIMELINE_ZOOM_MAX"
           :step="1"
           :aria-label="$t('timeline.zoom')"
           @update:model-value="onZoom"

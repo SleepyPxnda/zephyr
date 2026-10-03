@@ -3,11 +3,12 @@ import { PART_COLORS, type Part, type Timing } from '@zephyr/core'
 import { X } from '@lucide/vue'
 
 /** Name, from/to and colour of one part (prototype `renderPartEd`). */
-const props = defineProps<{ part: Part; timing: Timing; editable: boolean }>()
+const props = defineProps<{ part: Part; timing: Timing; editable: boolean; focused: boolean }>()
 const emit = defineEmits<{
   update: [patch: Partial<Pick<Part, 'name' | 'color'>>]
   times: [start: number, end: number]
   go: []
+  focus: []
   remove: []
   close: []
 }>()
@@ -102,6 +103,15 @@ const length = computed(() =>
     </div>
     <div class="flex gap-2">
       <Button variant="outline" size="sm" @click="emit('go')">{{ $t('timeline.parts.go') }}</Button>
+      <Button
+        variant="outline"
+        size="sm"
+        :disabled="focused"
+        :title="$t('timeline.parts.focusHint')"
+        data-testid="part-focus"
+        @click="emit('focus')"
+        >{{ $t('timeline.parts.focus') }}</Button
+      >
       <Button variant="destructive" size="sm" :disabled="!editable" @click="confirmRemove = true">{{
         $t('timeline.parts.remove')
       }}</Button>

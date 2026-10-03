@@ -13,13 +13,18 @@ const props = defineProps<{
   pps: number
   width: number
   selectedId: string | null
+  /** the focused part (ring in the lane) */
+  focusId: string | null
   editable: boolean
+  /** px the time axis is shifted left (focused part) */
+  offset?: number
 }>()
 const emit = defineEmits<{
   close: []
   update: [id: string, patch: Partial<Pick<Part, 'name' | 'color'>>]
   times: [id: string, start: number, end: number]
   go: [id: string]
+  focus: [id: string]
   remove: [id: string]
   key: [id: string, e: KeyboardEvent]
   add: []
@@ -60,7 +65,7 @@ const selected = computed(() => props.parts.find((p) => p.id === props.selectedI
     </div>
     <div
       class="relative h-9 shrink-0 cursor-crosshair touch-none"
-      :style="{ width: `${width}px` }"
+      :style="{ width: `${width}px`, marginLeft: `${-(offset ?? 0)}px` }"
       data-parts-lane
     >
       <span
@@ -73,7 +78,10 @@ const selected = computed(() => props.parts.find((p) => p.id === props.selectedI
           v-for="p in parts"
           :key="p.id"
           class="absolute top-1 bottom-1 z-[1] cursor-grab overflow-hidden rounded-[5px] border px-2.5 text-xs leading-[26px] text-ellipsis whitespace-nowrap select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          :class="p.id === selectedId ? 'outline-2 outline-offset-1 outline-foreground' : ''"
+          :class="[
+            p.id === selectedId ? 'outline-2 outline-offset-1 outline-foreground' : '',
+            p.id === focusId ? 'ring-2 ring-primary' : '',
+          ]"
           :style="{
             left: `${p.start * pps}px`,
             width: `${Math.max(6, (p.end - p.start) * pps)}px`,
@@ -112,6 +120,8 @@ const selected = computed(() => props.parts.find((p) => p.id === props.selectedI
             :part="selected"
             :timing="timing"
             :editable="editable"
+            :focused="selected.id === focusId"
+            @focus="emit('focus', selected.id)"
             @update="emit('update', selected.id, $event)"
             @times="(a, b) => emit('times', selected!.id, a, b)"
             @go="emit('go', selected.id)"

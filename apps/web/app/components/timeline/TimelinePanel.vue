@@ -37,15 +37,30 @@ const editor = useEditorStore()
 /** Height of the ruler and parts rows (incl. borders): part bands start below them. */
 const BANDS_TOP = 29 + 37
 
+const range = computed(() => props.ctl.focus.value)
+/** full time axis; the lanes lay out blocks on it with absolute positions */
 const width = computed(() =>
   Math.min(30000, Math.round(props.ctl.span.value * props.ctl.pps.value)),
 )
-const x = (t: number) => LANE_HEADER_PX + t * props.ctl.pps.value
+/** px the axis is shifted left while focused, so the part starts at the lane headers */
+const offset = computed(() => (range.value ? range.value.start * props.ctl.pps.value : 0))
+const viewWidth = computed(() =>
+  range.value
+    ? Math.min(30000, Math.round((range.value.end - range.value.start) * props.ctl.pps.value))
+    : width.value,
+)
+const x = (t: number) => LANE_HEADER_PX + t * props.ctl.pps.value - offset.value
 
 const zoom = computed({
   get: () => props.ctl.pps.value,
-  set: (v: number) => planStore.setSettings({ timelineZoom: v }),
+  set: (v: number) => {
+    if (range.value) editor.focusZoom = v
+    else planStore.setSettings({ timelineZoom: v })
+  },
 })
+const focusName = computed(
+  () => props.ctl.parts.value.find((p) => p.id === editor.focusPartId)?.name ?? null,
+)
 // zooming keeps the time at the left edge in place (prototype)
 const scroller = useTemplateRef<HTMLElement>('scroller')
 watch(
@@ -56,13 +71,35 @@ watch(
   },
   { flush: 'post' },
 )
+// entering the focus starts at the part, leaving it returns to where the part was
+let lastStart = 0
+watch(
+  () => range.value?.start,
+  (s) => {
+    if (s !== undefined) lastStart = s
+  },
+  { immediate: true },
+)
+watch(
+  () => range.value !== null,
+  (on) => {
+    const el = scroller.value
+    if (el) el.scrollLeft = on ? 0 : Math.max(0, lastStart * props.ctl.pps.value - 60)
+  },
+  { flush: 'post' },
+)
+function enterFocus(id: string) {
+  const el = scroller.value
+  props.ctl.enterFocus(id, Math.max(0, (el?.clientWidth ?? 0) - LANE_HEADER_PX))
+  editor.partId = null
+}
 // while playing, the playhead stays in view (prototype `updatePlayhead(true)`)
 watch(
   () => editor.time,
   (t) => {
     const el = scroller.value
     if (!el || !props.playback.playing.value) return
-    const left = t * props.ctl.pps.value
+    const left = t * props.ctl.pps.value - offset.value
     const visible = el.clientWidth - LANE_HEADER_PX
     if (left > el.scrollLeft + visible - 40 || left < el.scrollLeft)
       el.scrollLeft = Math.max(0, left - 60)
@@ -94,7 +131,9 @@ let lastDown: TimelineTarget | null = null
 function send(kind: 'down' | 'move' | 'up' | 'cancel', e: PointerEvent) {
   const el = content.value
   if (!el || !pointerTarget) return
-  const t = (e.clientX - el.getBoundingClientRect().left - LANE_HEADER_PX) / props.ctl.pps.value
+  const t =
+    (e.clientX - el.getBoundingClientRect().left - LANE_HEADER_PX + offset.value) /
+    props.ctl.pps.value
   // pointer capture keeps events on the container: the lane under the pointer is looked up
   const lane = document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLElement>('[data-lane]')
     ?.dataset.lane
@@ -171,12 +210,15 @@ function goToPart(id: string) {
       v-model:snap-beat="editor.snapBeat"
       v-model:magnet="editor.magnet"
       v-model:gap-fill="editor.gapFill"
+      v-model:loop="editor.loop"
+      :focus-name="focusName"
       :rate="playback.rate.value"
       :timing="ctl.timing.value"
       :time="editor.time"
       :end="ctl.end.value"
       :editable="editable"
       :playing="playback.playing.value"
+      @exit-focus="ctl.leaveFocus()"
       @update:rate="playback.setRate"
       @toggle="playback.toggle"
       @home="ctl.seek(0)"
@@ -186,8 +228,8 @@ function goToPart(id: string) {
     <div ref="scroller" class="relative overflow-x-auto overflow-y-hidden">
       <div
         ref="content"
-        class="relative"
-        :style="{ width: `${LANE_HEADER_PX + width}px` }"
+        class="relative overflow-x-clip"
+        :style="{ width: `${LANE_HEADER_PX + viewWidth}px` }"
         @pointerdown="onDown"
         @pointermove="onMove"
         @pointerup="onUp"
@@ -215,7 +257,7 @@ function goToPart(id: string) {
           />
           <div
             class="relative h-7 shrink-0 cursor-text touch-none"
-            :style="{ width: `${width}px` }"
+            :style="{ width: `${width}px`, marginLeft: `${-offset}px` }"
           >
             <TimelineRuler
               :timing="ctl.timing.value"
@@ -231,8 +273,11 @@ function goToPart(id: string) {
           :pps="ctl.pps.value"
           :width="width"
           :selected-id="editor.partId"
+          :focus-id="editor.focusPartId"
+          :offset="offset"
           :editable="editable"
           @add="ctl.addPartAtPlayhead"
+          @focus="enterFocus"
           @close="editor.partId = null"
           @update="ctl.updatePart"
           @times="ctl.setPartTimes"
@@ -245,6 +290,7 @@ function goToPart(id: string) {
           :pps="ctl.pps.value"
           :width="width"
           :editable="editable"
+          :offset="offset"
           :imported-name="importedMusic"
         />
         <HorseLane
@@ -258,6 +304,7 @@ function goToPart(id: string) {
           :pps="ctl.pps.value"
           :width="width"
           :active="h.id === editor.activeHorseId"
+          :offset="offset"
           :editable="editable"
           :selection="editor.selection"
           @select="editor.activeHorseId = h.id"

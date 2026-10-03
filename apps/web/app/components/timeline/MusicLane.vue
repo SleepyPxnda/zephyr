@@ -17,6 +17,8 @@ const props = defineProps<{
   editable: boolean
   /** music name from an imported prototype plan, shown until music is uploaded */
   importedName: string | null
+  /** px the time axis is shifted left (focused part) */
+  offset?: number
 }>()
 
 const HEIGHT = 56
@@ -114,7 +116,10 @@ function onFile(e: Event) {
         </Button>
       </template>
     </div>
-    <div class="relative h-14 shrink-0 touch-none" :style="{ width: `${width}px` }">
+    <div
+      class="relative h-14 shrink-0 touch-none"
+      :style="{ width: `${width}px`, marginLeft: `${-(offset ?? 0)}px` }"
+    >
       <canvas
         ref="canvas"
         class="pointer-events-none absolute top-0 left-0 block"

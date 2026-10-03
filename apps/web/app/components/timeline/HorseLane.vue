@@ -23,6 +23,8 @@ const props = defineProps<{
   active: boolean
   editable: boolean
   selection: readonly string[]
+  /** px the time axis is shifted left (focused part) */
+  offset?: number
 }>()
 const emit = defineEmits<{
   select: []
@@ -123,7 +125,7 @@ const endLabel = computed(() =>
     </div>
     <div
       class="relative h-14 shrink-0 touch-none"
-      :style="{ width: `${width}px` }"
+      :style="{ width: `${width}px`, marginLeft: `${-(offset ?? 0)}px` }"
       :data-lane="horse.id"
     >
       <span

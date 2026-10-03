@@ -11,10 +11,14 @@ export function createDb(url: string) {
 
 export type Db = ReturnType<typeof createDb>['db']
 
-/** Default location of the generated migrations (next to this file in the source tree). */
-export const migrationsFolder = fileURLToPath(new URL('./migrations', import.meta.url))
-
-/** Applies all pending migrations (forward only). */
-export async function runMigrations(db: Db, folder = migrationsFolder): Promise<void> {
+/**
+ * Applies all pending migrations (forward only). The default folder (next to this file in the
+ * source tree) is resolved per call: in the bundled server the URL is meaningless on Windows and
+ * must not break loading this module.
+ */
+export async function runMigrations(
+  db: Db,
+  folder = fileURLToPath(new URL('./migrations', import.meta.url)),
+): Promise<void> {
   await migrate(db, { migrationsFolder: folder })
 }

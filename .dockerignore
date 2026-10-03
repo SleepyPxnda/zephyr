@@ -1,0 +1,16 @@
+**/node_modules
+**/.nuxt
+**/.output
+**/.data
+**/.cache
+**/coverage
+.git
+.github
+.env
+.env.*
+.claude
+.agents
+.playwright-mcp
+docs
+packages/core/test/fixtures
+reference/poc-reitwege.html

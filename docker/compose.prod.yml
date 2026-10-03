@@ -1,0 +1,40 @@
+# Production: app and PostgreSQL 16. Object storage is an external S3 (e.g. Hetzner, see
+# .env.example). TLS comes from the operator's own reverse proxy in front of APP_PORT (see README).
+# From the repository root:
+#   docker compose -f docker/compose.prod.yml --env-file .env up -d --build
+# Migrations and the seed run at app start. Backups (pg_dump, bucket) are up to the operator.
+name: zephyr
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-zephyr}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-zephyr}
+    ports:
+      # only reachable from the host itself; the reverse proxy forwards to it
+      - '127.0.0.1:${APP_PORT:-3000}:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-zephyr}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-zephyr}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-zephyr} -d ${POSTGRES_DB:-zephyr}']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  postgres-data:

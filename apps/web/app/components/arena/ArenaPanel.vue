@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { canvasSize, type Gait, type Horse, type Part, type Point } from '@zephyr/core'
+import {
+  canvasSize,
+  type Gait,
+  type Horse,
+  type Part,
+  type Point,
+  type TimeRange,
+} from '@zephyr/core'
 import { useElementSize, useEventListener, useWindowSize } from '@vueuse/core'
 import { isTyping } from '~/composables/useEditorShortcuts'
 import type { ArenaInfo } from '~/composables/useCatalog'
@@ -23,6 +30,8 @@ const props = defineProps<{
   handles: readonly HandleView[]
   overlay: OverlayLabel | null
   pastePreview: readonly PastePreview[]
+  /** focused part: only the paths that touch it are drawn */
+  focus?: TimeRange | null
   cursor: string
   hint: string
   readOnly?: boolean
@@ -86,6 +95,7 @@ const timelines = useTimelines(
         :handles="handles"
         :overlay="overlay"
         :paste-preview="pastePreview"
+        :focus="focus"
         :cursor="cursor"
         @pointer="emit('pointer', $event)"
       />

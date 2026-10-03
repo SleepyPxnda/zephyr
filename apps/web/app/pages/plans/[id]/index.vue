@@ -169,6 +169,7 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · zephyr` : 'zephyr')
             :handles="select.handles.value"
             :overlay="select.overlay.value"
             :paste-preview="clip.preview.value"
+            :focus="timeline.focus.value"
             :cursor="cursor"
             :hint="hint"
             @pointer="onPointer"

@@ -14,9 +14,11 @@ import {
   type Part,
   type PathPoint,
   type Point,
+  type TimeRange,
   type Timeline,
   type ViewTransform,
   type Viewport,
+  visiblePoints,
 } from '@zephyr/core'
 
 // Canvas colours do not follow the UI theme: the hall image looks the same in light and dark.
@@ -147,6 +149,8 @@ export interface Scene {
   overlay: { text: string; at: Point } | null
   /** parts about to be pasted */
   pastePreview: readonly { color: string; pts: readonly PathPoint[]; from: Point | null }[]
+  /** focused part: only paths that touch this time range are drawn */
+  range?: TimeRange | null
 }
 
 const gaitName = (gaits: readonly Gait[], id: string | undefined) =>
@@ -162,13 +166,15 @@ function strokePath(
   width: number,
   /** segments (by end point) left out, e.g. connecting lines drawn on their own */
   skip?: ReadonlySet<number>,
+  /** first point to draw (focus window) */
+  from = 0,
 ) {
-  const first = pts[0]
+  const first = pts[from]
   if (!first) return
   ctx.beginPath()
   let [x, y] = px(t, first)
   ctx.moveTo(x, y)
-  for (let i = 1; i <= to && i < pts.length; i++) {
+  for (let i = from + 1; i <= to && i < pts.length; i++) {
     const q = pts[i] as PathPoint
     ;[x, y] = px(t, q)
     if (q.jump || skip?.has(i)) ctx.moveTo(x, y)
@@ -207,18 +213,23 @@ export function drawScene(
     const pts = h.path.pts
     const pos = posAt(h.path, tl, s.time, h.pending)
     const active = h.id === s.activeId
-    if (shown(h)) {
+    const vis = visiblePoints(h.path, tl, s.range ?? null)
+    const from = vis?.from ?? 0
+    const to = vis?.to ?? -1
+    const inWin = (i: number) => !!vis && i >= from && i <= to
+    if (shown(h) && vis) {
       // planned path, dashed; automatic connecting lines thin and finely dashed
       const links = new Set(h.path.sections.flatMap((sec) => (sec.link ? [sec.start] : [])))
       ctx.save()
       ctx.globalAlpha = active ? 0.8 : 0.55
       ctx.setLineDash([6, 6])
-      strokePath(ctx, t, pts, pts.length - 1, null, h.color, 2, links)
+      strokePath(ctx, t, pts, to, null, h.color, 2, links, from)
       ctx.setLineDash([2, 4])
       ctx.lineWidth = 1.5
       ctx.strokeStyle = h.color
       ctx.beginPath()
       for (const i of links) {
+        if (i <= from || i > to) continue
         const a = pts[i - 1]
         const b = pts[i]
         if (!a || !b) continue
@@ -229,7 +240,7 @@ export function drawScene(
       ctx.restore()
       const hd = headingAt(pts, pts.length - 1)
       const last = pts[pts.length - 1] as PathPoint
-      if (hd !== null) {
+      if (hd !== null && to === pts.length - 1) {
         const [ex, ey] = px(t, last)
         ctx.save()
         ctx.globalAlpha = active ? 0.85 : 0.6
@@ -251,7 +262,7 @@ export function drawScene(
       h.path.sections.forEach((sec, k) => {
         if (k === 0 || sec.gap < 0.05 || sec.gapType !== 'halt') return
         const at = pts[sec.start - 1]
-        if (!at) return
+        if (!at || !inWin(sec.start - 1)) return
         const [x, y] = px(t, at)
         ctx.save()
         ctx.strokeStyle = h.color
@@ -289,10 +300,12 @@ export function drawScene(
       }
     })
     // ridden so far, solid
-    if (pos && pos.i > 0) strokePath(ctx, t, pts, pos.i - 1, pos.hidden ? null : pos, h.color, 3.5)
+    if (pos && pos.i > 0 && vis && pos.i - 1 >= from)
+      strokePath(ctx, t, pts, pos.i - 1, pos.hidden ? null : pos, h.color, 3.5, undefined, from)
     if (shown(h)) {
       // section borders
       for (let k = 1; k < h.path.sections.length; k++) {
+        if (!inWin((h.path.sections[k]?.start ?? 0) - 1)) continue
         const b = pts[(h.path.sections[k]?.start ?? 0) - 1]
         if (!b) continue
         const [bx, by] = px(t, b)
@@ -315,9 +328,14 @@ export function drawScene(
     for (const h of s.horses) {
       const tl = s.timelines.get(h.id)
       if (!tl || h.path.pts.length < 3 || !shown(h)) continue
+      const vis = visiblePoints(h.path, tl, s.range ?? null)
       ctx.beginPath()
       let open = false
       for (let i = 1; i < h.path.pts.length; i++) {
+        if (!vis || i <= vis.from || i > vis.to) {
+          open = false
+          continue
+        }
         if (tl.tight[i]) {
           const [ax, ay] = px(t, h.path.pts[i - 1] as PathPoint)
           const [bx, by] = px(t, h.path.pts[i] as PathPoint)
@@ -334,12 +352,15 @@ export function drawScene(
 
   // gait labels of the active horse
   const ap = s.horses.find((h) => h.id === s.activeId)
+  const apTl = ap ? s.timelines.get(ap.id) : undefined
+  const apVis = ap && apTl ? visiblePoints(ap.path, apTl, s.range ?? null) : null
   if (!s.onlyHorses && ap && ap.path.pts.length > 1) {
     ap.path.sections.forEach((sec, k) => {
       if (sec.link) return
       const { s: st, e } = sectionRange(ap.path, k)
       const from = Math.max(0, st - 1)
       if (e <= from) return
+      if (!apVis || e <= apVis.from || st - 1 > apVis.to) return
       const [mx, my] = px(t, ap.path.pts[Math.round((from + e) / 2)] as PathPoint)
       label(ctx, `${k + 1} · ${gaitName(s.gaits, sec.gaitId)}`, mx, my - 14)
     })

@@ -7,6 +7,7 @@ import {
   type Horse,
   type Part,
   type Point,
+  type TimeRange,
   type Timeline,
   type Viewport,
 } from '@zephyr/core'
@@ -36,6 +37,8 @@ const props = defineProps<{
   handles: readonly HandleView[]
   overlay: OverlayLabel | null
   pastePreview: readonly PastePreview[]
+  /** focused part: only the paths that touch it are drawn */
+  focus?: TimeRange | null
   /** cursor style for the current tool */
   cursor: string
 }>()
@@ -100,6 +103,7 @@ watch(
     props.handles,
     props.overlay,
     props.pastePreview,
+    props.focus,
   ],
   () => (sceneDirty = true),
 )
@@ -132,6 +136,7 @@ useRafFn(() => {
           handles: props.handles,
           overlay: props.overlay,
           pastePreview: props.pastePreview,
+          range: props.focus ?? null,
           ...props.options,
         },
         tr,

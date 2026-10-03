@@ -147,6 +147,30 @@ export const arenaSchema = z.object({
 
 // ---------- API inputs ----------
 
+/** Discord user as returned by GET /users/@me (scope `identify`); only the fields we keep. */
+export const discordProfileSchema = z.object({
+  id: z.string().regex(/^\d{1,20}$/),
+  username: z.string().min(1).max(32),
+  global_name: z.string().max(32).nullish(),
+  avatar: z.string().max(64).nullish(),
+})
+
+/** Discord user name as typed by people: leading "@" and case do not matter. */
+export const usernameSchema = z
+  .string()
+  .trim()
+  .transform((s) => s.replace(/^@/, '').toLowerCase())
+  .pipe(z.string().min(1).max(32))
+
+export const userStatusSchema = z.enum(['pending', 'active', 'rejected'])
+export const userRoleSchema = z.enum(['user', 'admin'])
+
+/** PATCH /api/admin/users/:id */
+export const adminUserPatchSchema = z
+  .object({ status: z.enum(['active', 'rejected']), role: userRoleSchema })
+  .partial()
+  .refine((p) => Object.keys(p).length > 0, { message: 'nothing to change' })
+
 export const emailSchema = z.string().trim().toLowerCase().pipe(z.email().max(254))
 /** At least 10 characters; long passphrases are welcome, but bounded for hashing. */
 export const passwordSchema = z.string().min(10).max(200)
@@ -227,3 +251,7 @@ export type PlanSettings = z.infer<typeof planSettingsSchema>
 export type PlanContent = z.infer<typeof planContentSchema>
 export type Plan = z.infer<typeof planSchema>
 export type Arena = z.infer<typeof arenaSchema>
+export type DiscordProfile = z.infer<typeof discordProfileSchema>
+export type UserStatus = z.infer<typeof userStatusSchema>
+export type UserRole = z.infer<typeof userRoleSchema>
+export type AdminUserPatch = z.infer<typeof adminUserPatchSchema>

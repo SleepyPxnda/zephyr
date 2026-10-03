@@ -12,8 +12,8 @@ export const TOOL_KEYS: Record<string, Tool> = {
 }
 
 /**
- * Editor UI state that is not part of the plan document. Selection and clipboard follow with
- * M6/M7; the playback time with M9.
+ * Editor UI state that is not part of the plan document: tool, selection, clipboard, timeline
+ * options and the current time.
  */
 export const useEditorStore = defineStore('editor', () => {
   const activeHorseId = shallowRef<string | null>(null)
@@ -49,6 +49,16 @@ export const useEditorStore = defineStore('editor', () => {
     selection.value = []
   }
 
+  // ---------- timeline (M8) ----------
+  /** "Am Takt einrasten": snap to beats (otherwise 0.1 s) */
+  const snapBeat = shallowRef(true)
+  /** magnet: snap dragged blocks to edges (Alt switches it off while dragging) */
+  const magnet = shallowRef(true)
+  /** the part shown in the part editor */
+  const partId = shallowRef<string | null>(null)
+  /** length of the loaded music (s); 0 without music (M9) */
+  const musicDuration = shallowRef(0)
+
   // ---------- clipboard (M7); kept when switching plans ----------
   const clipboard = shallowRef<Clipboard | null>(null)
   /** paste bar: open, preview offset (m), join, target horses */
@@ -60,6 +70,10 @@ export const useEditorStore = defineStore('editor', () => {
   })
 
   return {
+    snapBeat,
+    magnet,
+    partId,
+    musicDuration,
     clipboard,
     paste,
     activeHorseId,

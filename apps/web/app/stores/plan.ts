@@ -1,4 +1,12 @@
-import { newHorse, type Horse, type Plan, type PlanContent, type PlanSettings } from '@zephyr/core'
+import {
+  newHorse,
+  type Horse,
+  type Part,
+  type Plan,
+  type PlanContent,
+  type PlanSettings,
+  type Timing,
+} from '@zephyr/core'
 import { useDebounceFn } from '@vueuse/core'
 
 export type PlanRole = 'viewer' | 'editor' | 'owner'
@@ -85,6 +93,11 @@ export const usePlanStore = defineStore('plan', () => {
   const rename = (title: string) => update((c) => ({ ...c, title }))
   const setSettings = (patch: Partial<PlanSettings>) =>
     update((c) => ({ ...c, settings: { ...c.settings, ...patch } }))
+  const setTiming = (patch: Partial<Timing>) =>
+    update((c) => ({ ...c, timing: { ...c.timing, ...patch } }))
+  /** Parts are not part of the undo history (as in the prototype, undo only covers paths). */
+  const setParts = (fn: (parts: readonly Part[]) => Part[]) =>
+    update((c) => ({ ...c, parts: fn(c.parts) }))
 
   // ---------- horses ----------
 
@@ -158,6 +171,8 @@ export const usePlanStore = defineStore('plan', () => {
     save,
     rename,
     setSettings,
+    setTiming,
+    setParts,
     addHorse,
     updateHorse,
     clearPath,

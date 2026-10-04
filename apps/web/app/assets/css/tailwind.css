@@ -72,18 +72,5 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    /* brand glow as in the app icon: cyan top left, purple bottom right */
-    background-image:
-      radial-gradient(
-        ellipse 60% 50% at 0% 0%,
-        color-mix(in srgb, var(--brand-cyan) 12%, transparent),
-        transparent
-      ),
-      radial-gradient(
-        ellipse 60% 50% at 100% 100%,
-        color-mix(in srgb, var(--brand-purple) 14%, transparent),
-        transparent
-      );
-    background-attachment: fixed;
   }
 }

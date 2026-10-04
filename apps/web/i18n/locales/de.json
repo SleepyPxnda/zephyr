@@ -391,7 +391,6 @@
     "revoke": "Link widerrufen"
   },
   "play": {
-    "open": "Ansehen",
     "transport": "Wiedergabe",
     "position": "Abspielposition",
     "invalid": "Dieser Link ist ungültig oder wurde widerrufen.",

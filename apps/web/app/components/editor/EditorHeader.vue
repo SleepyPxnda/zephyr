@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Play, Share2 } from '@lucide/vue'
+import { Share2 } from '@lucide/vue'
 import type { PeerInfo } from '@zephyr/core'
 import type { PlanRole, SaveStatus } from '~/stores/plan'
 
@@ -40,12 +40,6 @@ function onTitle(v: string | number) {
     </Badge>
     <PeerAvatars :peers="peers" />
     <div class="ml-auto flex items-center gap-2">
-      <Button variant="ghost" size="sm" as-child>
-        <NuxtLink :to="`/plans/${planId}/play`" data-testid="open-play">
-          <Play />
-          {{ $t('play.open') }}
-        </NuxtLink>
-      </Button>
       <Button
         v-if="role === 'owner'"
         variant="outline"

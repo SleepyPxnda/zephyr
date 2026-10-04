@@ -8,7 +8,7 @@ import {
 import type { ServerEnv } from './env'
 
 /**
- * S3 client for any S3-compatible store (local Garage, Hetzner Object Storage, ...). Checksums only
+ * S3 client for any S3-compatible store (Hetzner Object Storage, ...). Checksums only
  * where the API requires them: the SDK's newer default (CRC32 on every request) is not understood by
  * every non-AWS provider.
  */

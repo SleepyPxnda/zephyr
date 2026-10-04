@@ -36,7 +36,7 @@ The user interface is in German.
 
 Nuxt 4 (Vue 3, Nitro) · TypeScript · Tailwind + shadcn-vue · PostgreSQL 16 with Drizzle · S3-compatible object storage · Sign-in with Discord (accounts approved by an admin). The domain logic (time model, geometry, turning circle) lives as pure functions in [`packages/core`](packages/core) and runs the same in the browser and on the server.
 
-Specification (in German): [`SPEC.md`](SPEC.md) · Logo and icons: [`docs/brand`](docs/brand)
+Logo and icons: [`docs/brand`](docs/brand)
 
 ## Requirements
 
@@ -50,8 +50,7 @@ Specification (in German): [`SPEC.md`](SPEC.md) · Logo and icons: [`docs/brand`
 ```bash
 cp .env.example .env          # fill in values, at least SUPER_ADMIN_DISCORD_ID and S3
 pnpm install
-docker compose -f docker/compose.dev.yml up -d                     # Postgres
-# local S3 instead of an external one: docker compose -f docker/compose.dev.yml --profile garage up -d
+docker compose -f docker/compose.dev.yml up -d   # Postgres
 pnpm db:migrate && pnpm db:seed
 pnpm dev                      # http://localhost:3000
 ```

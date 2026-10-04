@@ -1,10 +1,40 @@
-# Zephyr
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/logo-on-dark.svg">
+    <img src="docs/brand/logo-on-light.svg" alt="Choreocore" width="420">
+  </picture>
+</p>
 
-Webanwendung zum Planen von Reit-Choreografien (Kür, Quadrille) zur Musik: Wege mehrerer Pferde auf dem Grundriss einer Reithalle zeichnen, zeitlich auf einer Zeitleiste zur Musik anordnen, gemeinsam live bearbeiten und abspielen.
+<p align="center">
+  Reit-Choreografien zur Musik planen – Kür, Pas de deux, Quadrille.
+</p>
 
-Nuxt 4 · PostgreSQL 16 · S3-kompatibler Objektspeicher · Anmeldung über Discord (Freigabe durch den Admin).
+<p align="center">
+  <a href="https://github.com/SleepyPxnda/zephyr/actions/workflows/ci.yml"><img src="https://github.com/SleepyPxnda/zephyr/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-4053DF" alt="MIT License"></a>
+</p>
 
-Fachliche Beschreibung: [`SPEC.md`](SPEC.md) · Umsetzungsstand: [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md)
+---
+
+**Choreocore** ist eine selbst gehostete Webanwendung, mit der Reitlehrer:innen und Reiter:innen Choreografien planen: Wege mehrerer Pferde auf dem Grundriss der Reithalle zeichnen, sie auf einer Zeitleiste zur Musik anordnen, gemeinsam live bearbeiten und als Animation abspielen.
+
+![Editor mit einer Quadrille aus vier Pferden: Wege auf dem Hallengrundriss, darunter die Zeitleiste mit Parts und Abschnitten je Pferd](docs/screenshots/editor.webp)
+
+## Funktionen
+
+- **Wege zeichnen** – Freihand, Gerade, Bogen, Zirkel und Volte direkt auf dem Hallenbild; Koordinaten in Metern, Ecken werden mit dem Wendekreis der Gangart abgerundet.
+- **Gangarten mit Tempo** – Schritt, Trab, Galopp usw. mit Geschwindigkeit (mit/ohne Sattel) und Wendekreis; zu enge Kurven werden markiert.
+- **Zeitleiste zur Musik** – Musik laden, Wellenform und Takt sehen, Abschnitte verschieben, Halt- und Pausen-Lücken setzen, Parts benennen.
+- **Gemeinsam bearbeiten** – mehrere Personen arbeiten live am selben Plan; Rückgängig gilt je Person.
+- **Teilen und Abspielen** – Pläne mit Rollen (Bearbeiten, Lesen) oder per Lese-Link teilen; die Abspielansicht zeigt die Choreografie als Animation.
+
+![Abspielansicht: vier Pferde mitten in der Figur „Wechsel“, unten der Fortschritt mit den Parts](docs/screenshots/play.webp)
+
+## Technik
+
+Nuxt 4 (Vue 3, Nitro) · TypeScript · Tailwind + shadcn-vue · PostgreSQL 16 mit Drizzle · S3-kompatibler Objektspeicher · Anmeldung über Discord (Freigabe durch den Admin). Die Fachlogik (Zeitmodell, Geometrie, Wendekreis) liegt als reine Funktionen in [`packages/core`](packages/core) und läuft in Browser und Server gleich.
+
+Fachliche Beschreibung: [`SPEC.md`](SPEC.md) · Umsetzungsstand: [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) · Logo und Icons: [`docs/brand`](docs/brand)
 
 ## Voraussetzungen
 
@@ -57,7 +87,7 @@ Die Produktion läuft mit [`docker/compose.prod.yml`](docker/compose.prod.yml): 
 3. Reverse Proxy mit TLS auf `http://127.0.0.1:3000` zeigen lassen. Er muss WebSockets durchreichen (Live-Bearbeitung unter `/ws/plans/…`) und `X-Forwarded-Host`/`X-Forwarded-Proto` setzen. Beispiel Caddy:
 
    ```
-   zephyr.example.org {
+   choreocore.example.org {
    	reverse_proxy 127.0.0.1:3000
    }
    ```

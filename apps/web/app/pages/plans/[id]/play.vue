@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { playEnd, type Gait, type Plan } from '@zephyr/core'
-import { ArrowLeft } from '@lucide/vue'
 import { useEventListener } from '@vueuse/core'
 import type { ArenaInfo } from '~/composables/useCatalog'
 import { isTyping } from '~/composables/useEditorShortcuts'
@@ -76,7 +75,7 @@ useEventListener(window, 'keydown', (e: KeyboardEvent) => {
 })
 
 useHead({
-  title: () => (plan.value ? `${plan.value.title} · zephyr` : 'zephyr'),
+  title: () => (plan.value ? `${plan.value.title} · Choreocore` : 'Choreocore'),
   // the read link must not leak to other sites through the Referer header
   meta: [{ name: 'referrer', content: 'no-referrer' }],
 })
@@ -85,12 +84,15 @@ useHead({
 <template>
   <div class="flex min-h-dvh flex-col">
     <header class="flex flex-wrap items-center gap-3 border-b bg-card px-4 py-2">
-      <Button v-if="loggedIn" variant="ghost" size="icon" as-child>
-        <NuxtLink to="/" :aria-label="$t('editor.back')"><ArrowLeft /></NuxtLink>
-      </Button>
-      <span class="flex items-center gap-2 font-brand text-xl font-bold">
-        <img src="/favicon.svg" alt="" class="size-7" />{{ $t('app.name') }}
-      </span>
+      <NuxtLink
+        v-if="loggedIn"
+        to="/"
+        :aria-label="$t('editor.back')"
+        class="rounded-md p-1 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      >
+        <img src="/logo.svg" alt="" class="h-6 w-auto" />
+      </NuxtLink>
+      <img v-else src="/logo.svg" :alt="$t('app.name')" class="h-6 w-auto p-1 box-content" />
       <h1 v-if="plan" class="min-w-0 truncate font-medium">{{ plan.title }}</h1>
       <Badge variant="outline">{{ $t('roles.viewer') }}</Badge>
     </header>

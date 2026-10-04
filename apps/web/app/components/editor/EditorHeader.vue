@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, Play, Share2 } from '@lucide/vue'
+import { Play, Share2 } from '@lucide/vue'
 import type { PeerInfo } from '@zephyr/core'
 import type { PlanRole, SaveStatus } from '~/stores/plan'
 
@@ -25,12 +25,13 @@ function onTitle(v: string | number) {
 
 <template>
   <header class="flex flex-wrap items-center gap-3 border-b bg-card px-4 py-2">
-    <Button variant="ghost" size="icon" as-child>
-      <NuxtLink to="/" :aria-label="$t('editor.back')"><ArrowLeft /></NuxtLink>
-    </Button>
-    <span class="flex items-center gap-2 font-brand text-xl font-bold">
-      <img src="/favicon.svg" alt="" class="size-7" />{{ $t('app.name') }}
-    </span>
+    <NuxtLink
+      to="/"
+      :aria-label="$t('editor.back')"
+      class="rounded-md p-1 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+    >
+      <img src="/logo.svg" alt="" class="h-6 w-auto" />
+    </NuxtLink>
     <Input
       :model-value="title"
       class="h-9 max-w-md flex-1 font-medium"

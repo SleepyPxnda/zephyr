@@ -29,7 +29,7 @@ const LABEL_BG = 'rgba(30, 26, 20, 0.78)'
 const WHITE = '#FFFFFF'
 const TIGHT = 'rgba(214, 40, 40, 0.75)'
 const TIGHT_SOLID = '#D62828'
-const MARGIN_BG = '#2B2722'
+const MARGIN_BG = '#16161D'
 const FONT = '"Inter Variable", system-ui, sans-serif'
 
 const px = (t: ViewTransform, p: Point): [number, number] => {

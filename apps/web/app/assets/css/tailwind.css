@@ -1,45 +1,50 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import '@fontsource-variable/inter';
-@import '@fontsource-variable/nunito';
 
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Zephyr theme (SPEC "Name und Farbthema"), dark only. The `dark` class is
+ * Choreocore theme (SPEC "Name und Farbthema"), dark only. The `dark` class is
  * set permanently on <html> so the shadcn `dark:` variants keep applying.
+ * Brand colours: blue #4053DF (primary), purple #AB40DF, cyan #40DFD1.
  */
 :root {
   color-scheme: dark;
   --radius: 0.625rem;
-  --background: #1c1b26;
-  --foreground: #eceaf5;
-  --card: #24232f;
-  --card-foreground: #eceaf5;
-  --popover: #24232f;
-  --popover-foreground: #eceaf5;
-  --primary: #a9c9e8;
-  --primary-foreground: #16202c;
-  --secondary: #3a3550;
-  --secondary-foreground: #eceaf5;
-  --accent: #2f4a40;
-  --accent-foreground: #eceaf5;
-  --muted: #2a2937;
-  --muted-foreground: #b4b0c8;
-  --destructive: #d98c95;
-  --destructive-foreground: #1c1b26;
-  --border: #34324a;
-  --input: #34324a;
-  --ring: #a9c9e8;
+  --brand-blue: #4053df;
+  --brand-purple: #ab40df;
+  --brand-cyan: #40dfd1;
+  --background: #121218;
+  --foreground: #ededf3;
+  --card: #1a1a22;
+  --card-foreground: #ededf3;
+  --popover: #1e1e27;
+  --popover-foreground: #ededf3;
+  --primary: var(--brand-blue);
+  --primary-foreground: #ffffff;
+  --secondary: #2a2140;
+  --secondary-foreground: #ededf3;
+  --accent: #232744;
+  --accent-foreground: #ededf3;
+  --muted: #20202a;
+  --muted-foreground: #a6a6b8;
+  --destructive: #f0606e;
+  --destructive-foreground: #121218;
+  --border: #2c2c3a;
+  --input: #2c2c3a;
+  --ring: var(--brand-cyan);
 }
 
 @theme inline {
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-brand: 'Nunito Variable', ui-rounded, ui-sans-serif, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-purple: var(--brand-purple);
+  --color-brand-cyan: var(--brand-cyan);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -67,5 +72,18 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    /* brand glow as in the app icon: cyan top left, purple bottom right */
+    background-image:
+      radial-gradient(
+        ellipse 60% 50% at 0% 0%,
+        color-mix(in srgb, var(--brand-cyan) 12%, transparent),
+        transparent
+      ),
+      radial-gradient(
+        ellipse 60% 50% at 100% 100%,
+        color-mix(in srgb, var(--brand-purple) 14%, transparent),
+        transparent
+      );
+    background-attachment: fixed;
   }
 }

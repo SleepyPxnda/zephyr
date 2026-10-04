@@ -74,6 +74,17 @@ docker compose -f docker/compose.prod.yml --env-file .env up -d --build
 
 Migrationen laufen beim Start automatisch.
 
+### Fertiges Image statt eigenem Build
+
+Die GitHub Action [`image.yml`](.github/workflows/image.yml) baut bei jedem Push auf `main` das Image `ghcr.io/sleepypxnda/zephyr` (Tags `main`, `sha-<commit>`) und bei Git-Tags `v1.2.3` zusätzlich `1.2.3`, `1.2` und `latest`. Auf dem Server reichen dann `compose.prod.yml` und `.env`, ohne Quellcode:
+
+```bash
+docker compose -f docker/compose.prod.yml --env-file .env pull app
+docker compose -f docker/compose.prod.yml --env-file .env up -d --no-build
+```
+
+Ein anderes Tag wählt `ZEPHYR_IMAGE` in `.env`, z. B. `ZEPHYR_IMAGE=ghcr.io/sleepypxnda/zephyr:1.2.3`. Ist das Paket auf GitHub privat, vorher `docker login ghcr.io` mit einem Token mit `read:packages`.
+
 ### Überwachen
 
 - `GET /api/health` antwortet `200 {"status":"ok"}`, solange die Datenbank erreichbar ist, sonst `503`. Docker nutzt das als Healthcheck (`docker compose … ps`).

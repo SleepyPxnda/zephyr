@@ -6,33 +6,12 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Zephyr theme (SPEC "Name und Farbthema"). Values marked "derived" are not
- * listed in the SPEC and are taken from the nearest SPEC token.
+ * Zephyr theme (SPEC "Name und Farbthema"), dark only. The `dark` class is
+ * set permanently on <html> so the shadcn `dark:` variants keep applying.
  */
 :root {
+  color-scheme: dark;
   --radius: 0.625rem;
-  --background: #f8f7fc;
-  --foreground: #2e2a3d;
-  --card: #ffffff;
-  --card-foreground: #2e2a3d; /* derived: foreground */
-  --popover: #ffffff; /* derived: card */
-  --popover-foreground: #2e2a3d; /* derived: foreground */
-  --primary: #8fb8de;
-  --primary-foreground: #1f2a3a;
-  --secondary: #e6e0f5;
-  --secondary-foreground: #2e2a3d; /* derived: foreground */
-  --accent: #cdebdd;
-  --accent-foreground: #2e2a3d; /* derived: foreground */
-  --muted: #f0eef6;
-  --muted-foreground: #655f7d; /* SPEC #6E6889, darkened for 4.5:1 on secondary/accent */
-  --destructive: #e8a0a8;
-  --destructive-foreground: #2e2a3d; /* derived: dark text on rosé */
-  --border: #e3e0ee;
-  --input: #e3e0ee; /* derived: border */
-  --ring: #8fb8de;
-}
-
-.dark {
   --background: #1c1b26;
   --foreground: #eceaf5;
   --card: #24232f;

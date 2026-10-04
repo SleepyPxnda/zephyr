@@ -55,7 +55,7 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      htmlAttrs: { lang: 'de' },
+      htmlAttrs: { lang: 'de', class: 'dark' },
       title: 'zephyr',
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },

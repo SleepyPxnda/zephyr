@@ -105,8 +105,6 @@ function tap() {
   const bpm = bpmFromTaps(list)
   if (bpm) emit('timing', { bpm })
 }
-/** "on" must be clearly visible; aria-pressed, as the tooltip trigger takes over data-state */
-const toggleOn = 'aria-pressed:bg-primary aria-pressed:text-primary-foreground'
 const onZoom = (v: number[] | undefined) => {
   if (v?.[0] !== undefined) zoom.value = v[0]
 }
@@ -177,7 +175,6 @@ const onZoom = (v: number[] | undefined) => {
         <Toggle
           v-model="loop"
           size="sm"
-          :class="toggleOn"
           :aria-label="$t('timeline.loop')"
           :title="$t('timeline.loopHint')"
           data-testid="loop"
@@ -278,7 +275,6 @@ const onZoom = (v: number[] | undefined) => {
             <Toggle
               v-model="snapBeat"
               size="sm"
-              :class="toggleOn"
               :aria-label="$t('timeline.snapBeat')"
               data-testid="snap-beat"
             >
@@ -292,7 +288,6 @@ const onZoom = (v: number[] | undefined) => {
             <Toggle
               v-model="magnet"
               size="sm"
-              :class="toggleOn"
               :aria-label="$t('timeline.magnet')"
               data-testid="magnet"
             >

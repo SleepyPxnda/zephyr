@@ -24,6 +24,7 @@ function select(v: unknown) {
   <TooltipProvider :delay-duration="300">
     <ToggleGroup
       type="single"
+      :spacing="1"
       :model-value="tool"
       :disabled="disabled"
       :aria-label="$t('tools.label')"

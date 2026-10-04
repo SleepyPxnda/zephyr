@@ -10,7 +10,7 @@ name: zephyr
 
 services:
   app:
-    image: ${ZEPHYR_IMAGE:-ghcr.io/sleepypxnda/zephyr:latest}
+    image: ${ZEPHYR_IMAGE:-ghcr.io/sleepypxnda/choreocore:latest}
     build:
       context: ..
       dockerfile: docker/Dockerfile

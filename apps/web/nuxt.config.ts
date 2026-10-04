@@ -37,10 +37,16 @@ export default defineNuxtConfig({
   css: ['~/assets/css/tailwind.css'],
   vite: {
     plugins: [tailwindcss()],
-    // dev server only: extra host names (comma separated), e.g. a tunnel for the Discord login
+    // dev server only: extra host names (comma separated), e.g. a tunnel for the Discord login;
+    // pasted URLs are reduced to the bare host name
     server: {
       allowedHosts: process.env.DEV_ALLOWED_HOSTS?.split(',')
-        .map((h) => h.trim())
+        .map((h) =>
+          h
+            .trim()
+            .replace(/^[a-z]+:\/\//i, '')
+            .replace(/[/:].*$/, ''),
+        )
         .filter(Boolean),
     },
   },

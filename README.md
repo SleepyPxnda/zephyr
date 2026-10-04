@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  Reit-Choreografien zur Musik planen – Kür, Pas de deux, Quadrille.
+  Plan equestrian choreographies to music – freestyle, pas de deux, quadrille.
 </p>
 
 <p align="center">
@@ -16,75 +16,78 @@
 
 ---
 
-**Choreocore** ist eine selbst gehostete Webanwendung, mit der Reitlehrer:innen und Reiter:innen Choreografien planen: Wege mehrerer Pferde auf dem Grundriss der Reithalle zeichnen, sie auf einer Zeitleiste zur Musik anordnen, gemeinsam live bearbeiten und als Animation abspielen.
+**Choreocore** is a self-hosted web app for riding instructors and riders to plan choreographies: draw the paths of several horses on the floor plan of the arena, arrange them on a timeline to the music, edit them together in real time and play them back as an animation.
 
-![Editor mit einer Quadrille aus vier Pferden: Wege auf dem Hallengrundriss, darunter die Zeitleiste mit Parts und Abschnitten je Pferd](docs/screenshots/editor.webp)
+The user interface is in German.
 
-## Funktionen
+![Editor with a quadrille of four horses: paths on the arena floor plan, below it the timeline with parts and sections per horse](docs/screenshots/editor.webp)
 
-- **Wege zeichnen** – Freihand, Gerade, Bogen, Zirkel und Volte direkt auf dem Hallenbild; Koordinaten in Metern, Ecken werden mit dem Wendekreis der Gangart abgerundet.
-- **Gangarten mit Tempo** – Schritt, Trab, Galopp usw. mit Geschwindigkeit (mit/ohne Sattel) und Wendekreis; zu enge Kurven werden markiert.
-- **Zeitleiste zur Musik** – Musik laden, Wellenform und Takt sehen, Abschnitte verschieben, Halt- und Pausen-Lücken setzen, Parts benennen.
-- **Gemeinsam bearbeiten** – mehrere Personen arbeiten live am selben Plan; Rückgängig gilt je Person.
-- **Teilen und Abspielen** – Pläne mit Rollen (Bearbeiten, Lesen) oder per Lese-Link teilen; die Abspielansicht zeigt die Choreografie als Animation.
+## Features
 
-![Abspielansicht: vier Pferde mitten in der Figur „Wechsel“, unten der Fortschritt mit den Parts](docs/screenshots/play.webp)
+- **Draw paths**: freehand, straight lines, arcs, circles and voltes directly on the arena image. Coordinates are stored in metres, and corners are rounded to the turning circle of the gait.
+- **Gaits with speed**: walk, trot, canter and so on, each with a speed (with and without saddle) and a turning circle. Curves that are too tight are flagged.
+- **Timeline to music**: load a track, see its waveform and beat, move sections, insert halts and pauses, name parts.
+- **Edit together**: several people work on the same plan live; undo applies per person.
+- **Share and play back**: share plans with roles (edit, read) or via a read-only link. The playback view shows the choreography as an animation.
 
-## Technik
+![Playback view: four horses in the middle of the “Wechsel” figure, with the progress bar and parts below](docs/screenshots/play.webp)
 
-Nuxt 4 (Vue 3, Nitro) · TypeScript · Tailwind + shadcn-vue · PostgreSQL 16 mit Drizzle · S3-kompatibler Objektspeicher · Anmeldung über Discord (Freigabe durch den Admin). Die Fachlogik (Zeitmodell, Geometrie, Wendekreis) liegt als reine Funktionen in [`packages/core`](packages/core) und läuft in Browser und Server gleich.
+## Tech stack
 
-Fachliche Beschreibung: [`SPEC.md`](SPEC.md) · Umsetzungsstand: [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) · Logo und Icons: [`docs/brand`](docs/brand)
+Nuxt 4 (Vue 3, Nitro) · TypeScript · Tailwind + shadcn-vue · PostgreSQL 16 with Drizzle · S3-compatible object storage · Sign-in with Discord (accounts approved by an admin). The domain logic (time model, geometry, turning circle) lives as pure functions in [`packages/core`](packages/core) and runs the same in the browser and on the server.
 
-## Voraussetzungen
+Specification: [`SPEC.md`](SPEC.md) · Implementation status: [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) (both in German) · Logo and icons: [`docs/brand`](docs/brand)
 
-- Docker mit Compose
-- Eine Discord-Anwendung (<https://discord.com/developers/applications>) für den Login: Client-ID und -Secret, unter „OAuth2 → Redirects“ die Adresse `…/auth/discord` eintragen
-- Ein S3-Bucket, z. B. Hetzner Object Storage (privat; die Anwendung setzt beim Start selbst eine CORS-Regel für Lesezugriffe)
-- Für die Entwicklung zusätzlich Node.js 22 und pnpm (`corepack enable`)
+## Requirements
 
-## Entwicklung
+- Docker with Compose
+- A Discord application (<https://discord.com/developers/applications>) for sign-in: client ID and secret, and the address `…/auth/discord` under “OAuth2 → Redirects”
+- An S3 bucket, e.g. Hetzner Object Storage (private; the app sets a CORS rule for read access itself on startup)
+- For development, also Node.js 22 and pnpm (`corepack enable`)
+
+## Development
 
 ```bash
-cp .env.example .env          # Werte eintragen, mindestens SUPER_ADMIN_DISCORD_ID und S3
+cp .env.example .env          # fill in values, at least SUPER_ADMIN_DISCORD_ID and S3
 pnpm install
 docker compose -f docker/compose.dev.yml up -d                     # Postgres
-# lokales S3 statt extern: docker compose -f docker/compose.dev.yml --profile garage up -d
+# local S3 instead of an external one: docker compose -f docker/compose.dev.yml --profile garage up -d
 pnpm db:migrate && pnpm db:seed
 pnpm dev                      # http://localhost:3000
 ```
 
-Ohne Discord anmelden (nur `pnpm dev`, nur über localhost): `http://localhost:3000/auth/dev-login?username=<SUPER_ADMIN_DISCORD_ID>`, Demo-Nutzerin: `anna`.
+Sign in without Discord (only with `pnpm dev`, only via localhost): `http://localhost:3000/auth/dev-login?username=<SUPER_ADMIN_DISCORD_ID>`, demo user: `anna`.
 
-| Befehl            | Zweck                                                   |
-| ----------------- | ------------------------------------------------------- |
-| `pnpm check`      | Lint, Typecheck, Formatierung – muss vor jedem Commit grün sein |
-| `pnpm format`     | Formatierung mit Prettier schreiben                     |
-| `pnpm db:generate`| Migration aus dem geänderten Schema erzeugen            |
-| `pnpm test:core`  | vorhandene Tests der Fachlogik (`packages/core`)        |
+| Command            | Purpose                                                    |
+| ------------------ | ---------------------------------------------------------- |
+| `pnpm check`       | Lint, typecheck, formatting – must pass before each commit |
+| `pnpm format`      | Write formatting with Prettier                             |
+| `pnpm db:generate` | Generate a migration from the changed schema               |
+| `pnpm test:core`   | Existing tests of the domain logic (`packages/core`)       |
 
-## Betrieb
+## Deployment
 
-Die Produktion läuft mit [`docker/compose.prod.yml`](docker/compose.prod.yml): die Anwendung (Node 22 mit ffmpeg) und PostgreSQL 16. Objektspeicher ist ein externer S3. TLS übernimmt ein Reverse Proxy, den du selbst vor die Anwendung stellst.
+Production runs with [`docker/compose.prod.yml`](docker/compose.prod.yml): the app (Node 22 with ffmpeg) and PostgreSQL 16. Object storage is an external S3. TLS is handled by a reverse proxy that you put in front of the app yourself.
 
-### Einrichten
+### Setup
 
-1. Repository auf den Server klonen und `.env` aus `.env.example` anlegen:
-   - `POSTGRES_PASSWORD`: zufälliges Passwort (nur Buchstaben und Ziffern, es landet in der Verbindungs-URL); `DATABASE_URL` setzt die Compose-Datei selbst
-   - `S3_*`: Endpunkt, Region, Bucket und Schlüssel; für Hetzner `S3_FORCE_PATH_STYLE=false`
-   - `NUXT_SESSION_PASSWORD`: mindestens 32 zufällige Zeichen (`openssl rand -hex 32`)
+1. Clone the repository on the server and create `.env` from `.env.example`:
+   - `POSTGRES_PASSWORD`: a random password (letters and digits only, it ends up in the connection URL); the Compose file sets `DATABASE_URL` itself
+   - `S3_*`: endpoint, region, bucket and keys; for Hetzner `S3_FORCE_PATH_STYLE=false`
+   - `NUXT_SESSION_PASSWORD`: at least 32 random characters (`openssl rand -hex 32`)
    - `NUXT_OAUTH_DISCORD_CLIENT_ID`, `NUXT_OAUTH_DISCORD_CLIENT_SECRET`
-   - `NUXT_OAUTH_DISCORD_REDIRECT_URL=https://<deine-domain>/auth/discord` (genauso in der Discord-Anwendung eintragen)
-   - `SUPER_ADMIN_DISCORD_ID`: deine Discord-Nutzer-ID; dieses Konto ist immer aktiv und Admin
-   - optional `DISCORD_WEBHOOK_URL` für Hinweise auf neue Zugangsanfragen, `APP_PORT` (Standard 3000)
-2. Starten:
+   - `NUXT_OAUTH_DISCORD_REDIRECT_URL=https://<your-domain>/auth/discord` (enter the same in the Discord application)
+   - `SUPER_ADMIN_DISCORD_ID`: your Discord user ID; this account is always active and an admin
+   - optional: `DISCORD_WEBHOOK_URL` for notifications about new access requests, `APP_PORT` (default 3000)
+2. Start:
 
    ```bash
    docker compose -f docker/compose.prod.yml --env-file .env up -d --build
    ```
 
-   Beim Start spielt die Anwendung alle ausstehenden Migrationen ein und legt fehlende Grunddaten an (Admin-Konto, Gangarten, Halle mit Platzhaltermaßen). Erst danach beantwortet sie Anfragen; schlägt das fehl, beendet sie sich und Docker startet sie neu.
-3. Reverse Proxy mit TLS auf `http://127.0.0.1:3000` zeigen lassen. Er muss WebSockets durchreichen (Live-Bearbeitung unter `/ws/plans/…`) und `X-Forwarded-Host`/`X-Forwarded-Proto` setzen. Beispiel Caddy:
+   On startup the app applies all pending migrations and creates missing base data (admin account, gaits, arena with placeholder dimensions). Only then does it answer requests; if this fails, it exits and Docker restarts it.
+
+3. Point a reverse proxy with TLS at `http://127.0.0.1:3000`. It must pass WebSockets through (live editing under `/ws/plans/…`) and set `X-Forwarded-Host`/`X-Forwarded-Proto`. Example for Caddy:
 
    ```
    choreocore.example.org {
@@ -92,45 +95,46 @@ Die Produktion läuft mit [`docker/compose.prod.yml`](docker/compose.prod.yml): 
    }
    ```
 
-   Die Anwendung setzt Cookies nur über HTTPS; ohne TLS ist keine Anmeldung möglich.
-4. Mit dem Discord-Konto aus `SUPER_ADMIN_DISCORD_ID` anmelden. Unter „Einstellungen“ Hallenbild und -maße sowie die Gangarten pflegen, unter „Nutzer“ offene Anfragen freigeben.
+   The app only sets cookies over HTTPS; without TLS, sign-in is not possible.
 
-### Aktualisieren
+4. Sign in with the Discord account from `SUPER_ADMIN_DISCORD_ID`. Under “Einstellungen” (settings) maintain the arena image, its dimensions and the gaits; under “Nutzer” (users) approve pending requests.
+
+### Updating
 
 ```bash
 git pull
 docker compose -f docker/compose.prod.yml --env-file .env up -d --build
 ```
 
-Migrationen laufen beim Start automatisch.
+Migrations run automatically on startup.
 
-### Fertiges Image statt eigenem Build
+### Prebuilt image instead of building yourself
 
-Die GitHub Action [`image.yml`](.github/workflows/image.yml) baut das Image `ghcr.io/sleepypxnda/zephyr`, sobald auf GitHub ein Release veröffentlicht wird. Ein Release `v1.2.3` erhält die Tags `1.2.3`, `1.2` und `latest`, ein Pre-Release (z. B. `v1.3.0-rc.1`) nur sein eigenes Versions-Tag. Auf dem Server reichen dann `compose.prod.yml` und `.env`, ohne Quellcode:
+The GitHub Action [`image.yml`](.github/workflows/image.yml) builds the image `ghcr.io/sleepypxnda/zephyr` whenever a release is published on GitHub. A release `v1.2.3` gets the tags `1.2.3`, `1.2` and `latest`; a pre-release (e.g. `v1.3.0-rc.1`) only gets its own version tag. On the server you then only need `compose.prod.yml` and `.env`, no source code:
 
 ```bash
 docker compose -f docker/compose.prod.yml --env-file .env pull app
 docker compose -f docker/compose.prod.yml --env-file .env up -d --no-build
 ```
 
-Ein anderes Tag wählt `ZEPHYR_IMAGE` in `.env`, z. B. `ZEPHYR_IMAGE=ghcr.io/sleepypxnda/zephyr:1.2.3`. Ist das Paket auf GitHub privat, vorher `docker login ghcr.io` mit einem Token mit `read:packages`.
+Choose a different tag with `ZEPHYR_IMAGE` in `.env`, e.g. `ZEPHYR_IMAGE=ghcr.io/sleepypxnda/zephyr:1.2.3`. If the package on GitHub is private, run `docker login ghcr.io` first with a token that has `read:packages`.
 
-### Überwachen
+### Monitoring
 
-- `GET /api/health` antwortet `200 {"status":"ok"}`, solange die Datenbank erreichbar ist, sonst `503`. Docker nutzt das als Healthcheck (`docker compose … ps`).
-- Logs: `docker compose -f docker/compose.prod.yml logs -f app`. Die Anwendung schreibt eine JSON-Zeile je Ereignis (`time`, `level`, `msg`, ggf. `err` mit Stacktrace).
-- Gelöschte Pläne werden nach 30 Tagen täglich um 03:00 endgültig entfernt.
+- `GET /api/health` answers `200 {"status":"ok"}` while the database is reachable, otherwise `503`. Docker uses it as a health check (`docker compose … ps`).
+- Logs: `docker compose -f docker/compose.prod.yml logs -f app`. The app writes one JSON line per event (`time`, `level`, `msg`, and `err` with a stack trace where applicable).
+- Deleted plans are removed permanently after 30 days, daily at 03:00.
 
-### Sicherung
+### Backups
 
-Backups richtet der Betreiber selbst ein, z. B. täglich:
+Set up backups yourself, e.g. daily:
 
 ```bash
 docker compose -f docker/compose.prod.yml exec -T postgres pg_dump -U zephyr zephyr | gzip > zephyr-$(date +%F).sql.gz
 ```
 
-Dazu den S3-Bucket (Musik, Bilder) mit den Mitteln des Anbieters sichern.
+Also back up the S3 bucket (music, images) using your provider's tools.
 
-## Lizenz
+## License
 
 [MIT](LICENSE)

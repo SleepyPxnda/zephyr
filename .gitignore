@@ -12,3 +12,11 @@ coverage/
 !.env.example
 .DS_Store
 .playwright-mcp/
+
+# AI tooling, kept local only
+CLAUDE.md
+.claude/
+.mcp.json
+skills-lock.json
+docs/superpowers/
+IMPLEMENTATION_PLAN.md

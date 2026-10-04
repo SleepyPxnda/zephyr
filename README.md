@@ -36,7 +36,7 @@ The user interface is in German.
 
 Nuxt 4 (Vue 3, Nitro) · TypeScript · Tailwind + shadcn-vue · PostgreSQL 16 with Drizzle · S3-compatible object storage · Sign-in with Discord (accounts approved by an admin). The domain logic (time model, geometry, turning circle) lives as pure functions in [`packages/core`](packages/core) and runs the same in the browser and on the server.
 
-Specification: [`SPEC.md`](SPEC.md) · Implementation status: [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) (both in German) · Logo and icons: [`docs/brand`](docs/brand)
+Specification (in German): [`SPEC.md`](SPEC.md) · Logo and icons: [`docs/brand`](docs/brand)
 
 ## Requirements
 

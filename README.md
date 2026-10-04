@@ -76,7 +76,7 @@ Migrationen laufen beim Start automatisch.
 
 ### Fertiges Image statt eigenem Build
 
-Die GitHub Action [`image.yml`](.github/workflows/image.yml) baut bei jedem Push auf `main` das Image `ghcr.io/sleepypxnda/zephyr` (Tags `main`, `sha-<commit>`) und bei Git-Tags `v1.2.3` zusätzlich `1.2.3`, `1.2` und `latest`. Auf dem Server reichen dann `compose.prod.yml` und `.env`, ohne Quellcode:
+Die GitHub Action [`image.yml`](.github/workflows/image.yml) baut das Image `ghcr.io/sleepypxnda/zephyr`, sobald auf GitHub ein Release veröffentlicht wird. Ein Release `v1.2.3` erhält die Tags `1.2.3`, `1.2` und `latest`, ein Pre-Release (z. B. `v1.3.0-rc.1`) nur sein eigenes Versions-Tag. Auf dem Server reichen dann `compose.prod.yml` und `.env`, ohne Quellcode:
 
 ```bash
 docker compose -f docker/compose.prod.yml --env-file .env pull app

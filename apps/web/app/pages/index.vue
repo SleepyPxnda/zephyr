@@ -38,7 +38,9 @@ async function logout() {
   <main class="mx-auto flex min-h-dvh max-w-5xl flex-col gap-6 px-4 py-8">
     <header class="flex items-center justify-between gap-4">
       <div>
-        <h1 class="font-brand text-4xl font-bold" data-testid="wordmark">{{ t('app.name') }}</h1>
+        <h1 class="flex items-center gap-3 font-brand text-4xl font-bold" data-testid="wordmark">
+          <img src="/favicon.svg" alt="" class="size-10" />{{ t('app.name') }}
+        </h1>
         <p class="text-muted-foreground">{{ t('app.tagline') }}</p>
       </div>
       <div class="flex items-center gap-3">

@@ -28,7 +28,9 @@ function onTitle(v: string | number) {
     <Button variant="ghost" size="icon" as-child>
       <NuxtLink to="/" :aria-label="$t('editor.back')"><ArrowLeft /></NuxtLink>
     </Button>
-    <span class="font-brand text-xl font-bold">{{ $t('app.name') }}</span>
+    <span class="flex items-center gap-2 font-brand text-xl font-bold">
+      <img src="/favicon.svg" alt="" class="size-7" />{{ $t('app.name') }}
+    </span>
     <Input
       :model-value="title"
       class="h-9 max-w-md flex-1 font-medium"

@@ -88,7 +88,9 @@ useHead({
       <Button v-if="loggedIn" variant="ghost" size="icon" as-child>
         <NuxtLink to="/" :aria-label="$t('editor.back')"><ArrowLeft /></NuxtLink>
       </Button>
-      <span class="font-brand text-xl font-bold">{{ $t('app.name') }}</span>
+      <span class="flex items-center gap-2 font-brand text-xl font-bold">
+        <img src="/favicon.svg" alt="" class="size-7" />{{ $t('app.name') }}
+      </span>
       <h1 v-if="plan" class="min-w-0 truncate font-medium">{{ plan.title }}</h1>
       <Badge variant="outline">{{ $t('roles.viewer') }}</Badge>
     </header>

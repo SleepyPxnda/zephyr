@@ -13,7 +13,9 @@ const notice = computed(() => {
   <main class="flex min-h-dvh items-center justify-center px-4 py-10">
     <Card class="w-full max-w-sm">
       <CardHeader>
-        <p class="font-brand text-2xl font-bold">{{ t('app.name') }}</p>
+        <p class="flex items-center gap-2 font-brand text-2xl font-bold">
+          <img src="/favicon.svg" alt="" class="size-8" />{{ t('app.name') }}
+        </p>
         <h1 class="leading-none font-semibold">{{ t('auth.login.title') }}</h1>
         <p class="text-sm text-muted-foreground">{{ t('auth.login.description') }}</p>
       </CardHeader>

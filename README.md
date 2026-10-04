@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/SleepyPxnda/choreocore/actions/workflows/ci.yml"><img src="https://github.com/SleepyPxnda/choreocore/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/SleepyPxnda/zephyr/actions/workflows/ci.yml"><img src="https://github.com/SleepyPxnda/zephyr/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3C64DD" alt="MIT License"></a>
 </p>
 
@@ -109,14 +109,14 @@ Migrations run automatically on startup.
 
 ### Prebuilt image instead of building yourself
 
-The GitHub Action [`image.yml`](.github/workflows/image.yml) builds the image `ghcr.io/sleepypxnda/choreocore` whenever a release is published on GitHub. A release `v1.2.3` gets the tags `1.2.3`, `1.2` and `latest`; a pre-release (e.g. `v1.3.0-rc.1`) only gets its own version tag. On the server you then only need `compose.prod.yml` and `.env`, no source code:
+The GitHub Action [`image.yml`](.github/workflows/image.yml) builds the image `ghcr.io/sleepypxnda/zephyr` whenever a release is published on GitHub. A release `v1.2.3` gets the tags `1.2.3`, `1.2` and `latest`; a pre-release (e.g. `v1.3.0-rc.1`) only gets its own version tag. On the server you then only need `compose.prod.yml` and `.env`, no source code:
 
 ```bash
 docker compose -f docker/compose.prod.yml --env-file .env pull app
 docker compose -f docker/compose.prod.yml --env-file .env up -d --no-build
 ```
 
-Choose a different tag with `ZEPHYR_IMAGE` in `.env`, e.g. `ZEPHYR_IMAGE=ghcr.io/sleepypxnda/choreocore:1.2.3`. If the package on GitHub is private, run `docker login ghcr.io` first with a token that has `read:packages`.
+Choose a different tag with `ZEPHYR_IMAGE` in `.env`, e.g. `ZEPHYR_IMAGE=ghcr.io/sleepypxnda/zephyr:1.2.3`. If the package on GitHub is private, run `docker login ghcr.io` first with a token that has `read:packages`.
 
 ### Monitoring
 

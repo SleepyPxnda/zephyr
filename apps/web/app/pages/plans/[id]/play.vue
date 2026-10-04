@@ -75,7 +75,7 @@ useEventListener(window, 'keydown', (e: KeyboardEvent) => {
 })
 
 useHead({
-  title: () => (plan.value ? `${plan.value.title} · Choreocore` : 'Choreocore'),
+  title: () => (plan.value ? `${plan.value.title} · Zephyr` : 'Zephyr'),
   // the read link must not leak to other sites through the Referer header
   meta: [{ name: 'referrer', content: 'no-referrer' }],
 })

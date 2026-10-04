@@ -105,7 +105,7 @@ useEventListener(window, 'beforeunload', (e: BeforeUnloadEvent) => {
   planStore.flush()
   if (planStore.dirty) e.preventDefault()
 })
-useHead({ title: () => (plan.value ? `${plan.value.title} · Choreocore` : 'Choreocore') })
+useHead({ title: () => (plan.value ? `${plan.value.title} · Zephyr` : 'Zephyr') })
 </script>
 
 <template>

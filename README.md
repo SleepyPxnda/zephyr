@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/brand/logo-on-dark.svg">
-    <img src="docs/brand/logo-on-light.svg" alt="Choreocore" width="420">
+    <img src="docs/brand/logo-on-light.svg" alt="Zephyr" width="420">
   </picture>
 </p>
 
@@ -11,12 +11,12 @@
 
 <p align="center">
   <a href="https://github.com/SleepyPxnda/choreocore/actions/workflows/ci.yml"><img src="https://github.com/SleepyPxnda/choreocore/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-4053DF" alt="MIT License"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3C64DD" alt="MIT License"></a>
 </p>
 
 ---
 
-**Choreocore** is a self-hosted web app for riding instructors and riders to plan choreographies: draw the paths of several horses on the floor plan of the arena, arrange them on a timeline to the music, edit them together in real time and play them back as an animation.
+**Zephyr** is a self-hosted web app for riding instructors and riders to plan choreographies: draw the paths of several horses on the floor plan of the arena, arrange them on a timeline to the music, edit them together in real time and play them back as an animation.
 
 The user interface is in German.
 
@@ -89,7 +89,7 @@ Production runs with [`docker/compose.prod.yml`](docker/compose.prod.yml): the a
 3. Point a reverse proxy with TLS at `http://127.0.0.1:3000`. It must pass WebSockets through (live editing under `/ws/plans/…`) and set `X-Forwarded-Host`/`X-Forwarded-Proto`. Example for Caddy:
 
    ```
-   choreocore.example.org {
+   zephyr.example.org {
    	reverse_proxy 127.0.0.1:3000
    }
    ```

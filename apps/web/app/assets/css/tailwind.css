@@ -5,16 +5,16 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Choreocore theme (SPEC "Name und Farbthema"), dark only. The `dark` class is
+ * Zephyr theme (SPEC "Name und Farbthema"), dark only. The `dark` class is
  * set permanently on <html> so the shadcn `dark:` variants keep applying.
- * Brand colours: blue #4053DF (primary), purple #AB40DF, cyan #40DFD1.
+ * Brand colours: blue #3C64DD (primary), purple #9A3CDD, cyan #3CDDCF.
  */
 :root {
   color-scheme: dark;
   --radius: 0.625rem;
-  --brand-blue: #4053df;
-  --brand-purple: #ab40df;
-  --brand-cyan: #40dfd1;
+  --brand-blue: #3c64dd;
+  --brand-purple: #9a3cdd;
+  --brand-cyan: #3cddcf;
   --background: #121218;
   --foreground: #ededf3;
   --card: #1a1a22;

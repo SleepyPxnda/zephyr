@@ -56,7 +56,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       htmlAttrs: { lang: 'de', class: 'dark' },
-      title: 'Choreocore',
+      title: 'Zephyr',
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
         { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },

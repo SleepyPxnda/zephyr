@@ -37,12 +37,9 @@ async function logout() {
 <template>
   <main class="mx-auto flex min-h-dvh max-w-5xl flex-col gap-6 px-4 py-8">
     <header class="flex items-center justify-between gap-4">
-      <div>
-        <h1 class="mb-2" data-testid="wordmark">
-          <img src="/logo.svg" :alt="t('app.name')" class="h-10 w-auto" />
-        </h1>
-        <p class="text-muted-foreground">{{ t('app.tagline') }}</p>
-      </div>
+      <h1 data-testid="wordmark">
+        <img src="/logo.svg" :alt="t('app.name')" class="h-10 w-auto" />
+      </h1>
       <div class="flex items-center gap-3">
         <Button v-if="isAdmin" variant="outline" as-child data-testid="admin-link">
           <NuxtLink to="/admin/users">

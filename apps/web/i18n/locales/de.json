@@ -1,7 +1,10 @@
 {
   "app": {
-    "name": "Choreocore",
-    "tagline": "Reit-Choreografien zur Musik planen"
+    "name": "Choreocore"
+  },
+  "nav": {
+    "label": "Navigation",
+    "dashboard": "Dashboard"
   },
   "home": {
     "empty": "Noch keine Pläne.",

@@ -84,15 +84,7 @@ useHead({
 <template>
   <div class="flex min-h-dvh flex-col">
     <header class="flex flex-wrap items-center gap-3 border-b bg-card px-4 py-2">
-      <NuxtLink
-        v-if="loggedIn"
-        to="/"
-        :aria-label="$t('editor.back')"
-        class="rounded-md p-1 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-      >
-        <img src="/logo.svg" alt="" class="h-6 w-auto" />
-      </NuxtLink>
-      <img v-else src="/logo.svg" :alt="$t('app.name')" class="h-6 w-auto p-1 box-content" />
+      <AppNav :links="loggedIn" />
       <h1 v-if="plan" class="min-w-0 truncate font-medium">{{ plan.title }}</h1>
       <Badge variant="outline">{{ $t('roles.viewer') }}</Badge>
     </header>

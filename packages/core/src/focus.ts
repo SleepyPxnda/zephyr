@@ -45,26 +45,29 @@ export function fitZoom(range: TimeRange, widthPx: number): number {
 /**
  * Point indices of a path that the arena draws while a range is focused: from the start position
  * of the first section that overlaps the range to the last point of the last one. A section that
- * crosses the range edge is drawn whole. `null` when no section touches the range (or no path).
+ * crosses the range edge is drawn whole. `start` is when the horse sets off on the first of these
+ * sections. `null` when no section touches the range (or no path).
  */
 export function visiblePoints(
   path: Path,
   tl: Timeline,
   range: TimeRange | null,
-): { from: number; to: number } | null {
+): { from: number; to: number; start: number } | null {
   const n = path.pts.length
   if (!n) return null
-  if (!range) return { from: 0, to: n - 1 }
+  if (!range) return { from: 0, to: n - 1, start: 0 }
   let from = Number.POSITIVE_INFINITY
   let to = -1
+  let start = Number.POSITIVE_INFINITY
   path.sections.forEach((_, k) => {
     const { a, b } = sectionTimes(path, tl, k)
     if (b <= range.start || a >= range.end) return
     const g = sectionGeom(path, k)
     from = Math.min(from, g.si)
     to = Math.max(to, g.e)
+    start = Math.min(start, a)
   })
-  return to < 0 ? null : { from, to }
+  return to < 0 ? null : { from, to, start }
 }
 
 /** One PDF page: a part, or a stretch no part covers (`part: null`). */

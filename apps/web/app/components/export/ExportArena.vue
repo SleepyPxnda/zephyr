@@ -11,7 +11,7 @@ import {
 import type { ArenaInfo } from '~/composables/useCatalog'
 import { drawField, drawScene } from '~/lib/arena/render'
 
-/** The arena of one PDF page: hall and the paths of the range, horses where the range ends. */
+/** The arena of one PDF page: a still picture of the range (see `Scene.snapshot`). */
 const props = defineProps<{
   arena: ArenaInfo
   image: HTMLImageElement | null
@@ -46,10 +46,11 @@ watchEffect(
         horses: props.horses,
         timelines: props.timelines,
         gaits: props.gaits,
-        // the sheet header names the part; the canvas badge would show the next one at range.end
+        // the sheet header names the part, no badge on the canvas
         parts: [],
         activeId: null,
-        time: props.range.end,
+        // horses that do not ride in the range stand where they are at its start
+        time: props.range.start,
         showPaths: true,
         showNames: false,
         onlyHorses: false,
@@ -61,6 +62,7 @@ watchEffect(
         overlay: null,
         pastePreview: [],
         range: props.range,
+        snapshot: true,
       },
       t,
       vp.value,

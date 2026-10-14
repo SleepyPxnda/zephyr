@@ -151,6 +151,11 @@ export interface Scene {
   pastePreview: readonly { color: string; pts: readonly PathPoint[]; from: Point | null }[]
   /** focused part: only paths that touch this time range are drawn */
   range?: TimeRange | null
+  /**
+   * still picture of the range (PDF export): every horse where its track in the range begins,
+   * paths solid with an arrow at their end, the gait written where it changes
+   */
+  snapshot?: boolean
 }
 
 const gaitName = (gaits: readonly Gait[], id: string | undefined) =>
@@ -206,12 +211,15 @@ export function drawScene(
   ctx.lineCap = 'round'
   const r = Math.max(9, Math.min(15, t.scale * 0.6))
   const shown = (h: Horse) => s.showPaths || h.id === s.activeId
+  const snap = !!s.snapshot
+  const timeOf = (h: Horse, tl: Timeline) =>
+    snap ? (visiblePoints(h.path, tl, s.range ?? null)?.start ?? s.time) : s.time
 
   for (const h of s.horses) {
     const tl = s.timelines.get(h.id)
     if (s.onlyHorses || h.path.pts.length < 2 || !tl) continue
     const pts = h.path.pts
-    const pos = posAt(h.path, tl, s.time, h.pending)
+    const pos = posAt(h.path, tl, timeOf(h, tl), h.pending)
     const active = h.id === s.activeId
     const vis = visiblePoints(h.path, tl, s.range ?? null)
     const from = vis?.from ?? 0
@@ -221,9 +229,9 @@ export function drawScene(
       // planned path, dashed; automatic connecting lines thin and finely dashed
       const links = new Set(h.path.sections.flatMap((sec) => (sec.link ? [sec.start] : [])))
       ctx.save()
-      ctx.globalAlpha = active ? 0.8 : 0.55
-      ctx.setLineDash([6, 6])
-      strokePath(ctx, t, pts, to, null, h.color, 2, links, from)
+      ctx.globalAlpha = snap ? 1 : active ? 0.8 : 0.55
+      ctx.setLineDash(snap ? [] : [6, 6])
+      strokePath(ctx, t, pts, to, null, h.color, snap ? 3.5 : 2, links, from)
       ctx.setLineDash([2, 4])
       ctx.lineWidth = 1.5
       ctx.strokeStyle = h.color
@@ -238,12 +246,14 @@ export function drawScene(
       }
       ctx.stroke()
       ctx.restore()
-      const hd = headingAt(pts, pts.length - 1)
-      const last = pts[pts.length - 1] as PathPoint
-      if (hd !== null && to === pts.length - 1) {
+      // arrow at the path end; on a snapshot where the track of the range ends
+      const endI = snap ? to : pts.length - 1
+      const hd = headingAt(pts, endI)
+      const last = pts[endI] as PathPoint
+      if (hd !== null && to === endI) {
         const [ex, ey] = px(t, last)
         ctx.save()
-        ctx.globalAlpha = active ? 0.85 : 0.6
+        ctx.globalAlpha = snap ? 1 : active ? 0.85 : 0.6
         ctx.translate(ex, ey)
         ctx.rotate(hd)
         ctx.fillStyle = h.color
@@ -370,7 +380,7 @@ export function drawScene(
   for (const h of s.horses) {
     const tl = s.timelines.get(h.id)
     if (!tl || !h.path.pts.length) continue
-    const pos = posAt(h.path, tl, s.time, h.pending)
+    const pos = posAt(h.path, tl, timeOf(h, tl), h.pending)
     if (!pos || pos.hidden) continue
     const [x, y] = px(t, pos)
     const light = isLightColor(h.color)
@@ -426,6 +436,59 @@ export function drawScene(
               ? gaitName(s.gaits, sec?.gaitId)
               : ''
       label(ctx, state ? `${h.name} · ${state}` : h.name, x, y + r + 13)
+    }
+  }
+
+  // snapshot: the gait each horse sets off in, and every gait change, next to the section start
+  if (snap && !s.onlyHorses) {
+    // boxes (centre, size) that a label must not cover: the horses and the labels already drawn
+    type Box = { x: number; y: number; w: number; h: number }
+    const taken: Box[] = []
+    const free = (b: Box) =>
+      !taken.some((q) => Math.abs(q.x - b.x) * 2 < q.w + b.w && Math.abs(q.y - b.y) * 2 < q.h + b.h)
+    for (const h of s.horses) {
+      const tl = s.timelines.get(h.id)
+      const pos = tl && h.path.pts.length ? posAt(h.path, tl, timeOf(h, tl), h.pending) : null
+      if (pos && !pos.hidden) {
+        const [x, y] = px(t, pos)
+        taken.push({ x, y, w: 2 * r + 4, h: 2 * r + 4 })
+      }
+    }
+    ctx.font = `600 12px ${FONT}`
+    for (const h of s.horses) {
+      const tl = s.timelines.get(h.id)
+      const vis = tl ? visiblePoints(h.path, tl, s.range ?? null) : null
+      if (!vis || !shown(h)) continue
+      let first = true
+      let prev: string | undefined
+      h.path.sections.forEach((sec, k) => {
+        if (sec.link) return
+        const { s: st, e } = sectionRange(h.path, k)
+        const at = h.path.pts[Math.max(0, st - 1)]
+        if (!at || e <= vis.from || st > vis.to) return
+        if (!first && sec.gaitId === prev) return
+        first = false
+        prev = sec.gaitId
+        const [lx, ly] = px(t, at)
+        const text = gaitName(s.gaits, sec.gaitId)
+        const w = ctx.measureText(text).width + 12
+        const dx = r + w / 2 + 4
+        const dy = r + 12
+        // above, below, left, right of the point; when all are taken, further up
+        const spots = [
+          [0, -dy],
+          [0, dy],
+          [-dx, 0],
+          [dx, 0],
+        ].map(([ox = 0, oy = 0]) => ({ x: lx + ox, y: ly + oy, w, h: 18 }))
+        let box = spots.find(free)
+        for (let up = 2; !box; up++) {
+          const b = { x: lx, y: ly - dy * up, w, h: 18 }
+          if (free(b) || up > 8) box = b
+        }
+        taken.push(box)
+        label(ctx, text, box.x, box.y)
+      })
     }
   }
 

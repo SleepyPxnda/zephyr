@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { announceGap, wholePathKeys } from '@zephyr/core'
-import { useEventListener } from '@vueuse/core'
+import { announceGap, peerColor, wholePathKeys } from '@zephyr/core'
+import { useElementSize, useEventListener } from '@vueuse/core'
 import type { ArenaPointer } from '~/composables/useDrawTools'
 
 /**
@@ -83,6 +83,7 @@ const cursor = computed(() =>
 )
 /** while pasting, the arena moves the preview; otherwise the current tool gets the pointer */
 function onPointer(e: ArenaPointer) {
+  if (e.kind === 'move' || e.kind === 'down') planStore.moveCursor({ area: 'arena', ...e.m })
   if (editor.paste.open) clip.onPointer(e)
   else if (editor.tool === 'select') select.onPointer(e)
   else tools.onPointer(e)
@@ -98,6 +99,39 @@ function selectWhole(id: string) {
   editor.selection = wholePathKeys([h])
 }
 
+// ---------- mouse pointers of the others ----------
+const page = useTemplateRef<HTMLElement>('page')
+const { width: pageWidth } = useElementSize(page)
+const peerCursors = computed(() =>
+  Object.entries(planStore.cursors).flatMap(([id, at]) => {
+    const p = planStore.peers.find((q) => q.peerId === id)
+    return p ? [{ id, name: p.name, color: peerColor(p.userId), at }] : []
+  }),
+)
+const arenaCursors = computed(() =>
+  peerCursors.value.flatMap(({ at, ...c }) =>
+    at.area === 'arena' ? [{ ...c, at: { x: at.x, y: at.y } }] : [],
+  ),
+)
+// shortcut: off the arena the position is relative to the page (share of width, px from top),
+// so it drifts where layouts differ (narrow windows); anchor to elements if that bothers
+const pageCursors = computed(() =>
+  peerCursors.value.flatMap(({ at, ...c }) =>
+    at.area === 'page' ? [{ ...c, x: at.x * pageWidth.value, y: at.y }] : [],
+  ),
+)
+function onPagePointer(e: PointerEvent) {
+  // over the arena the canvas reports the position in metres (`onPointer`)
+  if (e.target instanceof Element && e.target.closest('[data-arena-scene]')) return
+  const r = page.value?.getBoundingClientRect()
+  if (!r?.width) return
+  planStore.moveCursor({
+    area: 'page',
+    x: Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)),
+    y: Math.max(0, e.clientY - r.top),
+  })
+}
+
 // send what is still collected when leaving the page (SPEC "Speichern und Konflikte")
 onBeforeRouteLeave(() => planStore.flush())
 onBeforeUnmount(() => planStore.close())
@@ -109,7 +143,20 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · Zephyr` : 'Zephyr')
 </script>
 
 <template>
-  <div class="flex min-h-dvh flex-col">
+  <div
+    ref="page"
+    class="relative flex min-h-dvh flex-col"
+    @pointermove="onPagePointer"
+    @pointerleave="planStore.moveCursor(null)"
+  >
+    <PeerCursor
+      v-for="c in pageCursors"
+      :key="c.id"
+      :x="c.x"
+      :y="c.y"
+      :name="c.name"
+      :color="c.color"
+    />
     <EditorHeader
       :plan-id="planId"
       :title="plan?.title ?? ''"
@@ -166,6 +213,7 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · Zephyr` : 'Zephyr')
             :split-hover="tools.splitHover.value"
             :selection="editor.selection"
             :peer-marks="planStore.marks.sections"
+            :peer-cursors="arenaCursors"
             :handles="select.handles.value"
             :overlay="select.overlay.value"
             :paste-preview="clip.preview.value"

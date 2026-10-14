@@ -5,6 +5,25 @@ import { planSchema } from './schemas'
 /** Selected section as `horseId:k` (same keys as the editor selection). */
 const selectionKey = z.string().regex(/^[0-9a-f-]{36}:\d{1,6}$/i)
 
+/**
+ * Mouse pointer of a person: over the arena in metres (exact at any zoom), elsewhere in the
+ * editor as share of its width and pixels from its top; null when outside.
+ */
+export const cursorSchema = z
+  .discriminatedUnion('area', [
+    z.object({
+      area: z.literal('arena'),
+      x: z.number().min(-100).max(1000),
+      y: z.number().min(-100).max(1000),
+    }),
+    z.object({
+      area: z.literal('page'),
+      x: z.number().min(0).max(1),
+      y: z.number().min(0).max(100_000),
+    }),
+  ])
+  .nullable()
+
 export const clientMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('op'), seq: z.int().min(0), op: opSchema }),
   z.object({
@@ -12,6 +31,7 @@ export const clientMessageSchema = z.discriminatedUnion('type', [
     activeHorseId: z.uuid().nullable(),
     selection: z.array(selectionKey).max(2000),
   }),
+  z.object({ type: z.literal('cursor'), at: cursorSchema }),
   z.object({ type: z.literal('ping') }),
 ])
 
@@ -42,6 +62,7 @@ export const serverMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('reject'), seq: z.int().min(0), reason: z.string() }),
   z.object({ type: z.literal('op'), revision: z.int().min(0), op: opSchema }),
   z.object({ type: z.literal('presence'), peer: peerSchema }),
+  z.object({ type: z.literal('cursor'), peerId: z.string(), at: cursorSchema }),
   z.object({ type: z.literal('leave'), peerId: z.string() }),
   z.object({ type: z.literal('pong') }),
 ])
@@ -49,6 +70,7 @@ export const serverMessageSchema = z.discriminatedUnion('type', [
 export type ClientMessage = z.infer<typeof clientMessageSchema>
 export type ServerMessage = z.infer<typeof serverMessageSchema>
 export type PeerInfo = z.infer<typeof peerSchema>
+export type Cursor = z.infer<typeof cursorSchema>
 
 /** Stable colour per user (hue from a hash of the id); presence markers only. */
 export function peerColor(userId: string): string {

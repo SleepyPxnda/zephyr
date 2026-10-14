@@ -2,6 +2,7 @@
 import {
   pointerToArena,
   toMetres,
+  toScreen,
   viewKeeping,
   type Gait,
   type Horse,
@@ -20,6 +21,14 @@ import type { HandleView, OverlayLabel } from '~/composables/useSelectTool'
 import type { PastePreview } from '~/composables/useClipboardTools'
 import { drawField, drawScene } from '~/lib/arena/render'
 
+/** Pointer of another person over the arena, in metres. */
+export interface PeerArenaCursor {
+  id: string
+  name: string
+  color: string
+  at: Point
+}
+
 const props = defineProps<{
   arena: ArenaInfo
   viewport: Viewport
@@ -34,6 +43,7 @@ const props = defineProps<{
   splitHover: Point | null
   selection: readonly string[]
   peerMarks?: ReadonlyMap<string, readonly string[]>
+  peerCursors?: readonly PeerArenaCursor[]
   handles: readonly HandleView[]
   overlay: OverlayLabel | null
   pastePreview: readonly PastePreview[]
@@ -257,12 +267,20 @@ function onPointerUp(e: PointerEvent) {
       :height="pxSize.height"
       role="img"
       :aria-label="$t('editor.arena.canvas', horses.length)"
+      data-arena-scene
       @pointerdown="onPointerDown"
       @pointermove="onPointerMove"
       @pointerup="onPointerUp"
       @pointercancel="onPointerUp"
       @pointerleave="toolEvent('leave', $event)"
       @dblclick="toolEvent('dblclick', $event)"
+    />
+    <PeerCursor
+      v-for="c in peerCursors"
+      :key="c.id"
+      v-bind="toScreen(view.transform.value, c.at)"
+      :name="c.name"
+      :color="c.color"
     />
   </div>
 </template>

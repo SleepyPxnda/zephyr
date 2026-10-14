@@ -8,6 +8,7 @@ import {
   peerMarks,
   serverMessageSchema,
   type ClientMessage,
+  type Cursor,
   type Horse,
   type Part,
   type PeerInfo,
@@ -59,6 +60,8 @@ export const usePlanStore = defineStore('plan', () => {
   const plan = shallowRef<Plan | null>(null)
   const role = shallowRef<PlanRole | null>(null)
   const peers = shallowRef<PeerInfo[]>([])
+  /** mouse pointers of the others, by `peerId` */
+  const cursors = shallowRef<Record<string, NonNullable<Cursor>>>({})
   const connected = shallowRef(false)
   const unconfirmed = shallowRef(0)
 
@@ -161,9 +164,11 @@ export const usePlanStore = defineStore('plan', () => {
       case 'presence':
         peers.value = [...peers.value.filter((p) => p.peerId !== m.peer.peerId), m.peer]
         return
+      case 'cursor':
+        return setCursor(m.peerId, m.at)
       case 'leave':
         peers.value = peers.value.filter((p) => p.peerId !== m.peerId)
-        return
+        return setCursor(m.peerId, null)
       case 'pong':
         return
     }
@@ -179,6 +184,7 @@ export const usePlanStore = defineStore('plan', () => {
     confirmed.value = m.plan
     role.value = m.role
     peers.value = m.peers
+    cursors.value = {}
     connected.value = true
     // the role dropped to viewer: what is still open can never be accepted
     if (!writable(m.role)) {
@@ -233,6 +239,7 @@ export const usePlanStore = defineStore('plan', () => {
     plan.value = doc
     role.value = r
     peers.value = []
+    cursors.value = {}
     history.value = []
     inflight = []
     outbox = []
@@ -298,6 +305,29 @@ export const usePlanStore = defineStore('plan', () => {
     () => [editor.activeHorseId, editor.selection] as const,
     () => void sendPresenceThrottled(),
   )
+
+  function setCursor(peerId: string, at: Cursor) {
+    const { [peerId]: _old, ...rest } = cursors.value
+    cursors.value = at ? { ...rest, [peerId]: at } : rest
+  }
+
+  /** our own pointer; the throttled send always takes the latest, so a final null is not lost */
+  let ownCursor: Cursor = null
+  let sentCursor: Cursor = null
+  const flushCursor = useThrottleFn(
+    () => {
+      if (!connected.value || ownCursor === sentCursor) return
+      sentCursor = ownCursor
+      send({ type: 'cursor', at: ownCursor })
+    },
+    50,
+    true,
+    true,
+  )
+  function moveCursor(at: Cursor) {
+    ownCursor = at
+    void flushCursor()
+  }
 
   // ---------- plan-level changes ----------
 
@@ -392,6 +422,8 @@ export const usePlanStore = defineStore('plan', () => {
     dirty,
     canEdit,
     peers: computed(() => peers.value),
+    cursors: computed(() => cursors.value),
+    moveCursor,
     marks,
     load,
     close,

@@ -18,7 +18,7 @@ import { injectArenaView } from '~/composables/arenaViewContext'
 import type { ArenaPointer, Ghost } from '~/composables/useDrawTools'
 import type { HandleView, OverlayLabel } from '~/composables/useSelectTool'
 import type { PastePreview } from '~/composables/useClipboardTools'
-import { drawField, drawScene, type SceneLabels } from '~/lib/arena/render'
+import { drawField, drawScene } from '~/lib/arena/render'
 
 const props = defineProps<{
   arena: ArenaInfo
@@ -44,7 +44,6 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ pointer: [e: ArenaPointer] }>()
 
-const { t, n } = useI18n()
 const view = injectArenaView()
 const { pixelRatio } = useDevicePixelRatio()
 const fieldCanvas = useTemplateRef<HTMLCanvasElement>('field')
@@ -68,16 +67,7 @@ const pxSize = computed(() => ({
   height: Math.round(props.viewport.height * pixelRatio.value),
 }))
 
-const labels = computed<SceneLabels>(() => ({
-  waiting: t('editor.arena.waiting'),
-  halt: t('editor.arena.halt'),
-  pause: t('editor.arena.pause'),
-  pending: (kind, seconds, jump) =>
-    t(jump ? 'editor.arena.pendingJump' : 'editor.arena.pending', {
-      kind: t(`editor.arena.${kind}`),
-      seconds: n(seconds, 'decimal'),
-    }),
-}))
+const labels = useSceneLabels()
 
 // two layers: the hall only when zoom/size/image change, the scene once per frame when needed
 let fieldDirty = true

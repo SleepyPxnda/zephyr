@@ -390,6 +390,18 @@
     "copied": "Kopiert",
     "revoke": "Link widerrufen"
   },
+  "export": {
+    "open": "Export",
+    "title": "PDF-Export",
+    "back": "Zurück zum Plan",
+    "print": "Drucken / Als PDF speichern",
+    "hint": "Eine Seite je Part, Abschnitte ohne Part auf eigenen Seiten. Im Druckdialog „Als PDF speichern“ wählen.",
+    "empty": "Noch nichts zu exportieren: Der Plan hat keine Parts und keine Wege.",
+    "noPart": "Ohne Part",
+    "unnamed": "Part ohne Namen",
+    "legend": "Pferde",
+    "page": "Seite {n} / {total}"
+  },
   "play": {
     "transport": "Wiedergabe",
     "position": "Abspielposition",

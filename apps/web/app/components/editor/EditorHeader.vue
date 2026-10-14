@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Share2 } from '@lucide/vue'
+import { FileDown, Share2 } from '@lucide/vue'
 import type { PeerInfo } from '@zephyr/core'
 import type { PlanRole, SaveStatus } from '~/stores/plan'
 
@@ -40,6 +40,12 @@ function onTitle(v: string | number) {
     </Badge>
     <PeerAvatars :peers="peers" />
     <div class="ml-auto flex items-center gap-2">
+      <Button variant="outline" size="sm" as-child>
+        <NuxtLink :to="`/plans/${planId}/export`" data-testid="export">
+          <FileDown />
+          {{ $t('export.open') }}
+        </NuxtLink>
+      </Button>
       <Button
         v-if="role === 'owner'"
         variant="outline"

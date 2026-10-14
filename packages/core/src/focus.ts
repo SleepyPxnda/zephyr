@@ -1,5 +1,5 @@
 import { sectionGeom } from './path'
-import type { Path } from './schemas'
+import type { Horse, Part, Path } from './schemas'
 import { sectionTimes, type Timeline } from './timeline'
 
 /** Time window of a focused part (s). */
@@ -65,4 +65,42 @@ export function visiblePoints(
     to = Math.max(to, g.e)
   })
   return to < 0 ? null : { from, to }
+}
+
+/** One PDF page: a part, or a stretch no part covers (`part: null`). */
+export interface ExportPage extends TimeRange {
+  part: Part | null
+}
+
+/** Gaps between parts shorter than this (s) are rounding, not a page of their own. */
+const EXPORT_GAP_MIN = 0.05
+
+/**
+ * PDF pages in time order: one per part (sorted by start, overlaps allowed) and one per stretch
+ * between 0, the parts and `end` that no part covers, but only where a horse rides.
+ */
+export function exportPages(
+  parts: readonly Part[],
+  horses: readonly Horse[],
+  timelines: ReadonlyMap<string, Timeline>,
+  end: number,
+): ExportPage[] {
+  const rides = (r: TimeRange) =>
+    horses.some((h) => {
+      const tl = timelines.get(h.id)
+      return !!tl && visiblePoints(h.path, tl, r) !== null
+    })
+  const pages: ExportPage[] = []
+  const gap = (start: number, stop: number) => {
+    if (stop - start >= EXPORT_GAP_MIN && rides({ start, end: stop }))
+      pages.push({ start, end: stop, part: null })
+  }
+  let covered = 0
+  for (const p of [...parts].sort((a, b) => a.start - b.start)) {
+    gap(covered, p.start)
+    pages.push({ start: p.start, end: p.end, part: p })
+    covered = Math.max(covered, p.end)
+  }
+  gap(covered, end)
+  return pages
 }

@@ -399,7 +399,19 @@
     "empty": "Noch nichts zu exportieren: Der Plan hat keine Parts und keine Wege.",
     "noPart": "Ohne Part",
     "unnamed": "Part ohne Namen",
-    "page": "Seite {n} / {total}"
+    "page": "Seite {n} / {total}",
+    "video": {
+      "title": "Video",
+      "hint": "Ganzer Plan mit Musik als {format}. Die Aufnahme läuft in Echtzeit; den Tab so lange offen und im Vordergrund lassen.",
+      "unsupported": "Dieser Browser kann keine Videos aufnehmen. Bitte Chrome, Edge oder Safari verwenden.",
+      "record": "Video aufnehmen",
+      "preparing": "Wird vorbereitet …",
+      "cancel": "Abbrechen",
+      "download": "{format} herunterladen",
+      "failed": "Die Aufnahme ist fehlgeschlagen. Bitte erneut versuchen.",
+      "silent": "Die Musik ließ sich nicht laden; das Video wird ohne Ton aufgenommen.",
+      "preview": "Vorschau des Videos"
+    }
   },
   "play": {
     "transport": "Wiedergabe",

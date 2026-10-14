@@ -27,12 +27,13 @@ const horses = computed(() => plan.value?.horses ?? [])
 const gaits = computed(() => data.value?.gaits ?? [])
 const parts = computed(() => plan.value?.parts ?? [])
 const timelines = useTimelines(horses, gaits)
-const pages = computed(() => {
+// end of paths and parts; music after it adds no page (nobody rides there), the video plays it
+const planEnd = computed(() => {
   let m = 0
   for (const tl of timelines.value.values()) m = Math.max(m, tl.total)
-  // music after the last path adds no page: nobody rides there
-  return exportPages(parts.value, horses.value, timelines.value, playEnd(m, 0, parts.value))
+  return playEnd(m, 0, parts.value)
 })
+const pages = computed(() => exportPages(parts.value, horses.value, timelines.value, planEnd.value))
 
 // hall image (signed address), loaded once for all sheets
 const image = shallowRef<HTMLImageElement | null>(null)
@@ -81,6 +82,18 @@ useHead({
       v-if="plan && data?.arena"
       class="flex flex-col items-center gap-6 p-4 print:block print:p-0"
     >
+      <ExportVideo
+        class="print:hidden"
+        :plan-id="id"
+        :title="plan.title"
+        :arena="data.arena"
+        :image="image"
+        :horses="horses"
+        :timelines="timelines"
+        :gaits="gaits"
+        :parts="parts"
+        :plan-end="planEnd"
+      />
       <p class="text-sm text-muted-foreground print:hidden">{{ $t('export.hint') }}</p>
       <p v-if="!pages.length" class="text-muted-foreground">{{ $t('export.empty') }}</p>
       <article

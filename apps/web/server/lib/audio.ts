@@ -10,7 +10,7 @@ const RATE = 8000
 export const PEAK_STEP_S = 0.02
 const PER_PEAK = RATE * PEAK_STEP_S
 
-const ffmpegPath = (): string => {
+export const ffmpegPath = (): string => {
   const p = process.env.FFMPEG_PATH || (ffmpegStatic as unknown as string | null)
   if (!p) throw new Error('ffmpeg not found (set FFMPEG_PATH)')
   return p

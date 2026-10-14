@@ -53,12 +53,36 @@ const canvas = useTemplateRef<HTMLCanvasElement>('canvas')
 const labels = useSceneLabels()
 const { clock } = useFormat()
 
-const state = shallowRef<'idle' | 'preparing' | 'recording' | 'done' | 'error'>('idle')
+const state = shallowRef<'idle' | 'preparing' | 'recording' | 'finishing' | 'done' | 'error'>(
+  'idle',
+)
 const now = shallowRef(0)
 const end = shallowRef(props.planEnd)
 const url = shallowRef<string | null>(null)
 /** the music could not be loaded: recorded without sound */
 const silent = shallowRef(false)
+/** the server could not add the index: the file plays but cannot be seeked */
+const unseekable = shallowRef(false)
+
+/**
+ * MediaRecorder writes the file as a stream, without duration and index, so players cannot seek
+ * in it; the server rewrites it once with ffmpeg (no re-encoding, nothing stored).
+ */
+async function seekable(raw: Blob): Promise<Blob> {
+  try {
+    const res = await fetch('/api/video/remux', {
+      method: 'POST',
+      headers: { 'Content-Type': raw.type },
+      body: raw,
+    })
+    if (!res.ok) throw new Error(`remux failed: ${res.status}`)
+    return await res.blob()
+  } catch (e) {
+    console.error('[video] making the file seekable failed', e)
+    unseekable.value = true
+    return raw
+  }
+}
 const fileName = computed(
   () => `${props.title.replace(/[^\p{L}\p{N} _-]+/gu, '').trim() || 'zephyr'}.${ext}`,
 )
@@ -116,6 +140,7 @@ async function record() {
   if (!mime || !canvas.value) return
   state.value = 'preparing'
   silent.value = false
+  unseekable.value = false
   if (url.value) URL.revokeObjectURL(url.value)
   url.value = null
   const ac = new AudioContext()
@@ -144,15 +169,18 @@ async function record() {
       src.connect(dest)
       for (const track of dest.stream.getAudioTracks()) stream.addTrack(track)
     }
-    const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6_000_000 })
+    const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4_000_000 })
     const chunks: Blob[] = []
     let cancelled = false
     rec.ondataavailable = (e) => e.data.size && chunks.push(e.data)
-    rec.onstop = () => {
+    rec.onstop = async () => {
       stream.getTracks().forEach((tr) => tr.stop())
       void ac.close()
       if (cancelled) return void (state.value = 'idle')
-      url.value = URL.createObjectURL(new Blob(chunks, { type: mime }))
+      state.value = 'finishing'
+      const type = mime.split(';')[0] ?? mime
+      const raw = new Blob(chunks, { type })
+      url.value = URL.createObjectURL(await seekable(raw))
       state.value = 'done'
     }
 
@@ -224,12 +252,18 @@ onBeforeUnmount(() => {
         <Button
           v-else
           size="sm"
-          :disabled="!mime || state === 'preparing'"
+          :disabled="!mime || state === 'preparing' || state === 'finishing'"
           data-testid="record"
           @click="record"
         >
           <Circle />
-          {{ state === 'preparing' ? $t('export.video.preparing') : $t('export.video.record') }}
+          {{
+            state === 'preparing'
+              ? $t('export.video.preparing')
+              : state === 'finishing'
+                ? $t('export.video.finishing')
+                : $t('export.video.record')
+          }}
         </Button>
         <Button v-if="url && state === 'done'" variant="outline" size="sm" as-child>
           <a :href="url" :download="fileName" data-testid="video-download">
@@ -239,8 +273,19 @@ onBeforeUnmount(() => {
         </Button>
       </div>
     </div>
+    <p
+      v-if="state === 'recording'"
+      class="flex items-center gap-3 rounded-md border-2 border-primary bg-accent px-4 py-3 text-base font-semibold text-accent-foreground"
+      role="alert"
+    >
+      <span class="size-3 shrink-0 animate-pulse rounded-full bg-destructive" aria-hidden="true" />
+      {{ $t('export.video.recordingWarning') }}
+    </p>
     <p v-if="state === 'error'" class="text-sm" role="alert">{{ $t('export.video.failed') }}</p>
     <p v-else-if="silent" class="text-sm" role="status">{{ $t('export.video.silent') }}</p>
+    <p v-if="unseekable && state === 'done'" class="text-sm" role="status">
+      {{ $t('export.video.unseekable') }}
+    </p>
     <canvas
       ref="canvas"
       :width="vp.width"

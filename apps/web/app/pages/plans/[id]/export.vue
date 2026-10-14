@@ -116,13 +116,6 @@ useHead({
             :range="page"
           />
         </div>
-        <ul class="flex flex-wrap gap-x-4 gap-y-1 text-sm" :aria-label="$t('export.legend')">
-          <li v-for="h in horses" :key="h.id" class="flex items-center gap-1.5">
-            <span class="size-3 rounded-full" :style="{ background: h.color }" aria-hidden="true" />
-            <span class="tabular-nums">{{ h.number }}</span>
-            <span>{{ h.name }}</span>
-          </li>
-        </ul>
         <footer class="flex items-center justify-between border-t pt-2 text-sm">
           <span class="tabular-nums">{{ clock(page.start) }} – {{ clock(page.end) }}</span>
           <span class="tabular-nums text-muted-foreground">

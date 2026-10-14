@@ -76,6 +76,8 @@ export function drawField(
     t: ViewTransform
     vp: Viewport
     dpr: number
+    /** scale bar bottom left (default on) */
+    scaleBar?: boolean
   },
 ) {
   const { arena, image, t, vp, dpr } = o
@@ -91,6 +93,7 @@ export function drawField(
     ctx.fillStyle = '#3A342C'
     ctx.fillRect(x0, y0, w, h)
   }
+  if (o.scaleBar === false) return
   // scale bar, bottom left
   const len = scaleBarMetres(t.scale)
   const x = 12

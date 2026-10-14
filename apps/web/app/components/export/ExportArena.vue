@@ -33,7 +33,14 @@ watchEffect(
     const ctx = el?.getContext('2d')
     if (!el || !ctx) return
     const t = viewTransform(fitView(props.arena), props.arena, vp.value)
-    drawField(ctx, { arena: props.arena, image: props.image, t, vp: vp.value, dpr: DPR })
+    drawField(ctx, {
+      arena: props.arena,
+      image: props.image,
+      t,
+      vp: vp.value,
+      dpr: DPR,
+      scaleBar: false,
+    })
     // drawScene clears its canvas, so the scene goes on a second one laid over the hall
     const layer = document.createElement('canvas')
     layer.width = el.width

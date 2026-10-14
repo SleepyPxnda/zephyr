@@ -399,7 +399,6 @@
     "empty": "Noch nichts zu exportieren: Der Plan hat keine Parts und keine Wege.",
     "noPart": "Ohne Part",
     "unnamed": "Part ohne Namen",
-    "legend": "Pferde",
     "page": "Seite {n} / {total}"
   },
   "play": {

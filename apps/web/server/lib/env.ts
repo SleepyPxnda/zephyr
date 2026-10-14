@@ -1,17 +1,30 @@
 import { z } from 'zod'
 
-/** Server environment (see .env.example), validated once on first use. */
-const envSchema = z.object({
-  DATABASE_URL: z.string().min(1),
-  S3_ENDPOINT: z.url(),
-  S3_REGION: z.string().min(1),
-  S3_BUCKET: z.string().min(1),
-  S3_ACCESS_KEY: z.string().min(1),
-  S3_SECRET_KEY: z.string().min(1),
-  S3_FORCE_PATH_STYLE: z.stringbool().default(true),
-})
+/**
+ * Server environment (see .env.example), validated once on first use. Files go to S3, or with
+ * STORAGE=local into a folder on disk (local development without an S3).
+ */
+const envSchema = z.union([
+  z.object({
+    DATABASE_URL: z.string().min(1),
+    STORAGE: z.literal('local'),
+    /** relative to apps/web */
+    STORAGE_DIR: z.string().min(1).default('.data/storage'),
+  }),
+  z.object({
+    DATABASE_URL: z.string().min(1),
+    STORAGE: z.literal('s3').default('s3'),
+    S3_ENDPOINT: z.url(),
+    S3_REGION: z.string().min(1),
+    S3_BUCKET: z.string().min(1),
+    S3_ACCESS_KEY: z.string().min(1),
+    S3_SECRET_KEY: z.string().min(1),
+    S3_FORCE_PATH_STYLE: z.stringbool().default(true),
+  }),
+])
 
 export type ServerEnv = z.infer<typeof envSchema>
+export type S3Env = Extract<ServerEnv, { STORAGE: 's3' }>
 
 let cached: ServerEnv | undefined
 

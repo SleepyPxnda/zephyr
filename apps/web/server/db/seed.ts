@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import type { S3Client } from '@aws-sdk/client-s3'
 import { count, eq } from 'drizzle-orm'
-import { putObject } from '../lib/storage'
+import type { ObjectStore } from '../lib/storage'
 import type { Db } from './client'
 import { arena, files, gaits, users } from './schema'
 
@@ -27,8 +26,7 @@ export interface SeedOptions {
   /** also create DEMO_USERS (never in production) */
   demoUsers: boolean
   hallImage: Uint8Array
-  s3: S3Client
-  bucket: string
+  store: ObjectStore
 }
 
 export interface SeedResult {
@@ -82,7 +80,7 @@ export async function seed(db: Db, o: SeedOptions): Promise<SeedResult> {
   const [hall] = await db.select().from(arena)
   if (!hall) {
     const key = `images/${randomUUID()}.png`
-    await putObject(o.s3, o.bucket, key, o.hallImage, 'image/png')
+    await o.store.put(key, o.hallImage, 'image/png')
     await db.transaction(async (tx) => {
       const [file] = await tx
         .insert(files)

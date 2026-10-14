@@ -48,12 +48,14 @@ Logo and icons: [`docs/brand`](docs/brand)
 ## Development
 
 ```bash
-cp .env.example .env          # fill in values, at least SUPER_ADMIN_DISCORD_ID and S3
+cp .env.example .env          # fill in values, at least SUPER_ADMIN_DISCORD_ID and S3 (or STORAGE=local)
 pnpm install
 docker compose -f docker/compose.dev.yml up -d   # Postgres
 pnpm db:migrate && pnpm db:seed
 pnpm dev                      # http://localhost:3000
 ```
+
+Without an S3 bucket, set `STORAGE=local`: uploads go to `apps/web/.data/storage`, and `pnpm db:seed` puts the default hall image there.
 
 Sign in without Discord (only with `pnpm dev`, only via localhost): `http://localhost:3000/auth/dev-login?username=<SUPER_ADMIN_DISCORD_ID>`, demo user: `anna`.
 

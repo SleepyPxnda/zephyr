@@ -5,14 +5,50 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3'
-import type { ServerEnv } from './env'
+import { mkdir, rm, writeFile } from 'node:fs/promises'
+import { dirname, join, resolve } from 'node:path'
+import type { S3Env, ServerEnv } from './env'
+
+/** Where uploaded files live: the S3 bucket, or a folder with STORAGE=local. */
+export interface ObjectStore {
+  put(key: string, body: Uint8Array, contentType: string): Promise<void>
+  remove(keys: string[]): Promise<void>
+}
+
+/** Storage keys the app creates (`audio/<uuid>`, `images/<uuid>.png`); nothing that leaves the folder. */
+export const STORAGE_KEY = /^[a-z]+\/[\w-]+(\.[a-z0-9]+)?$/
+
+/** File of a key in the local folder (STORAGE=local). */
+export function localPath(dir: string, key: string): string {
+  if (!STORAGE_KEY.test(key)) throw new Error(`invalid storage key: ${key}`)
+  return join(resolve(dir), key)
+}
+
+export function createStore(env: ServerEnv): ObjectStore {
+  if (env.STORAGE === 'local')
+    return {
+      async put(key, body) {
+        const file = localPath(env.STORAGE_DIR, key)
+        await mkdir(dirname(file), { recursive: true })
+        await writeFile(file, body)
+      },
+      async remove(keys) {
+        await Promise.all(keys.map((k) => rm(localPath(env.STORAGE_DIR, k), { force: true })))
+      },
+    }
+  const s3 = createS3(env)
+  return {
+    put: (key, body, contentType) => putObject(s3, env.S3_BUCKET, key, body, contentType),
+    remove: (keys) => deleteObjects(s3, env.S3_BUCKET, keys),
+  }
+}
 
 /**
  * S3 client for any S3-compatible store (Hetzner Object Storage, ...). Checksums only
  * where the API requires them: the SDK's newer default (CRC32 on every request) is not understood by
  * every non-AWS provider.
  */
-export function createS3(env: ServerEnv): S3Client {
+export function createS3(env: S3Env): S3Client {
   return new S3Client({
     endpoint: env.S3_ENDPOINT,
     region: env.S3_REGION,

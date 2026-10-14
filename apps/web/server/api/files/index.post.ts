@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { files } from '../../db/schema'
 import { analyzeAudio } from '../../lib/audio'
-import { putObject } from '../../lib/storage'
 
 const MB = 1024 * 1024
 const LIMITS = { audio: 50 * MB, image: 15 * MB } as const
@@ -63,8 +62,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const key = `${kind}/${randomUUID()}`
-  const { s3, bucket } = useS3()
-  await putObject(s3, bucket, key, part.data, mime)
+  await useStore().put(key, part.data, mime)
   const [row] = await useDb()
     .insert(files)
     .values({

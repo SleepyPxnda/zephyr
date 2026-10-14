@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 import type { Db } from '../db/client'
 import { arena, files } from '../db/schema'
 import { PEAK_STEP_S } from './audio'
-import { signedUrl } from '../utils/s3'
+import { signedUrl } from '../utils/storage'
 
 /** The one hall: image (signed address, 5 min) and size in metres; null before the seed ran. */
 export async function arenaInfo(db: Db) {

@@ -32,6 +32,8 @@ interface Member {
   selection: string[]
   /** times of the last operations, for the rate limit */
   recent: number[]
+  /** time of the last forwarded cursor */
+  lastCursor: number
 }
 
 interface Room {
@@ -47,6 +49,8 @@ const rooms = new Map<string, Room>()
 const MAX_MESSAGE_CHARS = 5_000_000
 const RATE_WINDOW_MS = 2000
 const RATE_MAX = 40
+/** cursors closer together are dropped (the client sends at most every 50 ms) */
+const CURSOR_MIN_MS = 30
 
 const ctxOf = (peer: Peer) => peer.context as unknown as LiveContext
 const send = (peer: Peer, msg: ServerMessage) => peer.send(JSON.stringify(msg))
@@ -89,6 +93,7 @@ export async function join(peer: Peer): Promise<void> {
     activeHorseId: null,
     selection: [],
     recent: [],
+    lastCursor: 0,
   }
   room.members.set(peer.id, member)
   send(peer, {
@@ -138,6 +143,14 @@ export function handle(peer: Peer, text: string): void {
     member.activeHorseId = m.activeHorseId
     member.selection = m.selection
     broadcast(room, peer.id, { type: 'presence', peer: infoOf(member) })
+    return
+  }
+  if (m.type === 'cursor') {
+    const now = Date.now()
+    // "gone" (null) always passes, so no cursor stays behind at the others
+    if (m.at && now - member.lastCursor < CURSOR_MIN_MS) return
+    member.lastCursor = now
+    broadcast(room, peer.id, { type: 'cursor', peerId: peer.id, at: m.at })
     return
   }
   if (!hasRole(member.role, 'editor')) {

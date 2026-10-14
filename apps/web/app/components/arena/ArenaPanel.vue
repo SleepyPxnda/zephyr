@@ -11,6 +11,7 @@ import { useElementSize, useEventListener, useWindowSize } from '@vueuse/core'
 import { isTyping } from '~/composables/useEditorShortcuts'
 import type { ArenaInfo } from '~/composables/useCatalog'
 import type { ArenaPointer, Ghost } from '~/composables/useDrawTools'
+import type { PeerArenaCursor } from './ArenaCanvas.vue'
 import type { DisplayOptions } from '~/composables/useDisplayOptions'
 import type { HandleView, OverlayLabel } from '~/composables/useSelectTool'
 import type { PastePreview } from '~/composables/useClipboardTools'
@@ -27,6 +28,7 @@ const props = defineProps<{
   splitHover: Point | null
   selection: readonly string[]
   peerMarks?: ReadonlyMap<string, readonly string[]>
+  peerCursors?: readonly PeerArenaCursor[]
   handles: readonly HandleView[]
   overlay: OverlayLabel | null
   pastePreview: readonly PastePreview[]
@@ -92,6 +94,7 @@ const timelines = useTimelines(
         :split-hover="splitHover"
         :selection="selection"
         :peer-marks="peerMarks"
+        :peer-cursors="peerCursors"
         :handles="handles"
         :overlay="overlay"
         :paste-preview="pastePreview"

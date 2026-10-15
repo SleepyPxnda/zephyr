@@ -2,6 +2,7 @@
 import { isLightColor, type Horse } from '@zephyr/core'
 import { EllipsisVertical } from '@lucide/vue'
 import { buttonVariants } from '~/components/ui/button'
+import { keepMovedFocus } from '~/lib/utils'
 
 /**
  * One row in the timeline's lane header: number (in the horse colour), name, menu. A right click
@@ -27,21 +28,14 @@ const ask = (action: 'clear' | 'remove') => {
 const numberClass = computed(() =>
   isLightColor(props.horse.color) ? 'text-foreground' : 'text-white',
 )
-// attached once the menu has closed, so its focus return does not steal the input's focus
 const chat = useChatStore()
-let toChatPending = false
-const toChat = () => (toChatPending = true)
-function onCloseFocus(e: Event) {
-  if (!toChatPending) return
-  toChatPending = false
-  e.preventDefault()
+const toChat = () =>
   chat.attach({
     t: null,
     pos: null,
     horse: { id: props.horse.id, name: props.horse.name, k: null },
     part: null,
   })
-}
 
 const colorInput = useTemplateRef<HTMLInputElement>('colorInput')
 function onColor(e: Event) {
@@ -107,7 +101,7 @@ function runConfirmed() {
               ><EllipsisVertical
             /></Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" class="w-56" @close-auto-focus="onCloseFocus">
+          <DropdownMenuContent align="start" class="w-56" @close-auto-focus="keepMovedFocus">
             <HorseMenuItems
               :horse="horse"
               :editable="editable"
@@ -155,7 +149,7 @@ function runConfirmed() {
         </AlertDialog>
       </div>
     </ContextMenuTrigger>
-    <ContextMenuContent class="w-56" @close-auto-focus="onCloseFocus">
+    <ContextMenuContent class="w-56" @close-auto-focus="keepMovedFocus">
       <HorseMenuItems
         :horse="horse"
         :editable="editable"

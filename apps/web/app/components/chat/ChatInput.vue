@@ -9,13 +9,16 @@ const planStore = usePlanStore()
 const box = useTemplateRef<HTMLElement>('box')
 
 const locked = computed(() => !!chat.pending || !planStore.connected)
+// a task, not nextTick: an open menu still traps the focus until its close has been flushed
 const focus = () =>
-  nextTick(() => {
+  setTimeout(() => {
     // popped out, the input lives in the other window: bring that one to the front
     box.value?.ownerDocument.defaultView?.focus()
     box.value?.querySelector('textarea')?.focus()
   })
 watch(() => chat.focusInput, focus)
+// attaching opens a collapsed chat: the input mounts after the request, so it takes the focus here
+onMounted(() => chat.attachment && focus())
 // the textarea was disabled while sending: give the focus back afterwards
 watch(
   () => chat.pending,

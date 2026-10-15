@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useEventListener } from '@vueuse/core'
 import { refPick, type ChatRef, type Horse, type Part } from '@zephyr/core'
+import { keepMovedFocus } from '~/lib/utils'
 
 /**
  * "An Chat senden" on arena or timeline (the default slot is the trigger). The page captures the
@@ -52,16 +53,8 @@ function onOpen(o: boolean) {
 function preview(only: Only) {
   if (captured.value) editor.mark = { ref: refPick(captured.value, only), pulse: false }
 }
-// attached once the menu has closed, so its focus return does not steal the input's focus
-let chosen: ChatRef | null = null
 function choose(only: Only) {
-  if (captured.value) chosen = refPick(captured.value, only)
-}
-function onCloseFocus(e: Event) {
-  if (!chosen) return
-  e.preventDefault()
-  chat.attach(chosen)
-  chosen = null
+  if (captured.value) chat.attach(refPick(captured.value, only))
 }
 
 // Shift+F10 / the context menu key fire `contextmenu` on the focused element (often the body):
@@ -102,7 +95,7 @@ useEventListener(
     <ContextMenuTrigger as-child :disabled="disabled" :data-chat-spot="id">
       <slot />
     </ContextMenuTrigger>
-    <ContextMenuContent class="w-72" data-testid="chat-menu" @close-auto-focus="onCloseFocus">
+    <ContextMenuContent class="w-72" data-testid="chat-menu" @close-auto-focus="keepMovedFocus">
       <ContextMenuItem
         v-for="it in items"
         :key="it.only"

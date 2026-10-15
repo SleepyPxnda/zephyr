@@ -1,4 +1,5 @@
 import { useLocalStorage } from '@vueuse/core'
+import { skipHydrate } from 'pinia'
 import type { ChatRef, Clipboard, GapType, Hand, PasteLink, PasteTarget, Point } from '@zephyr/core'
 
 export type Tool = 'select' | 'free' | 'line' | 'arc' | 'circle' | 'split'
@@ -65,8 +66,8 @@ export const useEditorStore = defineStore('editor', () => {
   const focusZoom = shallowRef<number | null>(null)
   /** repeat the focused part during playback */
   const loop = shallowRef(true)
-  /** music volume 0–1, kept per browser */
-  const volume = useLocalStorage('zephyr-volume', 1)
+  /** music volume 0–1, kept per browser; not hydrated, or the server default would overwrite it */
+  const volume = skipHydrate(useLocalStorage('zephyr-volume', 1))
   /** length of the loaded music (s); 0 without music (M9) */
   const musicDuration = shallowRef(0)
 

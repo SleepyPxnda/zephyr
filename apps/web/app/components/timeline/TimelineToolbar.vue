@@ -157,6 +157,7 @@ const onZoom = (v: number[] | undefined) => {
             >
           </SelectContent>
         </Select>
+        <VolumeControl class="ml-2" />
       </div>
 
       <!-- focused part: chip to leave, loop switch -->

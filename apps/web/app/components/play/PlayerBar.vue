@@ -107,5 +107,6 @@ const bands = computed(() =>
         >
       </SelectContent>
     </Select>
+    <VolumeControl />
   </div>
 </template>

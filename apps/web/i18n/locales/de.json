@@ -322,6 +322,7 @@
     "home": "An den Anfang",
     "homeHint": "An den Anfang (Pos1)",
     "rate": "Tempo",
+    "volume": "Lautstärke",
     "focusOn": "Fokus: {name}",
     "focusExit": "Alles zeigen",
     "focusExitHint": "Fokus beenden und die ganze Zeitleiste zeigen",

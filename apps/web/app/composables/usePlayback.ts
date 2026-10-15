@@ -30,6 +30,9 @@ export function usePlayback(
 
   let ctx: AudioContext | null = null
   let src: AudioBufferSourceNode | null = null
+  let gain: GainNode | null = null
+  // squared: the slider then feels even to the ear
+  const level = () => Math.min(1, Math.max(0, editor.volume)) ** 2
   /** music position and context time when the source started */
   let from = 0
   let ctxStart = 0
@@ -57,7 +60,12 @@ export function usePlayback(
     const node = ctx.createBufferSource()
     node.buffer = buf
     node.playbackRate.value = rate.value
-    node.connect(ctx.destination)
+    if (!gain) {
+      gain = ctx.createGain()
+      gain.gain.value = level()
+      gain.connect(ctx.destination)
+    }
+    node.connect(gain)
     node.onended = () => {
       if (src === node) src = null
     }
@@ -122,6 +130,11 @@ export function usePlayback(
     if (playing.value) startAudio(editor.time)
   })
   watch(buffer, pause)
+  // short ramp so dragging the slider does not crackle
+  watch(
+    () => editor.volume,
+    () => gain && ctx && gain.gain.setTargetAtTime(level(), ctx.currentTime, 0.02),
+  )
   onScopeDispose(() => {
     pause()
     void ctx?.close()

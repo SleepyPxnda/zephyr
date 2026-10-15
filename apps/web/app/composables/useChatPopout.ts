@@ -15,13 +15,14 @@ export function useChatPopout() {
     blocked.value = !w
     if (!w) return
     const doc = w.document
-    doc.title = `${t('chat.title')} · Zephyr`
     // shortcut: styles added later (dev hot reload) do not reach the window; reopen it then
     doc.head.replaceChildren(
       ...[...document.head.querySelectorAll('link[rel=stylesheet], style')].map((n) =>
         n.cloneNode(true),
       ),
     )
+    // after the head was replaced, which drops a <title> set before
+    doc.title = `${t('chat.title')} · Zephyr`
     doc.documentElement.className = document.documentElement.className
     doc.documentElement.lang = document.documentElement.lang
     doc.body.className = 'bg-background text-foreground'

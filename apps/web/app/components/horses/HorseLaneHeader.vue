@@ -27,14 +27,21 @@ const ask = (action: 'clear' | 'remove') => {
 const numberClass = computed(() =>
   isLightColor(props.horse.color) ? 'text-foreground' : 'text-white',
 )
+// attached once the menu has closed, so its focus return does not steal the input's focus
 const chat = useChatStore()
-const toChat = () =>
+let toChatPending = false
+const toChat = () => (toChatPending = true)
+function onCloseFocus(e: Event) {
+  if (!toChatPending) return
+  toChatPending = false
+  e.preventDefault()
   chat.attach({
     t: null,
     pos: null,
     horse: { id: props.horse.id, name: props.horse.name, k: null },
     part: null,
   })
+}
 
 const colorInput = useTemplateRef<HTMLInputElement>('colorInput')
 function onColor(e: Event) {
@@ -100,7 +107,7 @@ function runConfirmed() {
               ><EllipsisVertical
             /></Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" class="w-56">
+          <DropdownMenuContent align="start" class="w-56" @close-auto-focus="onCloseFocus">
             <HorseMenuItems
               :horse="horse"
               :editable="editable"
@@ -148,7 +155,7 @@ function runConfirmed() {
         </AlertDialog>
       </div>
     </ContextMenuTrigger>
-    <ContextMenuContent class="w-56">
+    <ContextMenuContent class="w-56" @close-auto-focus="onCloseFocus">
       <HorseMenuItems
         :horse="horse"
         :editable="editable"

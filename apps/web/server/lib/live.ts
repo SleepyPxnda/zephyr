@@ -34,6 +34,8 @@ interface Member {
   recent: number[]
   /** time of the last forwarded cursor */
   lastCursor: number
+  /** times of the last chat messages, for the chat throttle */
+  chatRecent: number[]
 }
 
 interface Room {
@@ -51,6 +53,8 @@ const RATE_WINDOW_MS = 2000
 const RATE_MAX = 40
 /** cursors closer together are dropped (the client sends at most every 50 ms) */
 const CURSOR_MIN_MS = 30
+const CHAT_WINDOW_MS = 10_000
+const CHAT_MAX = 8
 
 const ctxOf = (peer: Peer) => peer.context as unknown as LiveContext
 const send = (peer: Peer, msg: ServerMessage) => peer.send(JSON.stringify(msg))
@@ -94,6 +98,7 @@ export async function join(peer: Peer): Promise<void> {
     selection: [],
     recent: [],
     lastCursor: 0,
+    chatRecent: [],
   }
   room.members.set(peer.id, member)
   send(peer, {
@@ -151,6 +156,28 @@ export function handle(peer: Peer, text: string): void {
     if (m.at && now - member.lastCursor < CURSOR_MIN_MS) return
     member.lastCursor = now
     broadcast(room, peer.id, { type: 'cursor', peerId: peer.id, at: m.at })
+    return
+  }
+  if (m.type === 'chat') {
+    // every role may chat; nothing is stored, the sender gets its own message back as echo
+    const now = Date.now()
+    member.chatRecent = member.chatRecent.filter((t) => now - t < CHAT_WINDOW_MS)
+    if (member.chatRecent.length >= CHAT_MAX) {
+      send(peer, { type: 'chatReject', nonce: m.nonce })
+      return
+    }
+    member.chatRecent.push(now)
+    broadcast(room, '', {
+      type: 'chat',
+      peerId: peer.id,
+      userId: member.userId,
+      name: member.name,
+      avatarUrl: member.avatarUrl,
+      sentAt: now,
+      text: m.text,
+      ref: m.ref,
+      nonce: m.nonce,
+    })
     return
   }
   if (!hasRole(member.role, 'editor')) {

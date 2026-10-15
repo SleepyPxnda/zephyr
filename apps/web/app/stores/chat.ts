@@ -1,4 +1,4 @@
-import type { ChatMessage, ChatRef } from '@zephyr/core'
+import { chatRefSchema, type ChatMessage, type ChatRef } from '@zephyr/core'
 import { useLocalStorage } from '@vueuse/core'
 
 /** Messages kept in the list; older ones fall off (nothing is stored anywhere). */
@@ -65,7 +65,10 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   function attach(ref: ChatRef) {
-    attachment.value = ref
+    // the server closes the socket on an invalid message, so a bad spot never gets attached
+    const parsed = chatRefSchema.safeParse(ref)
+    if (!parsed.success) return
+    attachment.value = parsed.data
     open.value = true
     focusInput.value++
   }

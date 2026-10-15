@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   pointerToArena,
+  posAt,
   toMetres,
   toScreen,
   viewKeeping,
@@ -29,6 +30,13 @@ export interface PeerArenaCursor {
   at: Point
 }
 
+/** A chat spot on the arena (`editor.mark`), in metres. */
+export interface ArenaMark {
+  pos: Point | null
+  horseId: string | null
+  pulse: boolean
+}
+
 const props = defineProps<{
   arena: ArenaInfo
   viewport: Viewport
@@ -51,8 +59,10 @@ const props = defineProps<{
   focus?: TimeRange | null
   /** cursor style for the current tool */
   cursor: string
+  /** chat spot to show: a ring at the position and around the horse */
+  mark?: ArenaMark | null
 }>()
-const emit = defineEmits<{ pointer: [e: ArenaPointer] }>()
+const emit = defineEmits<{ pointer: [e: ArenaPointer]; context: [m: Point] }>()
 
 const view = injectArenaView()
 const { pixelRatio } = useDevicePixelRatio()
@@ -189,6 +199,27 @@ function toolEvent(kind: ArenaPointer['kind'], e: MouseEvent & { pointerId?: num
   })
 }
 
+function onContextMenu(e: MouseEvent) {
+  const s = local(e)
+  emit('context', pointerToArena(view.transform.value, props.arena, s.x, s.y))
+}
+
+// ---------- chat spot: rings as DOM overlay (like the pointers of the others) ----------
+const markRings = computed(() => {
+  const mk = props.mark
+  if (!mk) return []
+  const tr = view.transform.value
+  const rings: { key: string; x: number; y: number; r: number; dashed: boolean }[] = []
+  if (mk.pos) rings.push({ key: 'pos', ...toScreen(tr, mk.pos), r: 0.8 * tr.scale, dashed: true })
+  const h = mk.horseId ? props.horses.find((q) => q.id === mk.horseId) : undefined
+  const tl = h && props.timelines.get(h.id)
+  const at = h && tl ? posAt(h.path, tl, props.time, h.pending) : null
+  // marker radius as in `drawScene`, plus a gap
+  const r = Math.max(9, Math.min(15, tr.scale * 0.6)) + 5
+  if (at && !at.hidden) rings.push({ key: 'horse', ...toScreen(tr, at), r, dashed: false })
+  return rings
+})
+
 function onPointerDown(e: PointerEvent) {
   if (e.pointerType === 'touch') {
     touches.set(e.pointerId, local(e))
@@ -274,6 +305,16 @@ function onPointerUp(e: PointerEvent) {
       @pointercancel="onPointerUp"
       @pointerleave="toolEvent('leave', $event)"
       @dblclick="toolEvent('dblclick', $event)"
+      @contextmenu="onContextMenu"
+    />
+    <span
+      v-for="m in markRings"
+      :key="m.key"
+      class="pointer-events-none absolute -translate-1/2 rounded-full border-2 border-ring"
+      :class="[m.dashed ? 'border-dashed' : 'ring-2 ring-ring/40', mark?.pulse && 'animate-pulse']"
+      :style="{ left: `${m.x}px`, top: `${m.y}px`, width: `${2 * m.r}px`, height: `${2 * m.r}px` }"
+      aria-hidden="true"
+      data-testid="chat-mark"
     />
     <PeerCursor
       v-for="c in peerCursors"

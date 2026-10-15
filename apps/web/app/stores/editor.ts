@@ -1,4 +1,4 @@
-import type { Clipboard, GapType, Hand, PasteLink, PasteTarget, Point } from '@zephyr/core'
+import type { ChatRef, Clipboard, GapType, Hand, PasteLink, PasteTarget, Point } from '@zephyr/core'
 
 export type Tool = 'select' | 'free' | 'line' | 'arc' | 'circle' | 'split'
 /** Keyboard shortcuts of the tools (SPEC "Interaktionen und Tastenkürzel"). */
@@ -84,7 +84,12 @@ export const useEditorStore = defineStore('editor', () => {
     t: 0,
   })
 
+  // ---------- chat ----------
+  /** spot shown on arena and timeline: while the chat menu is open, or flashing after a jump */
+  const mark = shallowRef<{ ref: ChatRef; pulse: boolean } | null>(null)
+
   return {
+    mark,
     snapBeat,
     magnet,
     gapFill,

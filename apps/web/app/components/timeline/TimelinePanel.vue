@@ -29,6 +29,8 @@ const emit = defineEmits<{
   update: [id: string, patch: Partial<Pick<Horse, 'name' | 'color' | 'tack'>>]
   clear: [id: string]
   remove: [id: string]
+  /** right click (or context menu key): time, what is under the pointer and the horse lane */
+  context: [e: { t: number; target: TimelineTarget | null; lane: string | null }]
 }>()
 
 const planStore = usePlanStore()
@@ -176,6 +178,45 @@ function onUp(e: PointerEvent) {
 function onDblclick() {
   if (lastDown?.horseId) props.ctl.selectWhole(lastDown.horseId)
 }
+function onContext(e: MouseEvent) {
+  const el = content.value
+  if (!el) return
+  const t =
+    (e.clientX - el.getBoundingClientRect().left - LANE_HEADER_PX + offset.value) /
+    props.ctl.pps.value
+  const node = e.target instanceof Element ? e.target : null
+  const lane = node?.closest<HTMLElement>('[data-lane]')?.dataset.lane ?? null
+  emit('context', { t, target: targetOf(e.target), lane })
+}
+
+// ---------- chat spot (`editor.mark`): line at its time, frame around block, lane or part ----------
+const markBox = shallowRef<{ left: number; top: number; width: number; height: number } | null>(
+  null,
+)
+watch(
+  () => editor.mark,
+  async (mk) => {
+    markBox.value = null
+    const r = mk?.ref
+    if (!r || (!r.horse && !r.part)) return
+    await nextTick()
+    const sel = r.horse
+      ? r.horse.k !== null
+        ? `[data-horse="${r.horse.id}"][data-k="${r.horse.k}"]:not([data-gap])`
+        : `[data-lane="${r.horse.id}"]`
+      : `[data-part="${r.part?.id}"]`
+    const el = content.value
+    const box = el?.querySelector(sel)?.getBoundingClientRect()
+    const base = el?.getBoundingClientRect()
+    if (box && base)
+      markBox.value = {
+        left: box.left - base.left,
+        top: box.top - base.top,
+        width: box.width,
+        height: box.height,
+      }
+  },
+)
 
 // ---------- keyboard on blocks ----------
 function onSectionKey(horseId: string, k: number, e: KeyboardEvent) {
@@ -235,6 +276,7 @@ function goToPart(id: string) {
         @pointerup="onUp"
         @pointercancel="onUp"
         @dblclick="onDblclick"
+        @contextmenu="onContext"
       >
         <!-- part bands across music and horse lanes -->
         <div
@@ -330,6 +372,29 @@ function goToPart(id: string) {
           >
         </div>
         <Playhead :left="x(editor.time)" />
+        <template v-if="editor.mark">
+          <div
+            v-if="editor.mark.ref.t !== null"
+            class="pointer-events-none absolute top-0 bottom-0 z-[6] -ml-px border-l-2 border-dashed border-ring"
+            :class="editor.mark.pulse && 'animate-pulse'"
+            :style="{ left: `${x(editor.mark.ref.t)}px` }"
+            aria-hidden="true"
+            data-testid="chat-mark-time"
+          />
+          <div
+            v-if="markBox"
+            class="pointer-events-none absolute z-[6] rounded-md ring-2 ring-ring"
+            :class="editor.mark.pulse && 'animate-pulse'"
+            :style="{
+              left: `${markBox.left}px`,
+              top: `${markBox.top}px`,
+              width: `${markBox.width}px`,
+              height: `${markBox.height}px`,
+            }"
+            aria-hidden="true"
+            data-testid="chat-mark-box"
+          />
+        </template>
       </div>
     </div>
   </section>

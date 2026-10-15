@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { announceGap, peerColor, wholePathKeys } from '@zephyr/core'
+import {
+  announceGap,
+  horseNear,
+  peerColor,
+  r2,
+  wholePathKeys,
+  type ChatRef,
+  type Point,
+} from '@zephyr/core'
 import { useElementSize, useEventListener } from '@vueuse/core'
 import type { ArenaPointer } from '~/composables/useDrawTools'
 
@@ -133,6 +141,54 @@ function onPagePointer(e: PointerEvent) {
   })
 }
 
+// ---------- chat: spots from arena and timeline ----------
+type SpotMenu = { capture: (ref: ChatRef, canPos: boolean) => void }
+const arenaMenu = useTemplateRef<SpotMenu>('arenaMenu')
+const timelineMenu = useTemplateRef<SpotMenu>('timelineMenu')
+/** no menu while a stroke, a drag or a paste is in progress */
+const busy = computed(
+  () =>
+    !!tools.draft.value || !!select.preview.value || !!timeline.preview.value || editor.paste.open,
+)
+const named = <T extends { id: string; name: string }>(q: T | undefined) =>
+  q ? { id: q.id, name: q.name } : null
+const clampM = (v: number) => r2(Math.min(1000, Math.max(-100, v)))
+function onArenaContext(m: Point) {
+  const t = editor.time
+  arenaMenu.value?.capture(
+    {
+      t,
+      pos: { x: clampM(m.x), y: clampM(m.y) },
+      horse: horseNear(sceneHorses.value, gaitList.value, t, m),
+      part: named(timeline.parts.value.find((p) => t >= p.start && t < p.end)),
+    },
+    true,
+  )
+}
+function onTimelineContext(e: {
+  t: number
+  target: { horseId?: string; k?: number; gap?: boolean; partId?: string } | null
+  lane: string | null
+}) {
+  // lane headers have their own menu
+  if (!e.target) return
+  const h = horses.value.find((q) => q.id === (e.target?.horseId ?? e.lane))
+  const k = e.target.horseId && !e.target.gap ? (e.target.k ?? null) : null
+  timelineMenu.value?.capture(
+    {
+      t: Math.max(0, e.t),
+      pos: null,
+      horse: h ? { id: h.id, name: h.name, k } : null,
+      part: named(timeline.parts.value.find((p) => p.id === e.target?.partId)),
+    },
+    false,
+  )
+}
+const arenaMark = computed(() => {
+  const r = editor.mark?.ref
+  return r ? { pos: r.pos, horseId: r.horse?.id ?? null, pulse: !!editor.mark?.pulse } : null
+})
+
 // send what is still collected when leaving the page (SPEC "Speichern und Konflikte")
 onBeforeRouteLeave(() => planStore.flush())
 onBeforeUnmount(() => planStore.close())
@@ -201,29 +257,33 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · Zephyr` : 'Zephyr')
             </template>
           </ToolPanel>
           <div class="flex flex-col border-t lg:flex-row">
-            <ArenaPanel
-              class="min-w-0 flex-1"
-              v-model:options="options"
-              v-model:round-corners="roundCorners"
-              :arena="arena"
-              :horses="sceneHorses"
-              :gaits="gaitList"
-              :parts="timeline.parts.value"
-              :active-id="editor.activeHorseId"
-              :time="editor.time"
-              :ghost="tools.ghost.value"
-              :split-hover="tools.splitHover.value"
-              :selection="editor.selection"
-              :peer-marks="planStore.marks.sections"
-              :peer-cursors="arenaCursors"
-              :handles="select.handles.value"
-              :overlay="select.overlay.value"
-              :paste-preview="clip.preview.value"
-              :focus="timeline.focus.value"
-              :cursor="cursor"
-              :hint="hint"
-              @pointer="onPointer"
-            />
+            <ChatContextMenu ref="arenaMenu" :horses="horses" :parts="plan.parts" :disabled="busy">
+              <ArenaPanel
+                class="min-w-0 flex-1"
+                v-model:options="options"
+                v-model:round-corners="roundCorners"
+                :arena="arena"
+                :horses="sceneHorses"
+                :gaits="gaitList"
+                :parts="timeline.parts.value"
+                :active-id="editor.activeHorseId"
+                :time="editor.time"
+                :ghost="tools.ghost.value"
+                :split-hover="tools.splitHover.value"
+                :selection="editor.selection"
+                :peer-marks="planStore.marks.sections"
+                :peer-cursors="arenaCursors"
+                :handles="select.handles.value"
+                :overlay="select.overlay.value"
+                :paste-preview="clip.preview.value"
+                :focus="timeline.focus.value"
+                :cursor="cursor"
+                :hint="hint"
+                :mark="arenaMark"
+                @pointer="onPointer"
+                @context="onArenaContext"
+              />
+            </ChatContextMenu>
             <!-- details sidebar: always there, so the timeline below never moves -->
             <aside
               class="relative h-80 shrink-0 border-t lg:h-auto lg:w-80 lg:border-t-0 lg:border-l"
@@ -263,19 +323,22 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · Zephyr` : 'Zephyr')
           </div>
         </div>
         <!-- zone 3: timeline -->
-        <TimelinePanel
-          :ctl="timeline"
-          :playback="playback"
-          :music="music"
-          :imported-music="importedMusic"
-          :gaits="gaitList"
-          :editable="planStore.canEdit"
-          @add-horse="addHorse"
-          @select-whole="selectWhole"
-          @update="planStore.updateHorse"
-          @clear="planStore.clearPath"
-          @remove="planStore.removeHorse"
-        />
+        <ChatContextMenu ref="timelineMenu" :horses="horses" :parts="plan.parts" :disabled="busy">
+          <TimelinePanel
+            :ctl="timeline"
+            :playback="playback"
+            :music="music"
+            :imported-music="importedMusic"
+            :gaits="gaitList"
+            :editable="planStore.canEdit"
+            @add-horse="addHorse"
+            @select-whole="selectWhole"
+            @update="planStore.updateHorse"
+            @clear="planStore.clearPath"
+            @remove="planStore.removeHorse"
+            @context="onTimelineContext"
+          />
+        </ChatContextMenu>
       </main>
       <main v-else-if="error" class="p-8">
         <p role="alert">{{ $t('editor.loadError') }}</p>

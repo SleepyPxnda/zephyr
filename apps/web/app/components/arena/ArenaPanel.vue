@@ -11,7 +11,7 @@ import { useElementSize, useEventListener, useWindowSize } from '@vueuse/core'
 import { isTyping } from '~/composables/useEditorShortcuts'
 import type { ArenaInfo } from '~/composables/useCatalog'
 import type { ArenaPointer, Ghost } from '~/composables/useDrawTools'
-import type { PeerArenaCursor } from './ArenaCanvas.vue'
+import type { ArenaMark, PeerArenaCursor } from './ArenaCanvas.vue'
 import type { DisplayOptions } from '~/composables/useDisplayOptions'
 import type { HandleView, OverlayLabel } from '~/composables/useSelectTool'
 import type { PastePreview } from '~/composables/useClipboardTools'
@@ -37,8 +37,9 @@ const props = defineProps<{
   cursor: string
   hint: string
   readOnly?: boolean
+  mark?: ArenaMark | null
 }>()
-const emit = defineEmits<{ pointer: [e: ArenaPointer] }>()
+const emit = defineEmits<{ pointer: [e: ArenaPointer]; context: [m: Point] }>()
 const options = defineModel<DisplayOptions>('options', { required: true })
 const roundCorners = defineModel<boolean>('roundCorners')
 
@@ -100,7 +101,9 @@ const timelines = useTimelines(
         :paste-preview="pastePreview"
         :focus="focus"
         :cursor="cursor"
+        :mark="mark"
         @pointer="emit('pointer', $event)"
+        @context="emit('context', $event)"
       />
     </div>
     <ArenaViewControls

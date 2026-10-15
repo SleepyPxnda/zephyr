@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { opSchema } from './ops'
 import { planSchema } from './schemas'
+import { CHAT_MAX_CHARS, chatRefSchema } from './chat'
 
 /** Selected section as `horseId:k` (same keys as the editor selection). */
 const selectionKey = z.string().regex(/^[0-9a-f-]{36}:\d{1,6}$/i)
@@ -32,6 +33,14 @@ export const clientMessageSchema = z.discriminatedUnion('type', [
     selection: z.array(selectionKey).max(2000),
   }),
   z.object({ type: z.literal('cursor'), at: cursorSchema }),
+  z
+    .object({
+      type: z.literal('chat'),
+      nonce: z.string().min(1).max(36),
+      text: z.string().trim().max(CHAT_MAX_CHARS),
+      ref: chatRefSchema.nullable(),
+    })
+    .refine((m) => m.text !== '' || m.ref !== null, { message: 'empty chat message' }),
   z.object({ type: z.literal('ping') }),
 ])
 
@@ -64,6 +73,18 @@ export const serverMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('presence'), peer: peerSchema }),
   z.object({ type: z.literal('cursor'), peerId: z.string(), at: cursorSchema }),
   z.object({ type: z.literal('leave'), peerId: z.string() }),
+  z.object({
+    type: z.literal('chat'),
+    peerId: z.string(),
+    userId: z.string(),
+    name: z.string(),
+    avatarUrl: z.string().nullable(),
+    sentAt: z.number(),
+    text: z.string(),
+    ref: chatRefSchema.nullable(),
+    nonce: z.string(),
+  }),
+  z.object({ type: z.literal('chatReject'), nonce: z.string() }),
   z.object({ type: z.literal('pong') }),
 ])
 
@@ -71,6 +92,7 @@ export type ClientMessage = z.infer<typeof clientMessageSchema>
 export type ServerMessage = z.infer<typeof serverMessageSchema>
 export type PeerInfo = z.infer<typeof peerSchema>
 export type Cursor = z.infer<typeof cursorSchema>
+export type ChatMessage = Extract<ServerMessage, { type: 'chat' }>
 
 /** Stable colour per user (hue from a hash of the id); presence markers only. */
 export function peerColor(userId: string): string {

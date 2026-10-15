@@ -29,8 +29,8 @@ export async function requireUser(event: H3Event): Promise<AppUser> {
   return user
 }
 
-/** The one admin: the account of SUPER_ADMIN_DISCORD_ID. */
-export const isAdmin = (u: AppUser) => u.discordId === authEnv().SUPER_ADMIN_DISCORD_ID
+/** Admins: the accounts listed in SUPER_ADMIN_DISCORD_ID. */
+export const isAdmin = (u: AppUser) => authEnv().SUPER_ADMIN_DISCORD_ID.includes(u.discordId)
 
 export async function requireAdmin(event: H3Event): Promise<AppUser> {
   const user = await requireUser(event)

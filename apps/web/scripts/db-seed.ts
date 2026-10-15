@@ -20,7 +20,7 @@ const store = createStore(env)
 const { db, sql } = createDb(env.DATABASE_URL)
 try {
   const result = await seed(db, {
-    superAdminDiscordId: SUPER_ADMIN_DISCORD_ID,
+    superAdminDiscordIds: SUPER_ADMIN_DISCORD_ID,
     demoUsers: process.env.NODE_ENV !== 'production',
     hallImage,
     store,

@@ -78,7 +78,7 @@ Production runs with [`docker/compose.prod.yml`](docker/compose.prod.yml): the a
    - `NUXT_SESSION_PASSWORD`: at least 32 random characters (`openssl rand -hex 32`)
    - `NUXT_OAUTH_DISCORD_CLIENT_ID`, `NUXT_OAUTH_DISCORD_CLIENT_SECRET`
    - `NUXT_OAUTH_DISCORD_REDIRECT_URL=https://<your-domain>/auth/discord` (enter the same in the Discord application)
-   - `SUPER_ADMIN_DISCORD_ID`: your Discord user ID; this account is always active and an admin
+   - `SUPER_ADMIN_DISCORD_ID`: Discord user IDs of the admins, comma-separated (e.g. `123…,456…`); these accounts are always active and admins
    - optional: `DISCORD_WEBHOOK_URL` for notifications about new access requests, `APP_PORT` (default 3000)
 2. Start:
 

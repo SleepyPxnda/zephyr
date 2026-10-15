@@ -4,7 +4,7 @@ declare module '#auth-utils' {
     username: string
     name: string
     avatarUrl: string
-    /** the account of SUPER_ADMIN_DISCORD_ID */
+    /** listed in SUPER_ADMIN_DISCORD_ID */
     isAdmin: boolean
   }
 }

@@ -18,7 +18,7 @@ export default defineNitroPlugin((nitroApp) => {
     const db = useDb()
     await runMigrations(db, process.env.MIGRATIONS_DIR || resolve('server/db/migrations'))
     const result = await seed(db, {
-      superAdminDiscordId: authEnv().SUPER_ADMIN_DISCORD_ID,
+      superAdminDiscordIds: authEnv().SUPER_ADMIN_DISCORD_ID,
       demoUsers: false,
       hallImage: await readFile(
         process.env.HALL_IMAGE_PATH || resolve('../../reference/halle.png'),

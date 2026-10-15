@@ -6,14 +6,14 @@ import type { AppUser } from '../utils/auth'
 
 /**
  * Creates or refreshes the account of a Discord user. Unknown users become access requests
- * (`pending`); the super admin is always active.
+ * (`pending`); admins are always active.
  */
 export async function signInDiscordUser(
   db: Db,
   p: DiscordProfile,
-  superAdminId: string,
+  superAdminIds: readonly string[],
 ): Promise<{ user: AppUser; created: boolean }> {
-  const isSuper = p.id === superAdminId
+  const isSuper = superAdminIds.includes(p.id)
   const profile = {
     username: p.username,
     name: p.global_name || p.username,

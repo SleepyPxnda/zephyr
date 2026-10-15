@@ -22,7 +22,8 @@ export const DEMO_USERS = [
 ] as const
 
 export interface SeedOptions {
-  superAdminDiscordId: string
+  /** at least one; the first owns the hall image */
+  superAdminDiscordIds: readonly string[]
   /** also create DEMO_USERS (never in production) */
   demoUsers: boolean
   hallImage: Uint8Array
@@ -30,7 +31,7 @@ export interface SeedOptions {
 }
 
 export interface SeedResult {
-  adminCreated: boolean
+  adminsCreated: number
   demoUsersCreated: number
   gaitsCreated: number
   arenaCreated: boolean
@@ -39,27 +40,31 @@ export interface SeedResult {
 /** Idempotent: creates what is missing and never overwrites existing data. */
 export async function seed(db: Db, o: SeedOptions): Promise<SeedResult> {
   const result: SeedResult = {
-    adminCreated: false,
+    adminsCreated: 0,
     demoUsersCreated: 0,
     gaitsCreated: 0,
     arenaCreated: false,
   }
 
-  // the super admin: name and avatar follow at the first Discord sign-in
-  const [created] = await db
+  // the admins: name and avatar follow at the first Discord sign-in
+  const created = await db
     .insert(users)
-    .values({
-      discordId: o.superAdminDiscordId,
-      // placeholder until the first sign-in; the id cannot collide with a Discord name
-      username: o.superAdminDiscordId,
-      name: 'Admin',
-      status: 'active',
-      decidedAt: new Date(),
-    })
+    .values(
+      o.superAdminDiscordIds.map((discordId) => ({
+        discordId,
+        // placeholder until the first sign-in; the id cannot collide with a Discord name
+        username: discordId,
+        name: 'Admin',
+        status: 'active' as const,
+        decidedAt: new Date(),
+      })),
+    )
     .onConflictDoNothing()
     .returning()
-  result.adminCreated = !!created
-  const [admin] = await db.select().from(users).where(eq(users.discordId, o.superAdminDiscordId))
+  result.adminsCreated = created.length
+  const firstId = o.superAdminDiscordIds[0]
+  if (!firstId) throw new Error('no admin id given')
+  const [admin] = await db.select().from(users).where(eq(users.discordId, firstId))
   if (!admin) throw new Error('admin account could not be created')
 
   if (o.demoUsers) {

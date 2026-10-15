@@ -436,5 +436,42 @@
   },
   "units": {
     "seconds": "{n} s"
+  },
+  "chat": {
+    "title": "Chat",
+    "open": "Chat öffnen",
+    "openUnread": "Chat öffnen, {n} ungelesen",
+    "close": "Chat einklappen",
+    "messages": "Nachrichten",
+    "empty": "Noch keine Nachrichten. Alle, die gerade im Plan sind, lesen mit.",
+    "placeholder": "Nachricht schreiben …",
+    "sending": "Wird gesendet …",
+    "offline": "Keine Verbindung, Senden ist gerade nicht möglich.",
+    "removeAttachment": "Anhang entfernen",
+    "error": {
+      "rejected": "Zu viele Nachrichten in kurzer Zeit. Bitte kurz warten und erneut senden.",
+      "offline": "Die Verbindung ist abgebrochen, die Nachricht wurde nicht gesendet.",
+      "timeout": "Keine Bestätigung vom Server. Bitte erneut senden."
+    },
+    "help": {
+      "open": "Hilfe zum Chat",
+      "title": "So funktioniert der Chat",
+      "names": "Namen von Pferden und Parts sowie Zeiten wie 1:23 werden automatisch hervorgehoben.",
+      "menu": "Rechtsklick auf den Platz oder die Zeitleiste öffnet „An Chat senden“: Die Stelle hängt dann an der Nachricht, ein Klick darauf springt dorthin.",
+      "keys": "Per Tastatur öffnet Umschalt+F10 oder die Kontextmenü-Taste dasselbe Menü.",
+      "send": "Enter sendet, Umschalt+Enter beginnt eine neue Zeile."
+    },
+    "popout": "In eigenem Fenster öffnen",
+    "popin": "Zurückholen",
+    "poppedOut": "Der Chat ist in einem eigenen Fenster.",
+    "popupBlocked": "Der Browser hat das Fenster blockiert. Der Chat bleibt hier.",
+    "menu": {
+      "sendSpot": "An Chat senden",
+      "sendTime": "Zeit senden",
+      "sendPos": "Position senden"
+    },
+    "jumpTo": "Zur Stelle springen: {what}",
+    "section": "Abschnitt {n}",
+    "pos": "{x} / {y} m"
   }
 }

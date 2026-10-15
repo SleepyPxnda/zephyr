@@ -100,6 +100,7 @@ function selectWhole(id: string) {
 }
 
 // ---------- mouse pointers of the others ----------
+// the chat sits beside `page`, so page-relative pointers keep measuring the editor only
 const page = useTemplateRef<HTMLElement>('page')
 const { width: pageWidth } = useElementSize(page)
 const peerCursors = computed(() =>
@@ -143,142 +144,145 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · Zephyr` : 'Zephyr')
 </script>
 
 <template>
-  <div
-    ref="page"
-    class="relative flex min-h-dvh flex-col"
-    @pointermove="onPagePointer"
-    @pointerleave="planStore.moveCursor(null)"
-  >
-    <PeerCursor
-      v-for="c in pageCursors"
-      :key="c.id"
-      :x="c.x"
-      :y="c.y"
-      :name="c.name"
-      :color="c.color"
-    />
-    <EditorHeader
-      :plan-id="planId"
-      :title="plan?.title ?? ''"
-      :status="planStore.status"
-      :role="planStore.role"
-      :editable="planStore.canEdit"
-      :peers="planStore.peers"
-      @rename="planStore.rename"
-    />
-    <main v-if="plan && arena" class="flex w-full flex-col gap-4 p-4 pb-12">
-      <!-- zones 1 and 2 form one surface: tool bar, then arena with the details sidebar (SPEC) -->
-      <div class="overflow-hidden rounded-lg border bg-card">
-        <ToolPanel
-          v-model:tool="editor.tool"
-          v-model:circle="editor.circle"
-          :gaits="gaitList"
-          :draw-gait-id="tools.drawGait.value?.id ?? null"
-          :editable="planStore.canEdit"
-          :can-announce="!!activeHorse?.path.pts.length"
-          :can-undo="planStore.canUndo"
-          :can-copy="editor.selection.length > 0 || !!activeHorse?.path.pts.length"
-          :can-paste="!!editor.clipboard"
-          @draw-gait="planStore.setSettings({ drawGaitId: $event })"
-          @announce="announce"
-          @undo="planStore.undo()"
-          @copy="clip.copy"
-          @paste="clip.open"
-        >
-          <!-- while pasting, the bar shows the paste options instead of the tools -->
-          <template v-if="editor.paste.open" #paste>
-            <PasteBar
-              v-model:link="editor.paste.link"
-              v-model:target="editor.paste.target"
-              :title="clip.label.value"
-              :multi="(editor.clipboard?.parts.length ?? 0) > 1"
-              @position="clip.setPosition"
-              @confirm="clip.confirm"
-              @cancel="clip.close"
-            />
-          </template>
-        </ToolPanel>
-        <div class="flex flex-col border-t lg:flex-row">
-          <ArenaPanel
-            class="min-w-0 flex-1"
-            v-model:options="options"
-            v-model:round-corners="roundCorners"
-            :arena="arena"
-            :horses="sceneHorses"
-            :gaits="gaitList"
-            :parts="timeline.parts.value"
-            :active-id="editor.activeHorseId"
-            :time="editor.time"
-            :ghost="tools.ghost.value"
-            :split-hover="tools.splitHover.value"
-            :selection="editor.selection"
-            :peer-marks="planStore.marks.sections"
-            :peer-cursors="arenaCursors"
-            :handles="select.handles.value"
-            :overlay="select.overlay.value"
-            :paste-preview="clip.preview.value"
-            :focus="timeline.focus.value"
-            :cursor="cursor"
-            :hint="hint"
-            @pointer="onPointer"
-          />
-          <!-- details sidebar: always there, so the timeline below never moves -->
-          <aside
-            class="relative h-80 shrink-0 border-t lg:h-auto lg:w-80 lg:border-t-0 lg:border-l"
-            :aria-label="$t('selection.details')"
-            data-testid="details-sidebar"
-          >
-            <div class="absolute inset-0 flex flex-col overflow-y-auto p-4">
-              <SelectionPanel
-                v-if="sel.summary.value && !editor.paste.open"
-                v-model:follow="editor.follow"
-                v-model:multi-select="editor.multiSelect"
-                v-model:fine-rotate="editor.fineRotate"
-                :summary="sel.summary.value"
-                :title="sel.title.value"
-                :gaits="gaitList"
-                :editable="planStore.canEdit"
-                :can-merge="sel.canMerge.value"
-                @gait="sel.setGait"
-                @tack="sel.setTack"
-                @gap="sel.setGap"
-                @gap-type="sel.setGapType"
-                @rotate="sel.rotate"
-                @mirror="sel.mirror"
-                @whole="sel.whole"
-                @merge="sel.merge"
-                @remove="sel.remove"
-                @clear="editor.clearSelection()"
-              />
-              <template v-else>
-                <h2 class="font-semibold">{{ $t('selection.details') }}</h2>
-                <p class="mt-1 text-sm text-muted-foreground" data-testid="details-empty">
-                  {{ editor.paste.open ? $t('paste.hint') : $t('selection.empty') }}
-                </p>
-              </template>
-            </div>
-          </aside>
-        </div>
-      </div>
-      <!-- zone 3: timeline -->
-      <TimelinePanel
-        :ctl="timeline"
-        :playback="playback"
-        :music="music"
-        :imported-music="importedMusic"
-        :gaits="gaitList"
-        :editable="planStore.canEdit"
-        @add-horse="addHorse"
-        @select-whole="selectWhole"
-        @update="planStore.updateHorse"
-        @clear="planStore.clearPath"
-        @remove="planStore.removeHorse"
+  <div class="flex min-h-dvh">
+    <div
+      ref="page"
+      class="relative flex min-h-dvh min-w-0 flex-1 flex-col"
+      @pointermove="onPagePointer"
+      @pointerleave="planStore.moveCursor(null)"
+    >
+      <PeerCursor
+        v-for="c in pageCursors"
+        :key="c.id"
+        :x="c.x"
+        :y="c.y"
+        :name="c.name"
+        :color="c.color"
       />
-    </main>
-    <main v-else-if="error" class="p-8">
-      <p role="alert">{{ $t('editor.loadError') }}</p>
-      <NuxtLink to="/" class="underline">{{ $t('editor.back') }}</NuxtLink>
-    </main>
-    <main v-else class="p-8 text-muted-foreground">{{ $t('common.loading') }}</main>
+      <EditorHeader
+        :plan-id="planId"
+        :title="plan?.title ?? ''"
+        :status="planStore.status"
+        :role="planStore.role"
+        :editable="planStore.canEdit"
+        :peers="planStore.peers"
+        @rename="planStore.rename"
+      />
+      <main v-if="plan && arena" class="flex w-full flex-col gap-4 p-4 pb-12">
+        <!-- zones 1 and 2 form one surface: tool bar, then arena with the details sidebar (SPEC) -->
+        <div class="overflow-hidden rounded-lg border bg-card">
+          <ToolPanel
+            v-model:tool="editor.tool"
+            v-model:circle="editor.circle"
+            :gaits="gaitList"
+            :draw-gait-id="tools.drawGait.value?.id ?? null"
+            :editable="planStore.canEdit"
+            :can-announce="!!activeHorse?.path.pts.length"
+            :can-undo="planStore.canUndo"
+            :can-copy="editor.selection.length > 0 || !!activeHorse?.path.pts.length"
+            :can-paste="!!editor.clipboard"
+            @draw-gait="planStore.setSettings({ drawGaitId: $event })"
+            @announce="announce"
+            @undo="planStore.undo()"
+            @copy="clip.copy"
+            @paste="clip.open"
+          >
+            <!-- while pasting, the bar shows the paste options instead of the tools -->
+            <template v-if="editor.paste.open" #paste>
+              <PasteBar
+                v-model:link="editor.paste.link"
+                v-model:target="editor.paste.target"
+                :title="clip.label.value"
+                :multi="(editor.clipboard?.parts.length ?? 0) > 1"
+                @position="clip.setPosition"
+                @confirm="clip.confirm"
+                @cancel="clip.close"
+              />
+            </template>
+          </ToolPanel>
+          <div class="flex flex-col border-t lg:flex-row">
+            <ArenaPanel
+              class="min-w-0 flex-1"
+              v-model:options="options"
+              v-model:round-corners="roundCorners"
+              :arena="arena"
+              :horses="sceneHorses"
+              :gaits="gaitList"
+              :parts="timeline.parts.value"
+              :active-id="editor.activeHorseId"
+              :time="editor.time"
+              :ghost="tools.ghost.value"
+              :split-hover="tools.splitHover.value"
+              :selection="editor.selection"
+              :peer-marks="planStore.marks.sections"
+              :peer-cursors="arenaCursors"
+              :handles="select.handles.value"
+              :overlay="select.overlay.value"
+              :paste-preview="clip.preview.value"
+              :focus="timeline.focus.value"
+              :cursor="cursor"
+              :hint="hint"
+              @pointer="onPointer"
+            />
+            <!-- details sidebar: always there, so the timeline below never moves -->
+            <aside
+              class="relative h-80 shrink-0 border-t lg:h-auto lg:w-80 lg:border-t-0 lg:border-l"
+              :aria-label="$t('selection.details')"
+              data-testid="details-sidebar"
+            >
+              <div class="absolute inset-0 flex flex-col overflow-y-auto p-4">
+                <SelectionPanel
+                  v-if="sel.summary.value && !editor.paste.open"
+                  v-model:follow="editor.follow"
+                  v-model:multi-select="editor.multiSelect"
+                  v-model:fine-rotate="editor.fineRotate"
+                  :summary="sel.summary.value"
+                  :title="sel.title.value"
+                  :gaits="gaitList"
+                  :editable="planStore.canEdit"
+                  :can-merge="sel.canMerge.value"
+                  @gait="sel.setGait"
+                  @tack="sel.setTack"
+                  @gap="sel.setGap"
+                  @gap-type="sel.setGapType"
+                  @rotate="sel.rotate"
+                  @mirror="sel.mirror"
+                  @whole="sel.whole"
+                  @merge="sel.merge"
+                  @remove="sel.remove"
+                  @clear="editor.clearSelection()"
+                />
+                <template v-else>
+                  <h2 class="font-semibold">{{ $t('selection.details') }}</h2>
+                  <p class="mt-1 text-sm text-muted-foreground" data-testid="details-empty">
+                    {{ editor.paste.open ? $t('paste.hint') : $t('selection.empty') }}
+                  </p>
+                </template>
+              </div>
+            </aside>
+          </div>
+        </div>
+        <!-- zone 3: timeline -->
+        <TimelinePanel
+          :ctl="timeline"
+          :playback="playback"
+          :music="music"
+          :imported-music="importedMusic"
+          :gaits="gaitList"
+          :editable="planStore.canEdit"
+          @add-horse="addHorse"
+          @select-whole="selectWhole"
+          @update="planStore.updateHorse"
+          @clear="planStore.clearPath"
+          @remove="planStore.removeHorse"
+        />
+      </main>
+      <main v-else-if="error" class="p-8">
+        <p role="alert">{{ $t('editor.loadError') }}</p>
+        <NuxtLink to="/" class="underline">{{ $t('editor.back') }}</NuxtLink>
+      </main>
+      <main v-else class="p-8 text-muted-foreground">{{ $t('common.loading') }}</main>
+    </div>
+    <ChatSidebar v-if="plan && arena" :horses="horses" :parts="plan.parts" />
   </div>
 </template>

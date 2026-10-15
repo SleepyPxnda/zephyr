@@ -184,6 +184,25 @@ function onTimelineContext(e: {
     false,
   )
 }
+/** a block in the chat: jump to its time (only here) and let the spot light up; selection stays */
+const FLASH_MS = 1500
+let flashTimer: ReturnType<typeof setTimeout> | undefined
+function onJump(ref: ChatRef) {
+  if (ref.t !== null) {
+    playback.pause()
+    timeline.seek(ref.t)
+  }
+  const mark = { ref, pulse: true }
+  editor.mark = mark
+  clearTimeout(flashTimer)
+  flashTimer = setTimeout(() => {
+    if (editor.mark === mark) editor.mark = null
+  }, FLASH_MS)
+}
+onBeforeUnmount(() => {
+  clearTimeout(flashTimer)
+  editor.mark = null
+})
 const arenaMark = computed(() => {
   const r = editor.mark?.ref
   return r ? { pos: r.pos, horseId: r.horse?.id ?? null, pulse: !!editor.mark?.pulse } : null
@@ -346,6 +365,6 @@ useHead({ title: () => (plan.value ? `${plan.value.title} · Zephyr` : 'Zephyr')
       </main>
       <main v-else class="p-8 text-muted-foreground">{{ $t('common.loading') }}</main>
     </div>
-    <ChatSidebar v-if="plan && arena" :horses="horses" :parts="plan.parts" />
+    <ChatSidebar v-if="plan && arena" :horses="horses" :parts="plan.parts" @jump="onJump" />
   </div>
 </template>

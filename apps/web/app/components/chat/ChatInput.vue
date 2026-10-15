@@ -9,7 +9,12 @@ const planStore = usePlanStore()
 const box = useTemplateRef<HTMLElement>('box')
 
 const locked = computed(() => !!chat.pending || !planStore.connected)
-const focus = () => nextTick(() => box.value?.querySelector('textarea')?.focus())
+const focus = () =>
+  nextTick(() => {
+    // popped out, the input lives in the other window: bring that one to the front
+    box.value?.ownerDocument.defaultView?.focus()
+    box.value?.querySelector('textarea')?.focus()
+  })
 watch(() => chat.focusInput, focus)
 // the textarea was disabled while sending: give the focus back afterwards
 watch(

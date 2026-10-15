@@ -14,7 +14,8 @@ defineOptions({
 })
 
 const props = withDefaults(
-  defineProps<PopoverContentProps & { class?: HTMLAttributes["class"] }>(),
+  // `to`: portal target, e.g. the body of the chat pop-out window (Zephyr addition)
+  defineProps<PopoverContentProps & { class?: HTMLAttributes["class"]; to?: string | HTMLElement }>(),
   {
     align: "center",
     sideOffset: 4,
@@ -22,13 +23,13 @@ const props = withDefaults(
 )
 const emits = defineEmits<PopoverContentEmits>()
 
-const delegatedProps = reactiveOmit(props, "class")
+const delegatedProps = reactiveOmit(props, "class", "to")
 
 const forwarded = useForwardPropsEmits(delegatedProps, emits)
 </script>
 
 <template>
-  <PopoverPortal>
+  <PopoverPortal :to="to">
     <PopoverContent
       data-slot="popover-content"
       v-bind="{ ...$attrs, ...forwarded }"

@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { CircleHelp } from '@lucide/vue'
+
+/** `to`: where the popover is rendered (the pop-out window's body when popped out) */
+defineProps<{ to?: HTMLElement }>()
 </script>
 
 <template>
@@ -9,7 +12,7 @@ import { CircleHelp } from '@lucide/vue'
         <CircleHelp />
       </Button>
     </PopoverTrigger>
-    <PopoverContent class="w-72 text-sm" align="end">
+    <PopoverContent class="w-72 text-sm" align="end" :to="to">
       <h3 class="font-semibold">{{ $t('chat.help.title') }}</h3>
       <ul class="mt-2 list-disc space-y-1.5 pl-4 text-muted-foreground">
         <li>{{ $t('chat.help.names') }}</li>

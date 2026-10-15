@@ -24,9 +24,11 @@ export const useChatStore = defineStore('chat', () => {
   const error = shallowRef<ChatError | null>(null)
   /** bumped to move the focus into the input */
   const focusInput = shallowRef(0)
+  /** the chat lives in its own window (`useChatPopout`) */
+  const popout = shallowRef<Window | null>(null)
   let timer: ReturnType<typeof setTimeout> | undefined
 
-  const visible = () => open.value
+  const visible = () => (popout.value ? !popout.value.document.hidden : open.value)
 
   function settle(err: ChatError | null) {
     clearTimeout(timer)
@@ -95,6 +97,7 @@ export const useChatStore = defineStore('chat', () => {
     pending: computed(() => pending.value),
     error,
     focusInput: computed(() => focusInput.value),
+    popout,
     send,
     receive,
     rejected,

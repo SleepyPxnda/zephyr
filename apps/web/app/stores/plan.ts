@@ -8,6 +8,7 @@ import {
   peerMarks,
   serverMessageSchema,
   type ClientMessage,
+  type ChatRef,
   type Cursor,
   type Horse,
   type Part,
@@ -64,6 +65,8 @@ export const usePlanStore = defineStore('plan', () => {
   const cursors = shallowRef<Record<string, NonNullable<Cursor>>>({})
   const connected = shallowRef(false)
   const unconfirmed = shallowRef(0)
+  /** our own peer id on the socket (from `hello`), to recognise our chat echo */
+  const you = shallowRef<string | null>(null)
 
   let planId = ''
   let seq = 0
@@ -121,6 +124,7 @@ export const usePlanStore = defineStore('plan', () => {
         if (ws !== socket?.ws.value) return
         connected.value = false
         needsResend = true
+        useChatStore().dropped()
         if (STOP_CODES.includes(e.code)) close()
       },
       onMessage: (_ws, e) => onMessage(e.data),
@@ -132,6 +136,8 @@ export const usePlanStore = defineStore('plan', () => {
     socket = null
     connected.value = false
     needsResend = false
+    you.value = null
+    useChatStore().reset()
   }
 
   /** Reconnects to get a fresh document (after a gap in the revisions). */
@@ -169,6 +175,10 @@ export const usePlanStore = defineStore('plan', () => {
       case 'leave':
         peers.value = peers.value.filter((p) => p.peerId !== m.peerId)
         return setCursor(m.peerId, null)
+      case 'chat':
+        return useChatStore().receive(m, you.value)
+      case 'chatReject':
+        return useChatStore().rejected(m.nonce)
       case 'pong':
         return
     }
@@ -182,6 +192,7 @@ export const usePlanStore = defineStore('plan', () => {
     // after a reconnect the undo steps may refer to horses somebody else changed meanwhile
     if (reconnected) history.value = []
     confirmed.value = m.plan
+    you.value = m.you
     role.value = m.role
     peers.value = m.peers
     cursors.value = {}
@@ -329,6 +340,10 @@ export const usePlanStore = defineStore('plan', () => {
     void flushCursor()
   }
 
+  /** Sends a chat message; false without a connection. */
+  const sendChat = (nonce: string, text: string, ref: ChatRef | null): boolean =>
+    connected.value && send({ type: 'chat', nonce, text, ref })
+
   // ---------- plan-level changes ----------
 
   const rename = (title: string) => update((c) => ({ ...c, title }))
@@ -424,6 +439,9 @@ export const usePlanStore = defineStore('plan', () => {
     peers: computed(() => peers.value),
     cursors: computed(() => cursors.value),
     moveCursor,
+    sendChat,
+    you: computed(() => you.value),
+    connected: computed(() => connected.value),
     marks,
     load,
     close,
